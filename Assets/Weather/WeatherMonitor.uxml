@@ -28,7 +28,7 @@
       <ui:VisualElement class="forecast-top">
         <ui:Image name="next-icon-1" class="forecast-icon" />
         <ui:VisualElement class="forecast-heading">
-          <ui:Label name="next-name-1" text="TOXICITY" class="forecast-name" />
+          <ui:Label name="next-name-1" text="RADIATION" class="forecast-name" />
           <ui:Label name="next-time-1" text="IN 02:45" class="forecast-time" />
         </ui:VisualElement>
       </ui:VisualElement>
