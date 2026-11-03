@@ -46,6 +46,7 @@ namespace MoonThemedGame.Computer
         float previousFov;
         CursorLockMode previousLock;
         bool focusCursorVisible, aimed;
+        Behaviour playerController;
         float transition;
         int transitionDirection;
         Vector3 focusPosition;
@@ -265,6 +266,7 @@ namespace MoonThemedGame.Computer
             previousRotation = focusedCamera.transform.rotation;
             previousFov = focusedCamera.fieldOfView;
             previousLock = Cursor.lockState;
+            SuspendPlayer(focusedCamera);
             focusCursorVisible = hovering ? previousCursorVisible : Cursor.visible;
             float tangent = Mathf.Tan(FocusFov * 0.5f * Mathf.Deg2Rad);
             float distance = Mathf.Max(screenSize.y / (2 * tangent), screenSize.x / (2 * tangent * focusedCamera.aspect)) * 1.2f;
@@ -309,6 +311,7 @@ namespace MoonThemedGame.Computer
             if (transitionDirection > 0)
             {
                 Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
             else
             {
@@ -316,8 +319,26 @@ namespace MoonThemedGame.Computer
                 Cursor.visible = focusCursorVisible;
                 focusedCamera = null;
                 focused = false;
+                ResumePlayer();
             }
             transitionDirection = 0;
+        }
+
+        // The first person controller would keep reading the mouse and relock the cursor on click.
+        void SuspendPlayer(Camera camera)
+        {
+            var controller = camera.GetComponentInParent<FirstPersonController>();
+            if (!controller) controller = FindAnyObjectByType<FirstPersonController>();
+            playerController = controller && controller.enabled ? controller : null;
+            if (!playerController) return;
+            playerController.enabled = false;
+            Cursor.visible = false;
+        }
+
+        void ResumePlayer()
+        {
+            if (playerController) playerController.enabled = true;
+            playerController = null;
         }
 
         void OnDisable()

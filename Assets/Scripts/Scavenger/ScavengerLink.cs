@@ -30,6 +30,7 @@ namespace MoonThemedGame.Scavenger
 
         Camera operatorCamera;
         AudioListener operatorListener;
+        Behaviour playerController;
         Renderer interference;
         Material interferenceMaterial;
         VisualStyle stationStyle;
@@ -196,6 +197,10 @@ namespace MoonThemedGame.Scavenger
                 operatorCamera.enabled = false;
                 operatorListener = operatorCamera.GetComponent<AudioListener>();
                 if (operatorListener) operatorListener.enabled = false;
+                var controller = operatorCamera.GetComponentInParent<FirstPersonController>();
+                if (!controller) controller = FindAnyObjectByType<FirstPersonController>();
+                playerController = controller && controller.enabled ? controller : null;
+                if (playerController) playerController.enabled = false;
             }
             robotCamera.enabled = true;
             robotCamera.GetComponent<AudioListener>().enabled = true;
@@ -225,6 +230,8 @@ namespace MoonThemedGame.Scavenger
             if (operatorListener) operatorListener.enabled = true;
             Cursor.lockState = previousLock;
             Cursor.visible = previousCursorVisible;
+            if (playerController) playerController.enabled = true;
+            playerController = null;
             connected = false;
             if (state) state.Active = false;
             if (isActiveAndEnabled) StartCoroutine(RefocusTerminal());
