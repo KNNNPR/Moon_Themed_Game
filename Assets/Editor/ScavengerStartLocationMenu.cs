@@ -24,7 +24,10 @@ namespace MoonThemedGame.Editor
                 Debug.LogError($"[Scavenger] '{ScavengerLink.RobotName}' was not found in the open scene.");
                 return;
             }
-            var location = ScavengerStartLocation.BuildFor(robot.transform);
+            Renderer chargeBuilding = null;
+            foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+                if (r.name == "Cube.026") chargeBuilding = r;
+            var location = ScavengerStartLocation.BuildFor(robot.transform, chargeBuilding);
             Undo.RegisterCreatedObjectUndo(location, "Create Scavenger Start Location");
             Selection.activeGameObject = location;
             EditorSceneManager.MarkSceneDirty(location.scene);

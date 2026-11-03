@@ -39,6 +39,8 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
         [Min(0.01f)] public float terminateDuration = 1.3f;
+        [Tooltip("The robot model is built large; this scales it once at start so it fits the charge building.")]
+        [Range(0.2f, 1)] public float robotScale = 0.6f;
         [Header("Base")]
         [Tooltip("Within this distance of the hangar the feed uses the base antenna. 0 = six robot lengths.")]
         [Min(0)] public float baseRelayRange;
@@ -62,6 +64,7 @@ namespace MoonThemedGame.Scavenger
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
+        Vector3 cameraTarget, cameraVelocity;
         Vector3 homePosition;
         Quaternion homeRotation;
         RobotStatus lastStatus;
@@ -115,8 +118,10 @@ namespace MoonThemedGame.Scavenger
                 Debug.LogWarning($"[Scavenger] No '{RobotName}' found in the scene; SCAVENGER will do nothing.", this);
                 return;
             }
+            robot.localScale *= robotScale;
             var bounds = RobotBounds(robot);
             cameraSize = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
+            cameraTarget = robot.InverseTransformPoint(bounds.center);
             if (!robotCamera) robotCamera = CreateCamera();
             sceneMask = robotCamera.cullingMask | 1 << OverlayLayer;
             sceneClear = CameraClearFlags.SolidColor;
@@ -130,8 +135,11 @@ namespace MoonThemedGame.Scavenger
             var forward = DetectForward(robot, bounds.center);
             if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
             Drive = drive;
+            if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
+            if (!chargeBuilding) Debug.LogWarning($"[Scavenger] Charge building '{chargeBuildingName}' not found; the robot cannot charge.", this);
             var location = ScavengerStartLocation.Find();
-            if (!location) location = ScavengerStartLocation.BuildFor(robot).transform;
+            if (!location) location = ScavengerStartLocation.BuildFor(robot, chargeBuilding).transform;
+            if (chargeBuilding) AddBuildingCollider(chargeBuilding);
             var marker = ScavengerStartLocation.Marker(location);
             float rideHeight = robot.position.y - bounds.min.y;
             Drive.Setup(forward);
@@ -141,6 +149,7 @@ namespace MoonThemedGame.Scavenger
                 if (facing.sqrMagnitude < 1e-4f) facing = Vector3.forward;
                 homePosition = marker.position + Vector3.up * rideHeight;
                 homeRotation = Quaternion.LookRotation(facing) * Quaternion.Inverse(Quaternion.LookRotation(forward));
+                Drive.SetFallbackGround(marker.position.y);
             }
             else
             {
@@ -148,11 +157,7 @@ namespace MoonThemedGame.Scavenger
                 homeRotation = robot.rotation;
             }
             Drive.PlaceAt(homePosition, homeRotation);
-            float unit = Drive.Length;
-            if (baseRelayRange <= 0) baseRelayRange = unit * 6;
-            if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
-            if (chargeBuilding) AddBuildingCollider(chargeBuilding);
-            else Debug.LogWarning($"[Scavenger] Charge building '{chargeBuildingName}' not found; the robot cannot charge.", this);
+            if (baseRelayRange <= 0) baseRelayRange = Drive.Length * 6;
             CreateInterference();
         }
 
@@ -184,16 +189,18 @@ namespace MoonThemedGame.Scavenger
             if (!Connected || !robot || !Drive) return;
             var target = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
             cameraYaw = Mathf.LerpAngle(cameraYaw, target, 1 - Mathf.Exp(-4 * Time.deltaTime));
-            PlaceCamera(Mathf.Exp(-8 * Time.deltaTime));
+            PlaceCamera(false);
         }
 
-        void PlaceCamera(float keep)
+        // Follows a fixed point of the robot (not its bounds, which move with the wheels) and damps it.
+        void PlaceCamera(bool snap)
         {
-            var center = RobotBounds(robot).center;
+            var center = robot.TransformPoint(cameraTarget);
             var wanted = center + Quaternion.Euler(0, cameraYaw, 0) * new Vector3(0, cameraSize * 1.2f, -cameraSize * 3);
             wanted.y = Mathf.Max(wanted.y, center.y);
             var t = robotCamera.transform;
-            t.position = Vector3.Lerp(wanted, t.position, keep);
+            if (snap) { t.position = wanted; cameraVelocity = Vector3.zero; }
+            else t.position = Vector3.SmoothDamp(t.position, wanted, ref cameraVelocity, 0.18f);
             t.rotation = Quaternion.LookRotation(center + Vector3.up * cameraSize * 0.3f - t.position, Vector3.up);
         }
 
@@ -421,7 +428,7 @@ namespace MoonThemedGame.Scavenger
                 if (playerController) playerController.enabled = false;
             }
             if (Drive) cameraYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
-            PlaceCamera(0);
+            PlaceCamera(true);
             robotCamera.enabled = true;
             robotCamera.GetComponent<AudioListener>().enabled = true;
             stationStyle = VisualStyleSwitcher.CurrentStyle;

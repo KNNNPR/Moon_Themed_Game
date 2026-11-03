@@ -20,7 +20,7 @@ namespace MoonThemedGame.Scavenger
             public Vector3 anchor;
             public Vector3 centerInParent, pivotInParent, axleInParent;
             public Quaternion restRotation;
-            public float radius, length, spin;
+            public float radius, length, spin, visualLift;
             public bool grounded;
             public Vector3 contact, normal;
         }
@@ -33,7 +33,7 @@ namespace MoonThemedGame.Scavenger
         [Tooltip("How fast throttle follows the keys, per second.")]
         public float throttleResponse = 1.6f;
         public float steerResponse = 3;
-        [Range(0, 1)] public float lateralGrip = 0.85f;
+        [Range(0, 1)] public float lateralGrip = 0.6f;
         public float coastDrag = 0.8f;
 
         [Header("Body")]
@@ -41,7 +41,7 @@ namespace MoonThemedGame.Scavenger
         public float gravity = 4;
         [Tooltip("Suspension travel as a share of the wheel radius.")]
         public float travel = 0.6f;
-        [Range(0, 2)] public float dampingRatio = 0.8f;
+        [Range(0, 2)] public float dampingRatio = 1.1f;
 
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
@@ -114,11 +114,12 @@ namespace MoonThemedGame.Scavenger
             body.interpolation = RigidbodyInterpolation.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             body.linearDamping = 0.05f;
-            body.angularDamping = 1.5f;
+            body.angularDamping = 3f;
+            body.solverIterations = 12;
             body.centerOfMass = transform.InverseTransformPoint(new Vector3(world.center.x, world.min.y + wheelRadius, world.center.z));
 
             int count = Mathf.Max(1, wheels.Count);
-            float sag = travel * wheelRadius * 0.35f;
+            float sag = travel * wheelRadius * 0.5f;
             stiffness = mass * gravity / count / Mathf.Max(0.001f, sag);
             damper = 2 * dampingRatio * Mathf.Sqrt(stiffness * mass / count);
         }
@@ -147,6 +148,8 @@ namespace MoonThemedGame.Scavenger
             foreach (var r in renderers) bounds.Encapsulate(r.bounds);
             return bounds;
         }
+
+        public void SetFallbackGround(float height) => groundHeight = height;
 
         public void PlaceAt(Vector3 position, Quaternion rotation)
         {
@@ -189,7 +192,7 @@ namespace MoonThemedGame.Scavenger
             wheel.grounded = CastGround(origin, -up, wheel.radius * 0.95f, rest * 2 + lead, out float distance, out wheel.contact, out wheel.normal);
             wheel.length = wheel.grounded ? Mathf.Max(0, distance - lead) : rest * 2;
             if (!wheel.grounded) return;
-            float compression = rest * 1.35f - wheel.length;
+            float compression = rest * 1.5f - wheel.length;
             float velocity = (previous - wheel.length) / dt;
             float force = Mathf.Max(0, stiffness * compression + damper * velocity);
             body.AddForceAtPosition(up * force, wheel.contact);
@@ -239,7 +242,7 @@ namespace MoonThemedGame.Scavenger
             var up = transform.up;
             float yaw = Vector3.Dot(body.angularVelocity, up);
             float wanted = steer * turnSpeed * Mathf.Deg2Rad;
-            body.AddTorque(up * (wanted - yaw) * 4, ForceMode.Acceleration);
+            body.AddTorque(up * (wanted - yaw) * 3, ForceMode.Acceleration);
         }
 
         void KeepUpright(float dt)
@@ -257,10 +260,11 @@ namespace MoonThemedGame.Scavenger
             foreach (var wheel in wheels)
             {
                 float lift = wheel.radius * travel - wheel.length;
+                wheel.visualLift = Mathf.Lerp(wheel.visualLift, lift, 1 - Mathf.Exp(-25 * Time.deltaTime));
                 var parent = wheel.transform.parent;
                 wheel.spin += speed / Mathf.Max(0.01f, wheel.radius) * Mathf.Rad2Deg * Time.deltaTime;
                 var spin = Quaternion.AngleAxis(wheel.spin, wheel.axleInParent);
-                var offset = parent.InverseTransformVector(up * lift);
+                var offset = parent.InverseTransformVector(up * wheel.visualLift);
                 wheel.transform.localPosition = wheel.centerInParent + offset + spin * wheel.pivotInParent;
                 wheel.transform.localRotation = spin * wheel.restRotation;
             }
