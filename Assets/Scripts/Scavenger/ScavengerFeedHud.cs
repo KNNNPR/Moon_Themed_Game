@@ -36,7 +36,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, weakSignal, leavingSoon;
+        bool subscribed, weakSignal, leavingSoon, covered;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -64,7 +64,7 @@ namespace MoonThemedGame.Scavenger
                 link.Network.Selected += OnHandover;
                 subscribed = true;
             }
-            weakSignal = leavingSoon = false;
+            weakSignal = leavingSoon = covered = false;
             connectedAt = Time.time;
             packets = Random.Range(10000, 40000);
             log.Clear();
@@ -91,7 +91,6 @@ namespace MoonThemedGame.Scavenger
                 UplinkStatus.Ok when link.ViaRelay => "UPLINK via BASE RELAY",
                 UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
                 UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
-                UplinkStatus.Blocked => "ERR no sky view - robot under cover",
                 _ => "ERR no satellite selected"
             });
         }
@@ -104,7 +103,6 @@ namespace MoonThemedGame.Scavenger
         public static string Reason(UplinkStatus status) => status switch
         {
             UplinkStatus.OutOfRange => "SATELLITE OUT OF RANGE",
-            UplinkStatus.Blocked => "NO SKY VIEW - ROBOT UNDER COVER",
             UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
             _ => ""
         };
@@ -131,7 +129,11 @@ namespace MoonThemedGame.Scavenger
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
-            bool weak = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && link.UplinkQuality < 0.35f;
+            bool cover = link.Cover > 0.3f;
+            if (cover && !covered) AddLog($"WARN overhead cover {Mathf.RoundToInt(link.Cover * 100)}% - signal degraded");
+            else if (!cover && covered) AddLog("SKY CLEAR - signal restored");
+            covered = cover;
+            bool weak = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && !cover && link.UplinkQuality < 0.35f;
             if (weak && !weakSignal) AddLog($"WARN {SatName} signal weak");
             weakSignal = weak;
             bool leaving = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && link.Network.ActiveLeavingSoon;
@@ -252,7 +254,7 @@ namespace MoonThemedGame.Scavenger
                 {
                     Alert(center, "NO UPLINK", warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    string hint = link.Uplink == UplinkStatus.Blocked ? "MOVE THE ROBOT OUT FROM UNDER COVER" : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
+                    string hint = "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
                     Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
                 else switch (state.Status)
@@ -277,12 +279,13 @@ namespace MoonThemedGame.Scavenger
 
         string SatLine()
         {
-            if (link.ViaRelay) return "LINK BASE RELAY  [||||]";
+            string coverText = link.Cover > 0 ? $"  COVER {Mathf.RoundToInt(link.Cover * 100)}%" : "";
+            if (link.ViaRelay) return $"LINK BASE RELAY  Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%{coverText}";
             var satellite = link.Network ? link.Network.Active : null;
             if (satellite == null) return "SAT NONE";
             float clock = link.Network.Clock;
             return satellite.InRange(clock)
-                ? $"SAT {satellite.name}  {Bars(satellite.Bars(clock))}  LEFT {Clock(satellite.TimeLeft(clock))}"
+                ? $"SAT {satellite.name}  Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%  LEFT {Clock(satellite.TimeLeft(clock))}{coverText}"
                 : $"SAT {satellite.name}  OUT OF RANGE";
         }
 

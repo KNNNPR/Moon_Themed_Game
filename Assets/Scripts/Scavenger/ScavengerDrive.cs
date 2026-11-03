@@ -21,8 +21,6 @@ namespace MoonThemedGame.Scavenger
         public LunarSurface surface;
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
-        // Set by the link when the uplink is lost under cover: the robot backs out on its own.
-        public Vector3? autopilotTarget;
 
         Collider[] own;
         Transform[] wheels;
@@ -84,7 +82,6 @@ namespace MoonThemedGame.Scavenger
             if (!surface) return;
             float dt = Time.deltaTime;
             Vector2 input = controllable ? ReadInput() : Vector2.zero;
-            if (autopilotTarget.HasValue) input = Autopilot(autopilotTarget.Value);
 
             heading += input.x * turnSpeed * dt;
             float target = input.y * speed * length * (input.y < 0 ? reverseFactor : 1);
@@ -98,16 +95,6 @@ namespace MoonThemedGame.Scavenger
             var normal = surface.WorldNormal(position);
             transform.rotation = Quaternion.Slerp(transform.rotation, Orientation(normal), 1 - Mathf.Exp(-tiltSharpness * dt));
             SpinWheels(dt);
-        }
-
-        Vector2 Autopilot(Vector3 target)
-        {
-            var offset = Flat(target - transform.position);
-            float distance = Vector3.Distance(new Vector3(target.x, 0, target.z), new Vector3(transform.position.x, 0, transform.position.z));
-            if (distance < length * 0.3f) return Vector2.zero;
-            // Reverse out the way it came in: steer so that the back points at the target.
-            float angle = Vector3.SignedAngle(-Heading, offset, Vector3.up);
-            return new Vector2(Mathf.Clamp(angle / 30, -1, 1), Mathf.Abs(angle) < 60 ? -1 : 0);
         }
 
         Vector3 Slide(Vector3 move)

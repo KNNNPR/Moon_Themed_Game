@@ -32,6 +32,10 @@ namespace MoonThemedGame.Scavenger
         public Camera robotCamera;
         public ScavengerRobotState state;
         public VisualStyle robotStyle = VisualStyle.ColorAscii;
+        [Header("Robot ASCII")]
+        [Range(6, 24)] public int robotCharacterHeight = 16;
+        [Range(0, 0.5f)] public float robotSceneBehindCharacters = 0.4f;
+        [Range(0.25f, 2)] public float robotCharacterDensity = 0.9f;
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
         [Min(0.01f)] public float terminateDuration = 1.3f;
@@ -45,6 +49,7 @@ namespace MoonThemedGame.Scavenger
         Renderer interference;
         Material interferenceMaterial;
         VisualStyle stationStyle;
+        Material robotAscii;
         CursorLockMode previousLock;
         bool previousCursorVisible;
         float phaseStart;
@@ -52,11 +57,10 @@ namespace MoonThemedGame.Scavenger
         CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
         Collider[] robotColliders;
-        Vector3 antenna, lastSignalPoint;
-        float cameraSize, cameraYaw, nextBreadcrumb;
+        Vector3 antenna;
+        float cameraSize, cameraYaw;
         Vector3 homePosition;
         float homeYaw;
-        bool failsafe;
         Light sun;
 
         public LinkPhase Phase { get; private set; }
@@ -68,6 +72,7 @@ namespace MoonThemedGame.Scavenger
         public ScavengerDrive Drive { get; private set; }
         // Near the station the feed goes through the base antenna, not a satellite.
         public bool ViaRelay { get; private set; }
+        public float Cover { get; private set; }
         public event Action<UplinkStatus> UplinkChanged;
         public float PhaseTime => Time.time - phaseStart;
         public bool Connected => Phase != LinkPhase.Off;
@@ -131,7 +136,6 @@ namespace MoonThemedGame.Scavenger
             homePosition = robot.position;
             homeYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
             Drive.PlaceAt(homePosition, homeYaw);
-            lastSignalPoint = homePosition;
             sun = CreateSun();
             CreateInterference();
         }
@@ -207,24 +211,9 @@ namespace MoonThemedGame.Scavenger
         {
             if (status != RobotStatus.Online || !Drive) return;
             Drive.PlaceAt(homePosition, homeYaw);
-            lastSignalPoint = homePosition;
         }
 
-        // Under cover the robot cannot hear commands, so it backs out to where it last had signal.
-        void UpdateDrive()
-        {
-            bool live = Phase == LinkPhase.Live && Powered;
-            Drive.controllable = live && Uplink == UplinkStatus.Ok;
-            if (live && Uplink == UplinkStatus.Ok && Time.time >= nextBreadcrumb)
-            {
-                nextBreadcrumb = Time.time + 0.5f;
-                lastSignalPoint = robot.position;
-            }
-            bool backOut = live && Uplink == UplinkStatus.Blocked;
-            if (backOut && !failsafe) hud.Notify("FAILSAFE: NO SKY - REVERSING TO LAST SIGNAL POINT");
-            failsafe = backOut;
-            Drive.autopilotTarget = backOut ? lastSignalPoint : null;
-        }
+        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
         static Vector3 DetectForward(Transform robot, Vector3 center)
@@ -323,6 +312,18 @@ namespace MoonThemedGame.Scavenger
             if (Phase == LinkPhase.Connecting || Phase == LinkPhase.Live) SetPhase(LinkPhase.Terminating);
         }
 
+        // A runtime copy of the shared ASCII material with bigger, sparser glyphs for the robot feed.
+        Material RobotAscii()
+        {
+            var source = VisualStyleSwitcher.AsciiMaterial;
+            if (!source) return null;
+            if (!robotAscii) robotAscii = new Material(source) { name = "Color ASCII (robot feed)", hideFlags = HideFlags.DontSave };
+            robotAscii.SetFloat("_CharacterHeight", robotCharacterHeight);
+            robotAscii.SetFloat("_BackgroundStrength", robotSceneBehindCharacters);
+            robotAscii.SetFloat("_Density", robotCharacterDensity);
+            return robotAscii;
+        }
+
         void TryEvacuate()
         {
             if (state.OrderEvacuation(terminal)) hud.Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
@@ -335,9 +336,17 @@ namespace MoonThemedGame.Scavenger
             var offset = robot.position - (Surface ? Surface.transform.position : robot.position);
             offset.y = 0;
             bool relay = Surface && offset.magnitude < Surface.flatRadius;
-            float quality = 1;
-            var status = relay ? UplinkStatus.Ok : Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out quality);
+            float quality, cover;
+            UplinkStatus status;
+            if (relay)
+            {
+                cover = Network.Cover(robot.TransformPoint(antenna), robotColliders);
+                quality = Network.ApplyCover(1, cover);
+                status = UplinkStatus.Ok;
+            }
+            else status = Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out quality, out cover);
             UplinkQuality = quality;
+            Cover = cover;
             if (status == Uplink && relay == ViaRelay) return;
             Uplink = status;
             ViaRelay = relay;
@@ -350,7 +359,7 @@ namespace MoonThemedGame.Scavenger
         void UpdateFeed()
         {
             float k = state ? state.Interference : 0;
-            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, Mathf.Clamp01(0.5f - UplinkQuality) * 0.8f);
+            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, (1 - UplinkQuality) * (1 - UplinkQuality) * 0.75f);
             bool picture = HasPicture;
             float loss = Powered && Uplink != UplinkStatus.Ok && HandshakeDone ? 1 : 0, collapse = 0;
             if (Phase == LinkPhase.Connecting && picture)
@@ -397,6 +406,7 @@ namespace MoonThemedGame.Scavenger
             robotCamera.GetComponent<AudioListener>().enabled = true;
             stationStyle = VisualStyleSwitcher.CurrentStyle;
             VisualStyleSwitcher.SetStyle(robotStyle);
+            VisualStyleSwitcher.OverrideAscii(RobotAscii());
             previousLock = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             Cursor.lockState = CursorLockMode.Locked;
@@ -420,9 +430,9 @@ namespace MoonThemedGame.Scavenger
             if (Drive)
             {
                 Drive.controllable = false;
-                Drive.autopilotTarget = null;
             }
             VisualStyleSwitcher.SetStyle(stationStyle);
+            VisualStyleSwitcher.OverrideAscii(null);
             if (operatorCamera) operatorCamera.enabled = true;
             if (operatorListener) operatorListener.enabled = true;
             Cursor.lockState = previousLock;
