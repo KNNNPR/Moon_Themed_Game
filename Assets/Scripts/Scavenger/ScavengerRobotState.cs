@@ -12,6 +12,8 @@ namespace MoonThemedGame.Scavenger
         [Min(1)] public float capacity = 100;
         [Tooltip("Charge per second while the operator is connected.")]
         public float drainPerSecond = 1;
+        [Tooltip("Charge per second while parked at the CHARGE station.")]
+        public float chargePerSecond = 8;
         [Range(0, 1)] public float lowChargeThreshold = 0.2f;
         [Min(0)] public float shutdownDelay = 10;
         [Min(0)] public int evacuationCost = 15;
@@ -23,6 +25,9 @@ namespace MoonThemedGame.Scavenger
         public float Normalized => Charge / capacity;
         public RobotStatus Status { get; private set; } = RobotStatus.Online;
         public bool Active { get; set; }
+        // Set every frame by the link while the robot stands at the CHARGE station.
+        public bool AtCharger { get; set; }
+        public bool Charging => AtCharger && (Status == RobotStatus.Online || Status == RobotStatus.Failing) && Charge < capacity;
         public bool LowCharge => Status == RobotStatus.Online && Normalized <= lowChargeThreshold;
         public float TimeLeft => Mathf.Max(0, timer);
         public bool HasSignal => Status == RobotStatus.Online || Status == RobotStatus.Failing;
@@ -44,10 +49,17 @@ namespace MoonThemedGame.Scavenger
             switch (Status)
             {
                 case RobotStatus.Online:
-                    if (Active) Charge = Mathf.Max(0, Charge - drainPerSecond * dt);
+                    if (Charging) Charge = Mathf.Min(capacity, Charge + chargePerSecond * dt);
+                    else if (Active) Charge = Mathf.Max(0, Charge - drainPerSecond * dt);
                     if (Charge <= 0) SetStatus(RobotStatus.Failing, shutdownDelay);
                     break;
                 case RobotStatus.Failing:
+                    if (Charging)
+                    {
+                        Charge = Mathf.Min(capacity, Charge + chargePerSecond * dt);
+                        SetStatus(RobotStatus.Online, 0);
+                        break;
+                    }
                     timer -= dt;
                     if (timer <= 0) SetStatus(RobotStatus.Offline, 0);
                     break;
