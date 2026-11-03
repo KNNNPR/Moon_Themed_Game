@@ -27,6 +27,9 @@ namespace MoonThemedGame.Computer
         public TerminalLanguage language;
         [SerializeField, Min(0)] int credits = 20;
         [Min(1)] public float interactionDistance = 5;
+        [Tooltip("Seconds the camera takes to move into the screen and back.")]
+        [Min(0)] public float focusDuration = 0.9f;
+        [Min(1)] public float aimDotSize = 6;
 
         RenderTexture display;
         Material material;
@@ -42,12 +45,23 @@ namespace MoonThemedGame.Computer
         Quaternion previousRotation;
         float previousFov;
         CursorLockMode previousLock;
-        bool focusCursorVisible;
+        bool focusCursorVisible, aimed;
+        Behaviour playerController;
+        float transition;
+        int transitionDirection;
+        Vector3 focusPosition;
+        Quaternion focusRotation;
+        const float FocusFov = 42;
 
         public RenderTexture DisplayTexture => display;
         public Material ScreenMaterial => material;
         public bool IsFocused => focused;
+        public bool IsTransitioning => transitionDirection != 0;
+        public bool IsAimed => aimed;
         public string HoveredIcon { get; private set; }
+        public VisualElement Root => root;
+        public bool PointerActive { get; private set; }
+        public Vector2 PointerPosition { get; private set; }
         public int Credits => credits;
 
         void OnEnable()
@@ -77,8 +91,6 @@ namespace MoonThemedGame.Computer
             panelSettings.scale = 1;
             panelSettings.clearColor = true;
             panelSettings.colorClearValue = new Color(0.006f, 0.009f, 0.012f, 1);
-            // Pointer ownership stays with this physical screen. No overlay panel
-            // is allowed to intercept global mouse events or gameplay UI.
             panelSettings.SetScreenToPanelSpaceFunction(_ => new Vector2(-10000, -10000));
             uiHost = new GameObject("PC MONITOR / UI surface") { hideFlags = HideFlags.HideAndDontSave };
             uiHost.transform.SetParent(transform, false);
@@ -138,12 +150,13 @@ namespace MoonThemedGame.Computer
         void Update()
         {
             if (!Application.isPlaying || root == null) return;
-            bool focusKey = false, escape = false;
-            Vector2 position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            bool interact = false, escape = false;
+            var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            Vector2 position = center;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
-                focusKey = Keyboard.current.f7Key.wasPressedThisFrame;
+                interact = Keyboard.current.eKey.wasPressedThisFrame;
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
             }
             if (Mouse.current != null)
@@ -151,15 +164,53 @@ namespace MoonThemedGame.Computer
                 position = Mouse.current.position.ReadValue();
             }
 #elif ENABLE_LEGACY_INPUT_MANAGER
-            focusKey = Input.GetKeyDown(KeyCode.F7);
+            interact = Input.GetKeyDown(KeyCode.E);
             escape = Input.GetKeyDown(KeyCode.Escape);
             position = Input.mousePosition;
 #endif
-            if (focusKey) { if (focused) ExitFocus(); else Focus(); }
-            if (escape) ExitFocus();
+            aimed = false;
+            if (IsTransitioning) { AdvanceTransition(); return; }
             var camera = focusedCamera ? focusedCamera : Camera.main;
-            if (camera && TryGetPanelPosition(camera, position, out var panelPoint)) SetPointer(panelPoint);
-            else HidePointer();
+            if (focused)
+            {
+                if (escape) { ExitFocus(); return; }
+                if (camera && TryGetPanelPosition(camera, position, out var panelPoint)) SetPointer(panelPoint);
+                else HidePointer();
+                return;
+            }
+            // Standing in the room: the screen only reacts to the crosshair from up close.
+            HidePointer();
+            aimed = camera && TryGetPanelPosition(camera, center, out _);
+            if (aimed && interact) Focus();
+        }
+
+        void OnGUI()
+        {
+            if (!aimed || focused) return;
+            float size = aimDotSize;
+            var previous = GUI.color;
+            GUI.color = new Color(1, 1, 1, 0.9f);
+            GUI.DrawTexture(new Rect((Screen.width - size) * 0.5f, (Screen.height - size) * 0.5f, size, size), DotTexture);
+            GUI.color = previous;
+        }
+
+        static Texture2D dotTexture;
+        static Texture2D DotTexture
+        {
+            get
+            {
+                if (dotTexture) return dotTexture;
+                const int size = 32;
+                dotTexture = new Texture2D(size, size, TextureFormat.RGBA32, false) { hideFlags = HideFlags.HideAndDontSave, filterMode = FilterMode.Bilinear };
+                for (int y = 0; y < size; y++)
+                    for (int x = 0; x < size; x++)
+                    {
+                        float d = new Vector2(x + 0.5f - size * 0.5f, y + 0.5f - size * 0.5f).magnitude;
+                        dotTexture.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(size * 0.5f - d)));
+                    }
+                dotTexture.Apply();
+                return dotTexture;
+            }
         }
 
         public bool TryGetPanelPosition(Camera camera, Vector2 screenPoint, out Vector2 panelPoint)
@@ -174,9 +225,6 @@ namespace MoonThemedGame.Computer
             panelPoint = new Vector2(uv.x * assets.resolution.x, (1 - uv.y) * assets.resolution.y);
             return true;
         }
-
-        // Same mapping as PCMonitorCRT.hlsl: hit testing follows curved text
-        // and both moving waves, so hovering follows the visible icon.
         public static Vector2 WarpUV(Vector2 uv, float time, Material screen)
         {
             var p = uv * 2 - Vector2.one;
@@ -192,6 +240,8 @@ namespace MoonThemedGame.Computer
             if (root == null) return;
             if (!hovering) { previousCursorVisible = Cursor.visible; Cursor.visible = false; hovering = true; }
             cursor.style.display = DisplayStyle.Flex;
+            PointerActive = true;
+            PointerPosition = point;
             cursor.style.left = Mathf.Clamp(point.x, 0, assets.resolution.x - 20);
             cursor.style.top = Mathf.Clamp(point.y, 0, assets.resolution.y - 30);
             HoveredIcon = null;
@@ -206,6 +256,7 @@ namespace MoonThemedGame.Computer
         public void HidePointer()
         {
             if (cursor != null) cursor.style.display = DisplayStyle.None;
+            PointerActive = false;
             if (icons != null) foreach (var icon in icons) icon.RemoveFromClassList("pointer-over");
             HoveredIcon = null;
             if (!hovering) return;
@@ -213,7 +264,7 @@ namespace MoonThemedGame.Computer
             hovering = false;
         }
 
-        public void Focus()
+        public void Focus(bool instant = false)
         {
             if (focused || !Camera.main) return;
             focusedCamera = Camera.main;
@@ -221,35 +272,84 @@ namespace MoonThemedGame.Computer
             previousRotation = focusedCamera.transform.rotation;
             previousFov = focusedCamera.fieldOfView;
             previousLock = Cursor.lockState;
+            SuspendPlayer(focusedCamera);
             focusCursorVisible = hovering ? previousCursorVisible : Cursor.visible;
-            focusedCamera.fieldOfView = 42;
-            float tangent = Mathf.Tan(21 * Mathf.Deg2Rad);
+            float tangent = Mathf.Tan(FocusFov * 0.5f * Mathf.Deg2Rad);
             float distance = Mathf.Max(screenSize.y / (2 * tangent), screenSize.x / (2 * tangent * focusedCamera.aspect)) * 1.2f;
             var normal = transform.TransformDirection(screenNormal).normalized;
             var up = transform.TransformDirection(screenUp).normalized;
-            focusedCamera.transform.SetPositionAndRotation(transform.TransformPoint(screenCenter) + normal * distance, Quaternion.LookRotation(-normal, up));
-            Cursor.lockState = CursorLockMode.None;
+            focusPosition = transform.TransformPoint(screenCenter) + normal * distance;
+            focusRotation = Quaternion.LookRotation(-normal, up);
             focused = true;
+            transition = 0;
+            transitionDirection = 1;
+            if (instant || focusDuration <= 0) { transition = 1; FinishTransition(); }
         }
 
-        public void ExitFocus()
+        public void ExitFocus(bool instant = false)
         {
             if (!focused) return;
             HidePointer();
-            if (focusedCamera)
+            transitionDirection = -1;
+            if (instant || focusDuration <= 0 || !focusedCamera) { transition = 0; FinishTransition(); }
+        }
+
+        void AdvanceTransition()
+        {
+            transition = Mathf.Clamp01(transition + transitionDirection * Time.deltaTime / focusDuration);
+            ApplyCameraPose();
+            if (transitionDirection > 0 ? transition >= 1 : transition <= 0) FinishTransition();
+        }
+
+        void ApplyCameraPose()
+        {
+            if (!focusedCamera) return;
+            float t = transition * transition * (3 - 2 * transition); 
+
+            var position = Vector3.Lerp(previousPosition, focusPosition, t) + Vector3.down * (Mathf.Sin(t * Mathf.PI) * 0.06f);
+            focusedCamera.transform.SetPositionAndRotation(position, Quaternion.Slerp(previousRotation, focusRotation, t));
+            focusedCamera.fieldOfView = Mathf.Lerp(previousFov, FocusFov, t);
+        }
+
+        void FinishTransition()
+        {
+            ApplyCameraPose();
+            if (transitionDirection > 0)
             {
-                focusedCamera.transform.SetPositionAndRotation(previousPosition, previousRotation);
-                focusedCamera.fieldOfView = previousFov;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
-            Cursor.lockState = previousLock;
-            Cursor.visible = focusCursorVisible;
-            focusedCamera = null;
-            focused = false;
+            else
+            {
+                Cursor.lockState = previousLock;
+                Cursor.visible = focusCursorVisible;
+                focusedCamera = null;
+                focused = false;
+                ResumePlayer();
+            }
+            transitionDirection = 0;
+        }
+
+        // The first person controller would keep reading the mouse and relock the cursor on click.
+        void SuspendPlayer(Camera camera)
+        {
+            var controller = camera.GetComponentInParent<FirstPersonController>();
+            if (!controller) controller = FindAnyObjectByType<FirstPersonController>();
+            playerController = controller && controller.enabled ? controller : null;
+            if (!playerController) return;
+            playerController.enabled = false;
+            Cursor.visible = false;
+        }
+
+        void ResumePlayer()
+        {
+            if (playerController) playerController.enabled = true;
+            playerController = null;
         }
 
         void OnDisable()
         {
-            ExitFocus();
+            ExitFocus(true);
             HidePointer();
             if (screenRenderer && assets && screenRenderer.sharedMaterial == material) screenRenderer.sharedMaterial = assets.screenMaterial;
             if (uiHost) Destroy(uiHost);
