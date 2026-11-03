@@ -38,7 +38,7 @@ namespace MoonThemedGame.Rendering
         void Update()
         {
 #if ENABLE_INPUT_SYSTEM
-            if (Keyboard.current != null && Keyboard.current.f6Key.wasPressedThisFrame) ToggleStyle();
+            if (!MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput && MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.VisualStyle)) ToggleStyle();
 #elif ENABLE_LEGACY_INPUT_MANAGER
             if (Input.GetKeyDown(KeyCode.F6)) ToggleStyle();
 #endif

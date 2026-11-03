@@ -25,7 +25,7 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Density: 0.06499957
+    - _Density: 0.064999685
     - _OpacityLimit: 0.96
     m_Colors:
     - _FogTint: {r: 0.22, g: 0.2, b: 0.17, a: 1}

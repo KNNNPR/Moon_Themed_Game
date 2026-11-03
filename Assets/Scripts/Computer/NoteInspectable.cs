@@ -109,7 +109,7 @@ namespace MoonThemedGame.Computer
             Vector2 mouse = Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
-                close = Keyboard.current.eKey.wasPressedThisFrame || Keyboard.current.escapeKey.wasPressedThisFrame;
+                close = GameControls.Pressed(GameCommand.Interact) || Keyboard.current.escapeKey.wasPressedThisFrame;
             if (Mouse.current != null)
             {
                 close |= Mouse.current.rightButton.wasPressedThisFrame;
@@ -158,7 +158,7 @@ namespace MoonThemedGame.Computer
             if (hintStyle == null)
                 hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15 };
             GUI.color = new Color(1, 1, 1, 0.8f);
-            GUI.Label(new Rect(0, Screen.height - 48, Screen.width, 30), "E / ESC — Put down", hintStyle);
+            GUI.Label(new Rect(0, Screen.height - 48, Screen.width, 30), GameControls.Label(GameCommand.Interact)+" / ESC — Put down", hintStyle);
             GUI.color = Color.white;
         }
 

@@ -356,12 +356,12 @@ namespace MoonThemedGame.Scavenger
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
-                interact = Keyboard.current.eKey.wasPressedThisFrame;
+                interact = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Interact);
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
-                panelKey = Keyboard.current.hKey.wasPressedThisFrame;
-                if (Keyboard.current.digit1Key.wasPressedThisFrame) satelliteKey = 0;
-                else if (Keyboard.current.digit2Key.wasPressedThisFrame) satelliteKey = 1;
-                else if (Keyboard.current.digit3Key.wasPressedThisFrame) satelliteKey = 2;
+                panelKey = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.RobotPanel);
+                if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteOne)) satelliteKey = 0;
+                else if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteTwo)) satelliteKey = 1;
+                else if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteThree)) satelliteKey = 2;
             }
             if (Mouse.current != null) click = Mouse.current.leftButton.wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER

@@ -157,7 +157,7 @@ namespace MoonThemedGame.Computer
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
-                interact = Keyboard.current.eKey.wasPressedThisFrame;
+                interact = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Interact);
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
             }
             if (Mouse.current != null)

@@ -424,6 +424,7 @@ namespace MoonThemedGame.Scavenger
         // Phosphor bleed, line jitter, permanently faded glyphs and glitches that grow with interference.
         internal void Draw(Rect rect, string message, Color color, int salt, GUIStyle style, bool worn = true)
         {
+            message=MoonThemedGame.Interactions.GameControls.FormatPrompt(message);
             float k = Interference;
             int slice = Mathf.FloorToInt(Time.time * 10);
             if (Hash(salt, slice, 1) < 0.03f + 0.3f * k) rect.x += (Hash(salt, slice, 2) - 0.5f) * (4 + 20 * k);

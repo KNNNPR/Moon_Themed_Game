@@ -20,7 +20,7 @@ namespace MoonThemedGame.Interactions
         bool radioOn;
         Coroutine collisionRestore;
         public override string Prompt => radioTrack
-            ? "E — Take radio\n← / → — radio11   ↑ — Play   ↓ — Off"
+            ? "E — Take radio\n"+GameControls.Label(GameCommand.RadioPrevious)+" / "+GameControls.Label(GameCommand.RadioNext)+" — radio11   "+GameControls.Label(GameCommand.RadioPlay)+" — Play   "+GameControls.Label(GameCommand.RadioOff)+" — Off"
             : "E — Take apple";
         public bool IsHeld => hand;
         void Awake()
@@ -72,15 +72,15 @@ namespace MoonThemedGame.Interactions
         {
             if (!radioTrack || GameSettingsMenu.BlockGameplayInput || Keyboard.current == null) return;
             var key = Keyboard.current;
-            if (key.leftArrowKey.wasPressedThisFrame || key.rightArrowKey.wasPressedThisFrame || key.upArrowKey.wasPressedThisFrame)
+            if (GameControls.Pressed(GameCommand.RadioPrevious) || GameControls.Pressed(GameCommand.RadioNext) || GameControls.Pressed(GameCommand.RadioPlay))
             { if (!radioOn) { audioSource.Play(); radioOn = true; } }
-            if (key.downArrowKey.wasPressedThisFrame) { audioSource.Stop(); radioOn = false; }
+            if (GameControls.Pressed(GameCommand.RadioOff)) { audioSource.Stop(); radioOn = false; }
         }
         void LateUpdate()
         {
             if (!hand) return;
             if (GameSettingsMenu.BlockGameplayInput) return;
-            if (Keyboard.current != null && Keyboard.current.gKey.wasPressedThisFrame) { Drop(); return; }
+            if (Keyboard.current != null && GameControls.Pressed(GameCommand.Throw)) { Drop(); return; }
             var player = hand.GetComponentInParent<FirstPersonController>();
             if (!hand.enabled || (player && !player.enabled)) { Drop(false); return; }
             RadioInput();
@@ -126,7 +126,7 @@ namespace MoonThemedGame.Interactions
         protected override void OnDisable() { Drop(false); base.OnDisable(); }
         void OnGUI()
         {
-            if (hand && !GameSettingsMenu.IsOpen) GUI.Label(new Rect(Screen.width/2f-150,Screen.height-70,300,50), "G — Throw" + (radioTrack ? "    ↑ Play / ↓ Off" : ""));
+            if (hand && !GameSettingsMenu.IsOpen) GUI.Label(new Rect(Screen.width/2f-230,Screen.height-70,460,50), GameControls.Label(GameCommand.Throw)+" — Throw" + (radioTrack ? "    "+GameControls.Label(GameCommand.RadioPlay)+" Play / "+GameControls.Label(GameCommand.RadioOff)+" Off" : ""));
         }
     }
 }

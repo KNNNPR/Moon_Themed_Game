@@ -90,8 +90,10 @@ public class FirstPersonController : MonoBehaviour
 
     private void UpdateMovement()
     {
-        Vector2 input = Vector2.ClampMagnitude(
-            moveAction.action.ReadValue<Vector2>(), 1f);
+        Vector2 input = MoonThemedGame.Interactions.GameControls.Movement;
+        if (moveAction.action.activeControl != null && !(moveAction.action.activeControl.device is Keyboard))
+            input += moveAction.action.ReadValue<Vector2>();
+        input = Vector2.ClampMagnitude(input, 1f);
 
         Vector3 targetVelocity =
             (transform.right * input.x + transform.forward * input.y)

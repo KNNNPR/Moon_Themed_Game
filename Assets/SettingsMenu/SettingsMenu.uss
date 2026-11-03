@@ -1,0 +1,56 @@
+.settings-scrim {
+    flex-grow: 1;
+    background-color: rgb(0,0,0);
+    color: rgb(220,226,223);
+    font-size: 16px;
+}
+.settings-shell {
+    position: absolute;
+    left: 16%;
+    top: 20%;
+    width: 520px;
+    max-width: 80%;
+}
+.settings-header { margin-bottom: 32px; }
+.settings-title { font-size: 20px; color: rgb(238,242,240); }
+.station-caption { font-size: 14px; color: rgb(174,188,183); margin-top: 5px; }
+.section-title { font-size: 16px; margin-bottom: 14px; }
+.settings-heading { font-size: 28px; color: rgb(238,242,240); margin-bottom: 20px; }
+.muted { font-size: 14px; color: rgb(174,188,183); }
+.settings-body { min-height: 0; }
+.settings-home { align-items: flex-start; }
+.audio-row { flex-direction: row; align-items: center; height: 28px; margin-bottom: 12px; width: 440px; max-width: 100%; }
+.audio-label { width: 165px; font-size: 14px; }
+.volume-slider { flex-grow: 1; margin-left: 0; margin-right: 16px; }
+.volume-value { width: 42px; font-size: 14px; }
+.volume-slider .unity-base-slider__tracker { height: 1px; background-color: rgb(68,83,79); }
+.volume-slider .unity-base-slider__dragger { width: 5px; background-color: rgb(174,190,180); border-width: 0; border-radius: 0; }
+.sys-button {
+    align-self: flex-start;
+    height: 28px;
+    flex-shrink: 0;
+    border-width: 0;
+    border-radius: 0;
+    background-color: rgba(0,0,0,0);
+    color: rgb(205,218,212);
+    font-size: 16px;
+    padding: 3px 2px;
+    margin: 0;
+    -unity-text-align: middle-left;
+}
+.sys-button:hover, .sys-button:focus { color: rgb(236,244,238); background-color: rgba(0,0,0,0); }
+.sys-button:active { color: rgb(255,255,255); }
+.bind-status { color: rgb(174,188,183); font-size: 13px; height: 36px; white-space: normal; }
+.binding-scroll { height: 320px; min-height: 0; width: 440px; max-width: 100%; }
+.binding-row { height: 26px; flex-shrink: 0; flex-direction: row; align-items: center; padding: 0; }
+.binding-name { flex-grow: 1; font-size: 15px; }
+.binding-key { width: 145px; height: 26px; font-size: 14px; }
+.binding-scroll .unity-scroller--vertical { width: 4px; min-width: 4px; max-width: 4px; margin-left: 10px; }
+.binding-scroll .unity-scroller__low-button, .binding-scroll .unity-scroller__high-button { display: none; }
+.binding-scroll .unity-base-slider__tracker { background-color: rgba(0,0,0,0); }
+.binding-scroll .unity-base-slider__dragger { width: 3px; min-width: 3px; max-width: 3px; background-color: rgb(64,81,75); border-width: 0; border-radius: 0; }
+.text-actions { flex-direction: row; margin-top: 16px; }
+.text-actions > .sys-button { margin-right: 28px; }
+.small-action { font-size: 14px; }
+.footer-note { margin-top: 26px; font-size: 13px; }
+.settings-scrim Label, .settings-scrim Button { -unity-font-style: normal; text-shadow: 0px 0px 0px rgba(0,0,0,0); }

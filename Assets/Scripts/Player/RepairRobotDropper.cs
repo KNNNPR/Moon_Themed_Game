@@ -66,7 +66,7 @@ namespace MoonThemedGame.Repair
 
         void Update()
         {
-            if (Keyboard.current != null && Keyboard.current.fKey.wasPressedThisFrame &&
+            if (Keyboard.current != null && MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Repair) &&
                 Time.timeScale > 0f && Cursor.lockState == CursorLockMode.Locked &&
                 player && player.isActiveAndEnabled)
                 DropRobot();

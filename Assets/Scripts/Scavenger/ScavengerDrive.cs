@@ -278,10 +278,10 @@ namespace MoonThemedGame.Scavenger
 #if ENABLE_INPUT_SYSTEM
             var keys = Keyboard.current;
             if (keys == null) return input;
-            if (keys.wKey.isPressed) input.y += 1;
-            if (keys.sKey.isPressed) input.y -= 1;
-            if (keys.dKey.isPressed) input.x += 1;
-            if (keys.aKey.isPressed) input.x -= 1;
+            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Forward)) input.y += 1;
+            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Backward)) input.y -= 1;
+            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Right)) input.x += 1;
+            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Left)) input.x -= 1;
 #elif ENABLE_LEGACY_INPUT_MANAGER
             if (Input.GetKey(KeyCode.W)) input.y += 1;
             if (Input.GetKey(KeyCode.S)) input.y -= 1;
