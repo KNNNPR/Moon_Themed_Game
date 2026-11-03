@@ -13,6 +13,8 @@ namespace MoonThemedGame.Rendering
         public static VisualStyle CurrentStyle => Settings ? Settings.CurrentStyle : VisualStyle.Retro;
         public static void SetStyle(VisualStyle style) { if (Settings) Settings.SetStyle(style); }
         public static void ToggleStyle() { if (Settings) Settings.Toggle(); }
+        public static void OverrideAscii(Material material) { if (Settings) Settings.OverrideAscii(material); }
+        public static Material AsciiMaterial => Settings ? Settings.AsciiMaterial : null;
         public void UseRetro() => SetStyle(VisualStyle.Retro);
         public void UseColorAscii() => SetStyle(VisualStyle.ColorAscii);
         public void Toggle() => ToggleStyle();
