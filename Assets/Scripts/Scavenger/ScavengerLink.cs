@@ -328,7 +328,7 @@ namespace MoonThemedGame.Scavenger
                 state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
                 state.AtCharger = AtCharger;
             }
-            if (Network) Network.TickRival(Connected && !ViaRelay && Powered);
+            if (Network) Network.TickRival(Connected && Powered);
             if (Connected) RefreshUplink();
             switch (Phase)
             {
@@ -401,8 +401,8 @@ namespace MoonThemedGame.Scavenger
             if (relay)
             {
                 cover = Network.Cover(robot.TransformPoint(antenna), robotColliders);
-                quality = 1;
-                status = UplinkStatus.Ok;
+                status = Network.Threat(out float jam);
+                quality = status == UplinkStatus.Ok ? jam : 0;
             }
             else status = Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out quality, out cover);
             UplinkQuality = quality;

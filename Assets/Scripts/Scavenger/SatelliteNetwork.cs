@@ -30,13 +30,14 @@ namespace MoonThemedGame.Scavenger
     }
 
     // The robot's feed goes through one satellite, picked on the PC (SAT-LINK) or with 1/2/3 in the feed.
+    // All satellites share one period with staggered windows, so one is always in range and they leave one at a time.
     public sealed class SatelliteNetwork : MonoBehaviour
     {
         public List<Satellite> satellites = new List<Satellite>
         {
-            new Satellite { name = "ARGUS", period = 150, window = 90, offset = 0 },
-            new Satellite { name = "HERMES", period = 180, window = 100, offset = 70 },
-            new Satellite { name = "VESTA", period = 210, window = 110, offset = 140 }
+            new Satellite { name = "ARGUS", period = 180, window = 110, offset = 0 },
+            new Satellite { name = "HERMES", period = 180, window = 110, offset = 120 },
+            new Satellite { name = "VESTA", period = 180, window = 110, offset = 60 }
         };
         [Tooltip("Warn the operator this many seconds before the active satellite leaves range.")]
         public float leaveWarning = 15;
@@ -47,7 +48,9 @@ namespace MoonThemedGame.Scavenger
 
         [Header("Rival intercept")]
         public string rivalName = "CERBERUS-9";
-        [Tooltip("Seconds on a satellite link between rival attacks (min, max).")]
+        [Tooltip("Seconds of connection before the first rival attack (min, max).")]
+        public Vector2 rivalFirstAttack = new Vector2(25, 45);
+        [Tooltip("Seconds of connection between later rival attacks (min, max).")]
         public Vector2 rivalInterval = new Vector2(50, 110);
         public float interceptDuration = 25;
         [Range(0, 1)] public float interceptJam = 0.7f;
@@ -89,11 +92,11 @@ namespace MoonThemedGame.Scavenger
         {
             float dt = Time.deltaTime;
             if (HopTimeLeft > 0) HopTimeLeft = Mathf.Max(0, HopTimeLeft - dt);
-            if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalInterval.x, rivalInterval.y);
+            if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalFirstAttack.x, rivalFirstAttack.y);
             switch (Rival)
             {
                 case RivalPhase.None:
-                    if (!exposed || Hopping || Active == null || !Active.InRange(Clock)) return;
+                    if (!exposed || Hopping || Active == null) return;
                     rivalTimer -= dt;
                     if (rivalTimer > 0) return;
                     RivalTarget = ActiveIndex;
@@ -162,18 +165,26 @@ namespace MoonThemedGame.Scavenger
             return covered / (float)SkyRays.Length;
         }
 
+        // The rival jams the robot's carrier itself, so the base relay is affected too.
+        public UplinkStatus Threat(out float jam)
+        {
+            jam = Jam;
+            if (Hopping) return UplinkStatus.Hopping;
+            return Rival == RivalPhase.Hijacked && RivalOnActive ? UplinkStatus.Intercepted : UplinkStatus.Ok;
+        }
+
         public float ApplyCover(float strength, float cover) => strength * (1 - coverPenalty * cover);
 
         public UplinkStatus Evaluate(Vector3 antenna, Collider[] ignore, out float quality, out float cover)
         {
             quality = 0;
             cover = Cover(antenna, ignore);
-            if (Hopping) return UplinkStatus.Hopping;
+            var threat = Threat(out float jam);
+            if (threat != UplinkStatus.Ok) return threat;
             var satellite = Active;
             if (satellite == null) return UplinkStatus.NoSatellite;
-            if (Rival == RivalPhase.Hijacked && RivalOnActive) return UplinkStatus.Intercepted;
             if (!satellite.InRange(Clock)) return UplinkStatus.OutOfRange;
-            quality = ApplyCover(satellite.Strength(Clock), cover) * Jam;
+            quality = ApplyCover(satellite.Strength(Clock), cover) * jam;
             return UplinkStatus.Ok;
         }
 
