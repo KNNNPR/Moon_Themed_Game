@@ -26,6 +26,11 @@ namespace MoonThemedGame.Repair
         [Range(0.1f, 2f)] public float suspensionDamping = 0.9f;
 
         GameObject spawned;
+        public RepairRobotTarget CurrentRobot => spawned ? spawned.GetComponent<RepairRobotTarget>() : null;
+        public void ForgetCollectedRobot(RepairRobotTarget robot)
+        {
+            if (spawned && robot && spawned == robot.gameObject) spawned = null;
+        }
         FirstPersonController player;
         System.Random random;
 
@@ -33,6 +38,7 @@ namespace MoonThemedGame.Repair
         {
             random = new System.Random();
             player = FindAnyObjectByType<FirstPersonController>();
+            RepairCranePickup.ConnectScene(this);
         }
 
         void Update()
@@ -47,6 +53,7 @@ namespace MoonThemedGame.Repair
 
         public void DropRobot()
         {
+            if (CurrentRobot && CurrentRobot.IsBeingCollected) return;
             if (!robotPrefab || parts == null || parts.Length == 0)
             {
                 Debug.LogError("Configure the robot prefab and parts on the drop point.", this);
