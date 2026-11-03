@@ -42,12 +42,9 @@ namespace MoonThemedGame.Scavenger
         [Header("Base")]
         [Tooltip("Within this distance of the hangar the feed uses the base antenna. 0 = six robot lengths.")]
         [Min(0)] public float baseRelayRange;
-        [Tooltip("The CHARGE station; found by name (Charge_monitor) when empty.")]
-        public Transform charger;
-        [Tooltip("Building the robot charges in; found around the charger when empty.")]
+        [Tooltip("The robot charges only inside this building; found by Charge Building Name when empty.")]
         public Renderer chargeBuilding;
-        [Tooltip("Used only when no charge building is found: how close to the charger to park. 0 = robot length + 1.5 m.")]
-        [Min(0)] public float chargerRange;
+        public string chargeBuildingName = "Cube.026";
 
         Camera operatorCamera;
         AudioListener operatorListener;
@@ -138,11 +135,9 @@ namespace MoonThemedGame.Scavenger
             Drive.Setup(forward);
             float unit = Drive.Length;
             if (baseRelayRange <= 0) baseRelayRange = unit * 6;
-            if (!charger) charger = FindCharger();
-            if (chargerRange <= 0) chargerRange = unit + 1.5f;
-            if (!chargeBuilding && charger) chargeBuilding = FindBuilding(charger, unit);
+            if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
             if (chargeBuilding) AddBuildingCollider(chargeBuilding);
-            else if (charger) Debug.LogWarning("[Scavenger] No building found around the CHARGE station; charging works within Charger Range.", charger);
+            else Debug.LogWarning($"[Scavenger] Charge building '{chargeBuildingName}' not found; the robot cannot charge.", this);
             CreateInterference();
         }
 
@@ -187,29 +182,11 @@ namespace MoonThemedGame.Scavenger
             t.rotation = Quaternion.LookRotation(center + Vector3.up * cameraSize * 0.3f - t.position, Vector3.up);
         }
 
-        static Transform FindCharger()
+        static Renderer FindBuilding(string name)
         {
-            foreach (var t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
-                if (t.name.Replace("_", "").Replace(" ", "").Equals("CHARGEMONITOR", StringComparison.OrdinalIgnoreCase)) return t;
+            foreach (var r in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+                if (r.name == name) return r;
             return null;
-        }
-
-        // The smallest station mesh that contains the charger and fits the robot.
-        Renderer FindBuilding(Transform target, float robotLength)
-        {
-            Renderer best = null;
-            float bestVolume = float.MaxValue;
-            foreach (var r in target.root.GetComponentsInChildren<Renderer>())
-            {
-                if (r.transform == target || r.transform.IsChildOf(robot) || !r.TryGetComponent<MeshFilter>(out _)) continue;
-                var b = r.bounds;
-                b.Expand(0.3f);
-                if (!b.Contains(target.position) || b.size.x < robotLength * 1.5f || b.size.z < robotLength * 1.5f) continue;
-                float volume = b.size.x * b.size.y * b.size.z;
-                if (volume < bestVolume) { best = r; bestVolume = volume; }
-            }
-            if (best) Debug.Log($"[Scavenger] Charge building: {best.name}", best);
-            return best;
         }
 
         // Walls for the robot; the player keeps walking as before.
@@ -229,17 +206,7 @@ namespace MoonThemedGame.Scavenger
 
         public bool InChargeBuilding => chargeBuilding && robot && chargeBuilding.bounds.Contains(RobotBounds(robot).center);
 
-        public bool AtCharger
-        {
-            get
-            {
-                if (chargeBuilding) return InChargeBuilding;
-                if (!charger || !robot) return false;
-                var offset = charger.position - RobotBounds(robot).center;
-                offset.y = 0;
-                return offset.magnitude <= chargerRange;
-            }
-        }
+        public bool AtCharger => InChargeBuilding;
 
         void OnStatusChanged(RobotStatus status)
         {
