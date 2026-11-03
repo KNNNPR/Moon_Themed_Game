@@ -19,6 +19,8 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float shutdownDelay = 10;
         [Min(0)] public int evacuationCost = 15;
         [Min(0)] public float evacuationTime = 8;
+        [Min(0)] public int cargoCapacity = 4;
+        public int Cargo { get; set; }
 
         float timer;
 

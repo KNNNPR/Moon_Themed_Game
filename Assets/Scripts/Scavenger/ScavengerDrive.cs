@@ -45,6 +45,8 @@ namespace MoonThemedGame.Scavenger
 
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
+        [Tooltip("Automatically right an overturned rover. Disable for damaged repair deliveries.")]
+        public bool autoRecover = true;
 
         readonly List<Wheel> wheels = new List<Wheel>();
         readonly RaycastHit[] hits = new RaycastHit[16];
@@ -178,7 +180,7 @@ namespace MoonThemedGame.Scavenger
                 if (wheel.grounded) grounded++;
             }
             if (grounded > 0) Traction(grounded);
-            KeepUpright(dt);
+            if (autoRecover) KeepUpright(dt);
         }
 
         // `length` is how far the wheel centre hangs below its mount point.
