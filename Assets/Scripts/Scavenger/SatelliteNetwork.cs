@@ -30,13 +30,14 @@ namespace MoonThemedGame.Scavenger
     }
 
     // The robot's feed goes through one satellite, picked on the PC (SAT-LINK) or with 1/2/3 in the feed.
+    // All satellites share one period with staggered windows, so one is always in range and they leave one at a time.
     public sealed class SatelliteNetwork : MonoBehaviour
     {
         public List<Satellite> satellites = new List<Satellite>
         {
-            new Satellite { name = "ARGUS", period = 150, window = 90, offset = 0 },
-            new Satellite { name = "HERMES", period = 180, window = 100, offset = 70 },
-            new Satellite { name = "VESTA", period = 210, window = 110, offset = 140 }
+            new Satellite { name = "ARGUS", period = 180, window = 110, offset = 0 },
+            new Satellite { name = "HERMES", period = 180, window = 110, offset = 120 },
+            new Satellite { name = "VESTA", period = 180, window = 110, offset = 60 }
         };
         [Tooltip("Warn the operator this many seconds before the active satellite leaves range.")]
         public float leaveWarning = 15;
@@ -47,12 +48,20 @@ namespace MoonThemedGame.Scavenger
 
         [Header("Rival intercept")]
         public string rivalName = "CERBERUS-9";
-        [Tooltip("Seconds on a satellite link between rival attacks (min, max).")]
+        [Tooltip("Seconds of connection before the first rival attack (min, max).")]
+        public Vector2 rivalFirstAttack = new Vector2(25, 45);
+        [Tooltip("Seconds of connection between later rival attacks (min, max).")]
         public Vector2 rivalInterval = new Vector2(50, 110);
-        public float interceptDuration = 25;
+        public float interceptDuration = 40;
         [Range(0, 1)] public float interceptJam = 0.7f;
-        public float hopDuration = 3;
+        [Tooltip("Intercept progress the rival gains for each failed carrier lock.")]
+        [Range(0, 1)] public float lockPenalty = 0.12f;
+        [Tooltip("Seconds without a picture while the receiver retunes after a successful lock.")]
+        public float retuneDuration = 1.5f;
         public int hijackCreditLoss = 5;
+
+        [Header("Receiver")]
+        public float[] channels = { 2.15f, 2.30f, 2.45f, 2.60f };
 
         static SatelliteNetwork instance;
         readonly RaycastHit[] hits = new RaycastHit[16];
@@ -76,28 +85,33 @@ namespace MoonThemedGame.Scavenger
         public event Action<Satellite> Selected;
         public event Action<RivalPhase> RivalChanged;
 
+        // The rival locks onto the robot's carrier, not a satellite: switching satellites does not shake it off.
         public RivalPhase Rival { get; private set; }
-        public int RivalTarget { get; private set; } = -1;
+        public int RivalTarget => Rival != RivalPhase.None ? ActiveIndex : -1;
         public float RivalProgress { get; private set; }
         public float HopTimeLeft { get; private set; }
         public bool Hopping => HopTimeLeft > 0;
-        public bool RivalOnActive => Rival != RivalPhase.None && RivalTarget == ActiveIndex;
-        public float Jam => Rival == RivalPhase.Incoming && RivalOnActive ? 1 - interceptJam * RivalProgress : 1;
+        public bool RivalOnActive => Rival != RivalPhase.None;
+        public float Jam => Rival == RivalPhase.Incoming ? 1 - interceptJam * RivalProgress : 1;
+        public int CarrierChannel { get; private set; }
+        public bool[] Jammed { get; private set; } = new bool[0];
         float rivalTimer = -1;
+
+        public bool IsJammed(int channel) => Rival != RivalPhase.None && channel >= 0 && channel < Jammed.Length && Jammed[channel];
 
         public void TickRival(bool exposed)
         {
             float dt = Time.deltaTime;
             if (HopTimeLeft > 0) HopTimeLeft = Mathf.Max(0, HopTimeLeft - dt);
-            if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalInterval.x, rivalInterval.y);
+            if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalFirstAttack.x, rivalFirstAttack.y);
             switch (Rival)
             {
                 case RivalPhase.None:
-                    if (!exposed || Hopping || Active == null || !Active.InRange(Clock)) return;
+                    if (!exposed || Hopping || Active == null) return;
                     rivalTimer -= dt;
                     if (rivalTimer > 0) return;
-                    RivalTarget = ActiveIndex;
                     RivalProgress = 0;
+                    JamChannels();
                     SetRival(RivalPhase.Incoming);
                     break;
                 case RivalPhase.Incoming:
@@ -108,17 +122,33 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        public bool FrequencyHop()
+        // Every channel but one free one is jammed, always including the current carrier.
+        void JamChannels()
         {
-            if (Rival == RivalPhase.None || Hopping) return false;
-            HopTimeLeft = hopDuration;
+            Jammed = new bool[channels.Length];
+            int free;
+            do free = UnityEngine.Random.Range(0, channels.Length);
+            while (channels.Length > 1 && free == CarrierChannel);
+            for (int i = 0; i < Jammed.Length; i++) Jammed[i] = i != free;
+        }
+
+        public void Repel(int channel)
+        {
+            CarrierChannel = channel;
+            if (Rival == RivalPhase.None) return;
+            HopTimeLeft = retuneDuration;
             EndRival();
-            return true;
+        }
+
+        public void PenalizeLock()
+        {
+            if (Rival != RivalPhase.Incoming) return;
+            RivalProgress = Mathf.Min(1, RivalProgress + lockPenalty);
+            if (RivalProgress >= 1) SetRival(RivalPhase.Hijacked);
         }
 
         void EndRival()
         {
-            RivalTarget = -1;
             RivalProgress = 0;
             rivalTimer = UnityEngine.Random.Range(rivalInterval.x, rivalInterval.y);
             SetRival(RivalPhase.None);
@@ -136,7 +166,6 @@ namespace MoonThemedGame.Scavenger
             if (index == ActiveIndex || index < 0 || index >= satellites.Count) return;
             ActiveIndex = index;
             Selected?.Invoke(Active);
-            if (Rival != RivalPhase.None) EndRival();
         }
 
         static readonly Vector3[] SkyRays = BuildSkyRays();
@@ -162,18 +191,26 @@ namespace MoonThemedGame.Scavenger
             return covered / (float)SkyRays.Length;
         }
 
+        // The rival jams the robot's carrier itself, so the base relay is affected too.
+        public UplinkStatus Threat(out float jam)
+        {
+            jam = Jam;
+            if (Hopping) return UplinkStatus.Hopping;
+            return Rival == RivalPhase.Hijacked && RivalOnActive ? UplinkStatus.Intercepted : UplinkStatus.Ok;
+        }
+
         public float ApplyCover(float strength, float cover) => strength * (1 - coverPenalty * cover);
 
         public UplinkStatus Evaluate(Vector3 antenna, Collider[] ignore, out float quality, out float cover)
         {
             quality = 0;
             cover = Cover(antenna, ignore);
-            if (Hopping) return UplinkStatus.Hopping;
+            var threat = Threat(out float jam);
+            if (threat != UplinkStatus.Ok) return threat;
             var satellite = Active;
             if (satellite == null) return UplinkStatus.NoSatellite;
-            if (Rival == RivalPhase.Hijacked && RivalOnActive) return UplinkStatus.Intercepted;
             if (!satellite.InRange(Clock)) return UplinkStatus.OutOfRange;
-            quality = ApplyCover(satellite.Strength(Clock), cover) * Jam;
+            quality = ApplyCover(satellite.Strength(Clock), cover) * jam;
             return UplinkStatus.Ok;
         }
 
