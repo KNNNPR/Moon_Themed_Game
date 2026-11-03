@@ -176,16 +176,23 @@ namespace MoonThemedGame.Scavenger
         {
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
+            int satelliteKey = -1;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
                 interact = Keyboard.current.eKey.wasPressedThisFrame;
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
+                if (Keyboard.current.digit1Key.wasPressedThisFrame) satelliteKey = 0;
+                else if (Keyboard.current.digit2Key.wasPressedThisFrame) satelliteKey = 1;
+                else if (Keyboard.current.digit3Key.wasPressedThisFrame) satelliteKey = 2;
             }
             if (Mouse.current != null) click = Mouse.current.leftButton.wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
             interact = Input.GetKeyDown(KeyCode.E);
             escape = Input.GetKeyDown(KeyCode.Escape);
+            if (Input.GetKeyDown(KeyCode.Alpha1)) satelliteKey = 0;
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) satelliteKey = 1;
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) satelliteKey = 2;
             click = Input.GetMouseButtonDown(0);
 #endif
             if (state) state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
@@ -202,6 +209,7 @@ namespace MoonThemedGame.Scavenger
                 case LinkPhase.Live:
                     if (escape) Terminate();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
+                    else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
                     break;
                 case LinkPhase.Terminating:
                     if (PhaseTime >= terminateDuration) { Disconnect(); return; }
@@ -243,7 +251,7 @@ namespace MoonThemedGame.Scavenger
         void UpdateFeed()
         {
             float k = state ? state.Interference : 0;
-            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, (1 - UplinkQuality) * 0.45f);
+            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, Mathf.Clamp01(0.5f - UplinkQuality) * 0.8f);
             bool picture = HasPicture;
             float loss = Powered && Uplink != UplinkStatus.Ok && HandshakeDone ? 1 : 0, collapse = 0;
             if (Phase == LinkPhase.Connecting && picture)

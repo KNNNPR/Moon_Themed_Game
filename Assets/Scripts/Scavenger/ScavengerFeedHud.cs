@@ -36,7 +36,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, lowElevation;
+        bool subscribed, weakSignal, leavingSoon;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -64,7 +64,7 @@ namespace MoonThemedGame.Scavenger
                 link.Network.Selected += OnHandover;
                 subscribed = true;
             }
-            lowElevation = false;
+            weakSignal = leavingSoon = false;
             connectedAt = Time.time;
             packets = Random.Range(10000, 40000);
             log.Clear();
@@ -88,9 +88,9 @@ namespace MoonThemedGame.Scavenger
             if (!link.Connected) return;
             AddLog(status switch
             {
-                UplinkStatus.Ok => $"UPLINK via {SatName}  EL {Mathf.RoundToInt(link.Network.Active.Elevation(link.Network.Clock))}",
-                UplinkStatus.BelowHorizon => $"ERR {SatName} below horizon - uplink lost",
-                UplinkStatus.Blocked => $"ERR line of sight to {SatName} blocked",
+                UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
+                UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
+                UplinkStatus.Blocked => "ERR no sky view - robot under cover",
                 _ => "ERR no satellite selected"
             });
         }
@@ -102,8 +102,8 @@ namespace MoonThemedGame.Scavenger
 
         public static string Reason(UplinkStatus status) => status switch
         {
-            UplinkStatus.BelowHorizon => "SATELLITE BELOW HORIZON",
-            UplinkStatus.Blocked => "LINE OF SIGHT BLOCKED - ROBOT UNDER COVER",
+            UplinkStatus.OutOfRange => "SATELLITE OUT OF RANGE",
+            UplinkStatus.Blocked => "NO SKY VIEW - ROBOT UNDER COVER",
             UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
             _ => ""
         };
@@ -130,9 +130,12 @@ namespace MoonThemedGame.Scavenger
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
-            bool low = link.Uplink == UplinkStatus.Ok && link.UplinkQuality < 0.3f;
-            if (low && !lowElevation) AddLog($"WARN {SatName} low elevation - signal weak");
-            lowElevation = low;
+            bool weak = link.Uplink == UplinkStatus.Ok && link.UplinkQuality < 0.35f;
+            if (weak && !weakSignal) AddLog($"WARN {SatName} signal weak");
+            weakSignal = weak;
+            bool leaving = link.Uplink == UplinkStatus.Ok && link.Network.ActiveLeavingSoon;
+            if (leaving && !leavingSoon) AddLog($"WARN {SatName} leaves range in {Mathf.CeilToInt(link.Network.Active.TimeLeft(link.Network.Clock))}s");
+            leavingSoon = leaving;
             if (Time.time >= nextLog)
             {
                 nextLog = Time.time + Random.Range(1.2f, 3f) * (k > 0.4f ? 0.5f : 1);
@@ -248,7 +251,8 @@ namespace MoonThemedGame.Scavenger
                 {
                     Alert(center, "NO UPLINK", warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    Draw(new Rect(0, below.yMax, Screen.width, line), "SELECT ANOTHER SATELLITE IN SAT-LINK ON THE PC", Dim(phosphor), 36, Centered(text));
+                    string hint = link.Uplink == UplinkStatus.Blocked ? "MOVE THE ROBOT OUT FROM UNDER COVER" : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
+                    Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
                 else switch (state.Status)
                 {
@@ -264,9 +268,10 @@ namespace MoonThemedGame.Scavenger
                         break;
                 }
             }
+            if (link.Powered) DrawSatellites(unit, line);
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC - BACK TO PC", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC - BACK TO PC   1/2/3 - SATELLITE", phosphor, 60, text);
         }
 
         string SatLine()
@@ -274,7 +279,43 @@ namespace MoonThemedGame.Scavenger
             var satellite = link.Network ? link.Network.Active : null;
             if (satellite == null) return "SAT NONE";
             float clock = link.Network.Clock;
-            return $"SAT {satellite.name}  EL {Mathf.RoundToInt(satellite.Elevation(clock)):00}  AZ {Mathf.RoundToInt(satellite.Azimuth(clock)):000}  Q {Mathf.RoundToInt(link.UplinkQuality * 100):000}%";
+            return satellite.InRange(clock)
+                ? $"SAT {satellite.name}  {Bars(satellite.Bars(clock))}  LEFT {Clock(satellite.TimeLeft(clock))}"
+                : $"SAT {satellite.name}  OUT OF RANGE";
+        }
+
+        static string Bars(int bars) => "[" + new string('|', bars) + new string('.', 4 - bars) + "]";
+
+        static string Clock(float seconds)
+        {
+            int s = Mathf.CeilToInt(seconds);
+            return $"{s / 60:00}:{s % 60:00}";
+        }
+
+        // Bottom-right list of satellites with their key, signal and timer.
+        void DrawSatellites(float unit, float line)
+        {
+            var network = link.Network;
+            if (!network) return;
+            float clock = network.Clock;
+            float width = unit * 16;
+            float x = Screen.width - unit - width;
+            float y = Screen.height - unit - line * (network.satellites.Count + 2);
+            Draw(new Rect(x, y, width, line), "SATELLITES", Dim(phosphor), 90, text);
+            for (int i = 0; i < network.satellites.Count; i++)
+            {
+                var sat = network.satellites[i];
+                bool active = i == network.ActiveIndex;
+                string timer = sat.InRange(clock) ? Clock(sat.TimeLeft(clock)) + " left" : "back " + Clock(sat.TimeToReturn(clock));
+                string row = $"{(active ? ">" : " ")}[{i + 1}] {sat.name,-6} {Bars(sat.Bars(clock))} {timer}";
+                var tint = !sat.InRange(clock) ? Dim(Dim(phosphor)) : active ? phosphor : Dim(phosphor);
+                Draw(new Rect(x, y + line * (i + 1), width, line), row, tint, 91 + i, text);
+            }
+            if (link.Uplink == UplinkStatus.Ok && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
+            {
+                int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));
+                Draw(new Rect(0, unit * 6, Screen.width, line), $"{network.Active.name} LEAVES RANGE IN {left}s - SWITCH SATELLITE (1/2/3)", warning, 95, Centered(text));
+            }
         }
 
         void EnsureStyles()
