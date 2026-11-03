@@ -8,13 +8,13 @@
 **Escape** возвращает прежнее положение. Длительность — Focus Duration на WeatherMonitorDisplay.
 
 Объект **Moon Weather** в сцене Operator управляет всей погодой. Начальная очередь:
-SUNNY (90 секунд), FOG / MOON DUST (75), TOXICITY (75), METEORITE RAIN (90).
+SUNNY (90 секунд), FOG / MOON DUST (75), RADIATION (75), METEORITE RAIN (90).
 Дальше будущие состояния выбираются заранее без одинаковых соседних погод.
 Время второй будущей погоды включает длительность первой. Пауза игры останавливает погоду.
 
 - **SUNNY** — Perfect Weather: чистая атмосфера.
 - **FOG / MOON DUST** — Low Visibility: серо-коричневая лунная пыль и низкая видимость снаружи.
-- **TOXICITY** — Drains your energy faster: лёгкая зелёная дымка с ограниченной непрозрачностью;
+- **RADIATION** — Drains your energy faster: лёгкая зелёная дымка с ограниченной непрозрачностью;
   расход заряда SCAV_BOT при работе снаружи умножается на Toxic Energy Multiplier (изначально 2).
 - **METEORITE RAIN** — Meteorites drop from the sky, when hit - drains your energy:
   метка круга и крест на земле появляются за 5 секунд до удара. Внутреннее кольцо
@@ -34,7 +34,7 @@ SUNNY (90 секунд), FOG / MOON DUST (75), TOXICITY (75), METEORITE RAIN (90
 и обходят проекции базы. Nearby Robot Strike Chance задаёт вероятность удара рядом с роботом.
 
 Настройки частоты, радиуса, урона, плотности пыли и зелёной дымки находятся на **Moon Weather**.
-Во время Play Mode меню компонента **Weather / Sunny / Moon Dust / Toxicity / Meteorite Rain**
+Во время Play Mode меню компонента **Weather / Sunny / Moon Dust / Radiation / Meteorite Rain**
 позволяет сразу выбрать состояние. Из кода — `MoonWeatherSystem.Active.SetWeather(kind)`.
 
 Повторная установка на текущую сцену: **Tools → Moon Game → Weather → Install Weather System**.

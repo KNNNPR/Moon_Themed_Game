@@ -164,31 +164,31 @@ namespace MoonThemedGame.Editor
                 Require(weather && monitor && monitor.assets && monitor.assets.meteoritePrefab, "Weather assets were not installed.");
                 monitor.BuildDisplay();
                 weather.SetWeather(WeatherKind.Sunny, 90);
-                Require(weather.Forecast(0).kind == WeatherKind.MoonDust && weather.Forecast(1).kind == WeatherKind.Toxicity, "Initial weather queue is wrong.");
+                Require(weather.Forecast(0).kind == WeatherKind.MoonDust && weather.Forecast(1).kind == WeatherKind.Radiation, "Initial weather queue is wrong.");
                 Require(Mathf.Abs(weather.Forecast(1).startsIn - 165) < 0.01f, "Second forecast ETA is not cumulative.");
                 weather.AdvanceSchedule(90);
-                Require(weather.Current == WeatherKind.MoonDust && weather.Forecast(0).kind == WeatherKind.Toxicity && weather.Forecast(1).kind == WeatherKind.MeteoriteRain, "Forecast changed when the queue advanced.");
+                Require(weather.Current == WeatherKind.MoonDust && weather.Forecast(0).kind == WeatherKind.Radiation && weather.Forecast(1).kind == WeatherKind.MeteoriteRain, "Forecast changed when the queue advanced.");
                 weather.AdvanceSchedule(1500);
                 Require(weather.Remaining > 0 && weather.Forecast(0).kind != weather.Current && weather.Forecast(1).kind != weather.Forecast(0).kind, "Long-frame queue advance failed.");
                 var camera = Camera.main; camera.aspect = 16f / 9; camera.nearClipPlane = 0.03f;
                 var player = Object.FindFirstObjectByType<FirstPersonController>(); if (player) player.enabled = false;
                 var probe = new GameObject("Weather energy validation probe").AddComponent<ScavengerRobotState>();
                 probe.transform.position = new Vector3(-15, 0, -20); probe.Active = true;
-                weather.SetWeather(WeatherKind.Toxicity);
+                weather.SetWeather(WeatherKind.Radiation);
                 float startCharge = probe.Charge, startTime = Time.time;
                 await Task.Delay(1100);
                 float expected = (Time.time - startTime) * probe.drainPerSecond * weather.toxicEnergyMultiplier;
-                Require(Mathf.Abs((startCharge - probe.Charge) - expected) < 0.25f, "Toxicity did not increase exterior energy drain.");
-                report.AppendLine($"Toxicity outside: energy used {startCharge - probe.Charge:F3}, expected {expected:F3}.");
+                Require(Mathf.Abs((startCharge - probe.Charge) - expected) < 0.25f, "Radiation did not increase exterior energy drain.");
+                report.AppendLine($"Radiation outside: energy used {startCharge - probe.Charge:F3}, expected {expected:F3}.");
                 probe.transform.position = weather.shelterCenter;
                 startCharge = probe.Charge; startTime = Time.time;
                 await Task.Delay(1100);
                 expected = (Time.time - startTime) * probe.drainPerSecond;
-                Require(Mathf.Abs((startCharge - probe.Charge) - expected) < 0.25f, "Toxicity drained extra energy inside the base.");
+                Require(Mathf.Abs((startCharge - probe.Charge) - expected) < 0.25f, "Radiation drained extra energy inside the base.");
                 probe.Active = false;
                 Time.timeScale = 0;
                 var styles = Resources.Load<VisualStyleSettings>("VisualStyleSettings"); styles.SetStyle(VisualStyle.Retro);
-                foreach (var kind in new[] { WeatherKind.Sunny, WeatherKind.MoonDust, WeatherKind.Toxicity, WeatherKind.MeteoriteRain })
+                foreach (var kind in new[] { WeatherKind.Sunny, WeatherKind.MoonDust, WeatherKind.Radiation, WeatherKind.MeteoriteRain })
                 {
                     weather.SetWeather(kind); weather.SnapAtmosphere(); monitor.Refresh();
                     await Task.Delay(300);
@@ -209,7 +209,7 @@ namespace MoonThemedGame.Editor
                 {
                     QualitySettings.SetQualityLevel(quality, true);
                     camera.transform.SetPositionAndRotation(new Vector3(2, 8, -29), Quaternion.LookRotation(new Vector3(10, 5, -1) - new Vector3(2, 8, -29)));
-                    foreach (var kind in new[] { WeatherKind.Sunny, WeatherKind.MoonDust, WeatherKind.Toxicity })
+                    foreach (var kind in new[] { WeatherKind.Sunny, WeatherKind.MoonDust, WeatherKind.Radiation })
                     {
                         weather.SetWeather(kind); weather.SnapAtmosphere();
                         Capture(camera, Output + $"/outside-{quality}-{kind}.png");
