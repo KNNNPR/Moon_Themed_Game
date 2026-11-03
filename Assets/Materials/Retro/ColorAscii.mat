@@ -19,22 +19,22 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties:
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Intensity: 1
+    - _BackgroundStrength: 0.156
     - _CharacterHeight: 8
-    - _GlyphBrightness: 1.8
-    - _BackgroundStrength: 0.16
-    - _ColorDetail: 0.35
-    - _Saturation: 1
-    - _Exposure: 0.15
-    - _Density: 1.15
-    - _ShadowCutoff: 0.012
-    - _Vignette: 0.12
+    - _ColorDetail: 0.864
+    - _Density: 1.44
+    - _Exposure: 0.52
+    - _GlyphBrightness: 1.88
+    - _Intensity: 1
+    - _Saturation: 1.17
+    - _ShadowCutoff: 0.08
+    - _Vignette: 0.034
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1
