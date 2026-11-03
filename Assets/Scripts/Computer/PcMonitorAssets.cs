@@ -13,6 +13,7 @@ namespace MoonThemedGame.Computer
         public VectorImage shopIcon;
         public VectorImage scavengerIcon;
         public VectorImage messagesIcon;
+        public VectorImage coinIcon;
         public VectorImage cursorIcon;
         public TextAsset translations;
         public Material screenMaterial;

@@ -19,6 +19,7 @@ MonoBehaviour:
   shopIcon: {fileID: 7388822144124034973, guid: c7480d84ea8f4892827c7926c242b529, type: 3}
   scavengerIcon: {fileID: 7388822144124034973, guid: 1f280fce68f54bdd83a9110d017855ae, type: 3}
   messagesIcon: {fileID: 7388822144124034973, guid: 70a412827c4b45a48ea7ef565947b27c, type: 3}
+  coinIcon: {fileID: 7388822144124034973, guid: 94a4d85be0424561a488d9f6fbfda51c, type: 3}
   cursorIcon: {fileID: 7388822144124034973, guid: 9038d927f3ee4779a514a4146303b737, type: 3}
   translations: {fileID: 4900000, guid: a854d58532d94aa2969b5ac0e01c8e54, type: 3}
   screenMaterial: {fileID: 2100000, guid: 5285196d984082f4bb0b5c3571874eb8, type: 2}

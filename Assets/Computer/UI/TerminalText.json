@@ -2,6 +2,7 @@
   "entries": [
     {"key":"shop","en":"SHOP","ru":"МАГАЗИН"},
     {"key":"scavenger","en":"SCAVENGER","ru":"СБОРЩИК"},
-    {"key":"messages","en":"MESSAGES","ru":"СООБЩЕНИЯ"}
+    {"key":"messages","en":"MESSAGES","ru":"СООБЩЕНИЯ"},
+    {"key":"credit","en":"CREDIT","ru":"КРЕДИТ"}
   ]
 }
