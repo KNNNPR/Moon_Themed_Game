@@ -43,7 +43,7 @@ namespace MoonThemedGame.Scavenger
         {
             get
             {
-                float k = State ? State.Interference : 0;
+                float k = link ? link.Noise : 0;
                 if (link && link.Phase == LinkPhase.Terminating) k = Mathf.Max(k, Mathf.Clamp01(link.PhaseTime / link.terminateDuration * 2));
                 return k;
             }
@@ -62,6 +62,7 @@ namespace MoonThemedGame.Scavenger
             {
                 link.UplinkChanged += OnUplinkChanged;
                 link.Network.Selected += OnHandover;
+                link.Network.RivalChanged += OnRival;
                 subscribed = true;
             }
             weakSignal = leavingSoon = covered = charging = false;
@@ -91,6 +92,8 @@ namespace MoonThemedGame.Scavenger
                 UplinkStatus.Ok when link.ViaRelay => "UPLINK via BASE RELAY",
                 UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
                 UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
+                UplinkStatus.Intercepted => $"ALERT {SatName} carrier hijacked by {link.Network.rivalName}",
+                UplinkStatus.Hopping => "FREQ HOP - carrier offline",
                 _ => "ERR no satellite selected"
             });
         }
@@ -100,8 +103,18 @@ namespace MoonThemedGame.Scavenger
             if (link.Connected) AddLog($"HANDOVER -> {satellite.name}");
         }
 
+        void OnRival(RivalPhase phase)
+        {
+            if (!link.Connected) return;
+            var network = link.Network;
+            if (phase == RivalPhase.Incoming) AddLog($"WARN rival carrier {network.rivalName} locking on {SatName}");
+            else if (phase == RivalPhase.None) AddLog(network.Hopping ? $"FREQ HOP - {network.rivalName} lost the carrier" : $"{network.rivalName} lost track after handover");
+        }
+
         public static string Reason(UplinkStatus status) => status switch
         {
+            UplinkStatus.Intercepted => "SIGNAL HIJACKED BY RIVAL SATELLITE",
+            UplinkStatus.Hopping => "FREQUENCY HOP IN PROGRESS",
             UplinkStatus.OutOfRange => "SATELLITE OUT OF RANGE",
             UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
             _ => ""
@@ -123,9 +136,10 @@ namespace MoonThemedGame.Scavenger
             if (Time.time >= nextSample)
             {
                 nextSample = Time.time + 0.25f;
-                latency = signal ? 120 + Random.Range(0f, 40f) + 900 * k * k : 0;
-                loss = signal ? Random.Range(0.1f, 0.6f) + 60 * k * k : 100;
-                rssi = signal ? -68 - Random.Range(0f, 5f) - 25 * k : -120;
+                float d = link.Degradation;
+                latency = signal ? 120 + Random.Range(0f, 40f) + 700 * d * d + 900 * k * k : 0;
+                loss = signal ? Mathf.Min(99.9f, link.ExpectedLoss * Random.Range(0.85f, 1.15f) + Random.Range(0f, 0.3f)) : 100;
+                rssi = signal ? -60 - 45 * d - Random.Range(0f, 5f) - 20 * k : -120;
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
@@ -256,9 +270,17 @@ namespace MoonThemedGame.Scavenger
                 var below = new Rect(0, center.yMax + unit * 0.5f, Screen.width, line);
                 if (link.Powered && link.Uplink != UplinkStatus.Ok)
                 {
-                    Alert(center, "NO UPLINK", warning, 34);
+                    var network = link.Network;
+                    string title = link.Uplink switch
+                    {
+                        UplinkStatus.Intercepted => "SIGNAL HIJACKED",
+                        UplinkStatus.Hopping => $"FREQUENCY HOP  {Mathf.CeilToInt(network.HopTimeLeft)}",
+                        _ => "NO UPLINK"
+                    };
+                    Alert(center, title, warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    string hint = "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
+                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] FREQUENCY HOP   OR   1 / 2 / 3 SWITCH SATELLITE"
+                        : link.Uplink == UplinkStatus.Hopping ? "RETUNING CARRIER..." : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
                     Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
                 else switch (state.Status)
@@ -278,7 +300,7 @@ namespace MoonThemedGame.Scavenger
             if (link.Powered) DrawSatellites(unit, line);
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   ESC - BACK TO PC", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - FREQ HOP   ESC - BACK TO PC", phosphor, 60, text);
         }
 
         string SatLine()
@@ -320,6 +342,9 @@ namespace MoonThemedGame.Scavenger
                 var tint = !sat.InRange(clock) ? Dim(Dim(phosphor)) : active ? phosphor : Dim(phosphor);
                 Draw(new Rect(x, y + line * (i + 1), width, line), row, tint, 91 + i, text);
             }
+            if (link.Uplink == UplinkStatus.Ok && network.Rival == RivalPhase.Incoming && network.RivalOnActive && Mathf.Repeat(Time.time * 3, 1) < 0.7f)
+                Draw(new Rect(0, unit * 7.2f, Screen.width, line),
+                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] FREQ HOP / 1-2-3 SWITCH", warning, 96, Centered(text));
             if (link.Uplink == UplinkStatus.Ok && !link.ViaRelay && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
             {
                 int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));

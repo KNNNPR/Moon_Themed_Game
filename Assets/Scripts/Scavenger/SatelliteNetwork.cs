@@ -4,7 +4,9 @@ using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
 {
-    public enum UplinkStatus { Ok, NoSatellite, OutOfRange }
+    public enum UplinkStatus { Ok, NoSatellite, OutOfRange, Intercepted, Hopping }
+
+    public enum RivalPhase { None, Incoming, Hijacked }
 
     // Each satellite is in range for `window` seconds out of every `period`;
     // its signal rises and falls over the window.
@@ -22,6 +24,7 @@ namespace MoonThemedGame.Scavenger
         public float TimeLeft(float time) => InRange(time) ? window - Cycle(time) : 0;
         public float TimeToReturn(float time) => InRange(time) ? 0 : period - Cycle(time);
         public float WindowProgress(float time) => InRange(time) ? Cycle(time) / window : 0;
+        public float Angle(float time) => 2 * Mathf.PI * (Cycle(time) - window * 0.5f) / period;
         public float Strength(float time) => InRange(time) ? 0.25f + 0.75f * Mathf.Sin(Mathf.PI * Cycle(time) / window) : 0;
         public int Bars(float time) => InRange(time) ? Mathf.Clamp(Mathf.CeilToInt(Strength(time) * 4), 1, 4) : 0;
     }
@@ -41,6 +44,15 @@ namespace MoonThemedGame.Scavenger
         public float skyCheckHeight = 60;
         [Tooltip("Share of the signal lost when the sky above is fully covered.")]
         [Range(0, 1)] public float coverPenalty = 0.8f;
+
+        [Header("Rival intercept")]
+        public string rivalName = "CERBERUS-9";
+        [Tooltip("Seconds on a satellite link between rival attacks (min, max).")]
+        public Vector2 rivalInterval = new Vector2(50, 110);
+        public float interceptDuration = 25;
+        [Range(0, 1)] public float interceptJam = 0.7f;
+        public float hopDuration = 3;
+        public int hijackCreditLoss = 5;
 
         static SatelliteNetwork instance;
         readonly RaycastHit[] hits = new RaycastHit[16];
@@ -62,12 +74,69 @@ namespace MoonThemedGame.Scavenger
         public bool ActiveLeavingSoon => Active != null && Active.InRange(Clock) && Active.TimeLeft(Clock) <= leaveWarning;
 
         public event Action<Satellite> Selected;
+        public event Action<RivalPhase> RivalChanged;
+
+        public RivalPhase Rival { get; private set; }
+        public int RivalTarget { get; private set; } = -1;
+        public float RivalProgress { get; private set; }
+        public float HopTimeLeft { get; private set; }
+        public bool Hopping => HopTimeLeft > 0;
+        public bool RivalOnActive => Rival != RivalPhase.None && RivalTarget == ActiveIndex;
+        public float Jam => Rival == RivalPhase.Incoming && RivalOnActive ? 1 - interceptJam * RivalProgress : 1;
+        float rivalTimer = -1;
+
+        public void TickRival(bool exposed)
+        {
+            float dt = Time.deltaTime;
+            if (HopTimeLeft > 0) HopTimeLeft = Mathf.Max(0, HopTimeLeft - dt);
+            if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalInterval.x, rivalInterval.y);
+            switch (Rival)
+            {
+                case RivalPhase.None:
+                    if (!exposed || Hopping || Active == null || !Active.InRange(Clock)) return;
+                    rivalTimer -= dt;
+                    if (rivalTimer > 0) return;
+                    RivalTarget = ActiveIndex;
+                    RivalProgress = 0;
+                    SetRival(RivalPhase.Incoming);
+                    break;
+                case RivalPhase.Incoming:
+                    if (!exposed) return;
+                    RivalProgress = Mathf.Min(1, RivalProgress + dt / interceptDuration);
+                    if (RivalProgress >= 1) SetRival(RivalPhase.Hijacked);
+                    break;
+            }
+        }
+
+        public bool FrequencyHop()
+        {
+            if (Rival == RivalPhase.None || Hopping) return false;
+            HopTimeLeft = hopDuration;
+            EndRival();
+            return true;
+        }
+
+        void EndRival()
+        {
+            RivalTarget = -1;
+            RivalProgress = 0;
+            rivalTimer = UnityEngine.Random.Range(rivalInterval.x, rivalInterval.y);
+            SetRival(RivalPhase.None);
+        }
+
+        void SetRival(RivalPhase phase)
+        {
+            if (Rival == phase) return;
+            Rival = phase;
+            RivalChanged?.Invoke(phase);
+        }
 
         public void Select(int index)
         {
             if (index == ActiveIndex || index < 0 || index >= satellites.Count) return;
             ActiveIndex = index;
             Selected?.Invoke(Active);
+            if (Rival != RivalPhase.None) EndRival();
         }
 
         static readonly Vector3[] SkyRays = BuildSkyRays();
@@ -99,10 +168,12 @@ namespace MoonThemedGame.Scavenger
         {
             quality = 0;
             cover = Cover(antenna, ignore);
+            if (Hopping) return UplinkStatus.Hopping;
             var satellite = Active;
             if (satellite == null) return UplinkStatus.NoSatellite;
+            if (Rival == RivalPhase.Hijacked && RivalOnActive) return UplinkStatus.Intercepted;
             if (!satellite.InRange(Clock)) return UplinkStatus.OutOfRange;
-            quality = ApplyCover(satellite.Strength(Clock), cover);
+            quality = ApplyCover(satellite.Strength(Clock), cover) * Jam;
             return UplinkStatus.Ok;
         }
 
