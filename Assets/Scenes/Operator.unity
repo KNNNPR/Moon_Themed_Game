@@ -812,6 +812,7 @@ GameObject:
   - component: {fileID: 960045983}
   - component: {fileID: 960045984}
   - component: {fileID: 960045985}
+  - component: {fileID: 960045986}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -881,6 +882,25 @@ MonoBehaviour:
   gravity: -20
   mouseSensitivity: 0.1
   pitchLimit: 85
+--- !u!114 &960045986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 960045982}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8bdc16a07cbbe94683a239ee9da781f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.PlayerInteractor
+  viewCamera: {fileID: 1726639161}
+  maxDistance: 5
+  raycastLayers:
+    serializedVersion: 2
+    m_Bits: 4294967291
+  dotSize: 6
+  showPrompt: 1
 --- !u!1 &1196906031
 GameObject:
   m_ObjectHideFlags: 0
@@ -1337,6 +1357,8 @@ MonoBehaviour:
   language: 0
   credits: 20
   interactionDistance: 5
+  focusDuration: 0.9
+  aimDotSize: 6
 --- !u!64 &1508841710
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -4900,6 +4922,7 @@ GameObject:
   - component: {fileID: 4612563272055593613}
   - component: {fileID: 1508841710}
   - component: {fileID: 1508841709}
+  - component: {fileID: 8745468409220818567}
   m_Layer: 0
   m_Name: PC_MONITOR
   m_TagString: Untagged
@@ -7626,13 +7649,80 @@ GameObject:
   - component: {fileID: 6830945431390174510}
   - component: {fileID: 7606442908652456963}
   - component: {fileID: 4321514658127441004}
+  - component: {fileID: 8009987136491629094}
+  - component: {fileID: 8009987136491629093}
+  - component: {fileID: 8009987136491629092}
   m_Layer: 0
-  m_Name: Cube.011
+  m_Name: Door
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!64 &8009987136491629092
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8009987136491629091}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -153830957423991239, guid: 286a759e9efb7bf41b992e3f599fafae, type: 3}
+--- !u!114 &8009987136491629093
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8009987136491629091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4821878c7a6ce1e46a4b2e55fa1a3935, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.InteractionOutline
+  outlineMaterial: {fileID: 2100000, guid: a81ee46397718a14f9891114dae010a7, type: 2}
+  targets:
+  - {fileID: 4321514658127441004}
+  outlineMeshes:
+  - {fileID: 4300000, guid: e8976786ba1828046b796196b3da3a25, type: 2}
+  widthPixels: 3
+--- !u!114 &8009987136491629094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8009987136491629091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e71155e0859680459d6fef3ef5e7fb8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.DoorInteractable
+  interactionDistance: 2.5
+  outline: {fileID: 8009987136491629093}
+  movingPart: {fileID: 6830945431390174510}
+  motion: 0
+  openOffset: {x: 0, y: 4.8318715, z: 0}
+  useWorldSlideDirection: 1
+  slideLeftAlongDoor: 1
+  worldSlideDirection: {x: -1, y: 0, z: 0}
+  slideDistance: 0
+  openEuler: {x: 0, y: 90, z: 0}
+  duration: 0.65
+  locked: 0
 --- !u!23 &8102382927208826706
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8230,6 +8320,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 543450652233334530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8745468409220818567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476904558393934620}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ec2e37ab13176d4fa521eca099be23c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.TerminalInteractable
+  interactionDistance: 5
+  outline: {fileID: 0}
 --- !u!1 &8757042447089122189
 GameObject:
   m_ObjectHideFlags: 0

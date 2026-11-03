@@ -180,6 +180,8 @@ namespace MoonThemedGame.Computer
             }
             // Standing in the room: the screen only reacts to the crosshair from up close.
             HidePointer();
+            if (MoonThemedGame.Interactions.PlayerInteractor.Manages(camera) &&
+                TryGetComponent<MoonThemedGame.Interactions.TerminalInteractable>(out var adapter) && adapter.isActiveAndEnabled) return;
             aimed = camera && TryGetPanelPosition(camera, center, out _);
             if (aimed && interact) Focus();
         }
@@ -362,3 +364,4 @@ namespace MoonThemedGame.Computer
         }
     }
 }
+
