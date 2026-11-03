@@ -240,6 +240,72 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 191734807}
   m_Mesh: {fileID: 3390558720134950976, guid: 286a759e9efb7bf41b992e3f599fafae, type: 3}
+--- !u!1 &223072622
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 223072624}
+  - component: {fileID: 223072623}
+  m_Layer: 0
+  m_Name: Repair Robot Drop Point
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &223072623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223072622}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f4b829d56a7eb944bf52dbda3227c6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.RepairRobotDropper
+  robotPrefab: {fileID: 6557660350842821864, guid: 0e304068d8cbb9b4294490ca7905490a, type: 3}
+  parts:
+  - prefab: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+    displayName: "\u041A\u043E\u043B\u0451\u0441\u0430"
+  - prefab: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+    displayName: "\u0424\u0430\u0440\u044B (\u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442)"
+  - prefab: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+    displayName: "\u0410\u043A\u043A\u0443\u043C\u0443\u043B\u044F\u0442\u043E\u0440\u044B"
+  - prefab: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+    displayName: "\u0417\u0430\u0434\u043D\u044F\u044F \u043F\u0430\u043D\u0435\u043B\u044C
+      \u043A\u043E\u0440\u043F\u0443\u0441\u0430"
+  - prefab: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+    displayName: "\u0421\u0442\u0435\u043A\u043B\u043E"
+  landingPoint: {fileID: 223072624}
+  dropHeight: 5
+  gravity: 9.81
+  minimumMissingParts: 2
+  maximumMissingParts: 5
+  fixedSeed: 0
+  robotMass: 400
+  suspensionTravel: 0.6
+  suspensionDamping: 0.9
+--- !u!4 &223072624
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 223072622}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 22.579765, y: 5.0597844, z: -0.4143812}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &423724944
 GameObject:
   m_ObjectHideFlags: 0
@@ -611,7 +677,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a49d14a2ac64c2e9bfc92748f81e436, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Weather.MoonWeatherSystem
   assets: {fileID: 11400000, guid: 891b8d12f2e6ac442bec696551f1e214, type: 2}
   startingWeather: 0
@@ -3779,6 +3845,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1990690561197269508, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 5185347563297153875, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
       propertyPath: m_Name
       value: Notes
@@ -6133,7 +6203,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb1392d253bc429680dc6fccb12c54cf, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Weather.WeatherMonitorDisplay
   assets: {fileID: 11400000, guid: 891b8d12f2e6ac442bec696551f1e214, type: 2}
   screenRenderer: {fileID: 4613184937998619945}
@@ -6141,6 +6211,7 @@ MonoBehaviour:
   screenNormal: {x: 0.97650135, y: 0, z: 0.21551146}
   screenUp: {x: -0.21551147, y: -0.00000011920929, z: 0.9765013}
   screenSize: {x: 0.81138134, y: 1.3914673}
+  focusDuration: 0.9
 --- !u!23 &5716720962854846663
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9066,3 +9137,4 @@ SceneRoots:
   - {fileID: 2177869261563972162}
   - {fileID: 854061108}
   - {fileID: 665067229}
+  - {fileID: 223072624}
