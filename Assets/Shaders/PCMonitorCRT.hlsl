@@ -60,6 +60,12 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
     half fresnel = pow(1.0 - saturate(dot(normalWS, view)), 3.0);
     half sheen = pow(saturate(1.0 - length((meshUV - float2(0.19, 0.93)) * float2(1.0, 1.8))), 6.0);
     half edgeShade = 1.0 - 0.18 * dot(meshUV * 2.0 - 1.0, meshUV * 2.0 - 1.0);
-    return color * mask * edgeShade + _GlassTint.rgb * (0.12 + fresnel * 0.7 + sheen * 0.6);
+    color = color * mask * edgeShade + _GlassTint.rgb * (0.12 + fresnel * 0.7 + sheen * 0.6);
+    #if defined(MOON_PC_HOVER)
+        half rim = exp(-abs(rounded + 0.02) * 65.0);
+        half pulse = 0.88 + 0.12 * sin(time * 2.5);
+        color += half3(0.72, 0.85, 0.9) * _HoverHighlight * pulse * (rim + 0.025 * mask);
+    #endif
+    return color;
 }
 #endif
