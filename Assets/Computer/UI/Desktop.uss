@@ -1,0 +1,28 @@
+.desktop {
+    width: 960px;
+    height: 512px;
+    padding: 24px 28px;
+    background-color: rgb(3, 6, 8);
+    color: rgb(239, 244, 246);
+    font-size: 18px;
+}
+.build-label {
+    position: absolute;
+    top: 19px;
+    right: 25px;
+    color: rgb(149, 163, 171);
+    font-size: 12px;
+}
+.desktop-icons { width: 164px; }
+.desktop-icon {
+    width: 164px;
+    height: 128px;
+    margin-bottom: 14px;
+    align-items: center;
+    justify-content: center;
+}
+.icon-image { width: 62px; height: 62px; margin-bottom: 11px; opacity: 0.93; }
+.icon-label { font-size: 18px; letter-spacing: 0.5px; color: rgb(230, 237, 241); }
+.desktop-icon.pointer-over .icon-image { opacity: 1; }
+.desktop-icon.pointer-over .icon-label { color: white; }
+.screen-cursor { position: absolute; width: 20px; height: 32px; }

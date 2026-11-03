@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bcbe3ce95c843b68bb8945eb87d20d1, type: 3}
+  m_Name: PCMonitorAssets
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.PcMonitorAssets
+  layout: {fileID: 9197481963319205126, guid: 4eea87012e1d4bf6b15f1557059b03c6, type: 3}
+  styleSheet: {fileID: 7433441132597879392, guid: 552e397ce7a9414ca72a863d225f4f05, type: 3}
+  theme: {fileID: -4733365628477956816, guid: 5f8fff5d1a4175f4cbb99e52905674fc, type: 3}
+  font: {fileID: 12800000, guid: f2c3b0d3542244afb35e4d6914801d2a, type: 3}
+  shopIcon: {fileID: 7388822144124034973, guid: c7480d84ea8f4892827c7926c242b529, type: 3}
+  scavengerIcon: {fileID: 7388822144124034973, guid: 1f280fce68f54bdd83a9110d017855ae, type: 3}
+  messagesIcon: {fileID: 7388822144124034973, guid: 70a412827c4b45a48ea7ef565947b27c, type: 3}
+  cursorIcon: {fileID: 7388822144124034973, guid: 9038d927f3ee4779a514a4146303b737, type: 3}
+  translations: {fileID: 4900000, guid: a854d58532d94aa2969b5ac0e01c8e54, type: 3}
+  screenMaterial: {fileID: 2100000, guid: 5285196d984082f4bb0b5c3571874eb8, type: 2}
+  resolution: {x: 960, y: 512}
