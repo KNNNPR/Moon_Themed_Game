@@ -1,5 +1,6 @@
 using System;
 using MoonThemedGame.Computer;
+using MoonThemedGame.Weather;
 using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
@@ -44,7 +45,8 @@ namespace MoonThemedGame.Scavenger
             switch (Status)
             {
                 case RobotStatus.Online:
-                    if (Active) Charge = Mathf.Max(0, Charge - drainPerSecond * dt);
+                    if (Active) Charge = Mathf.Max(0, Charge - drainPerSecond * dt *
+                        (MoonWeatherSystem.Active ? MoonWeatherSystem.Active.EnergyMultiplier(transform.position) : 1));
                     if (Charge <= 0) SetStatus(RobotStatus.Failing, shutdownDelay);
                     break;
                 case RobotStatus.Failing:
@@ -63,6 +65,13 @@ namespace MoonThemedGame.Scavenger
         }
 
         public bool CanAffordEvacuation(PcMonitorTerminal terminal) => terminal && terminal.Credits >= evacuationCost;
+
+        public void ApplyEnergyDamage(float amount)
+        {
+            if (Status != RobotStatus.Online || amount <= 0) return;
+            Charge = Mathf.Max(0, Charge - amount);
+            if (Charge <= 0) SetStatus(RobotStatus.Failing, shutdownDelay);
+        }
 
         public bool OrderEvacuation(PcMonitorTerminal terminal)
         {

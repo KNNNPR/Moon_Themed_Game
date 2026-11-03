@@ -1,0 +1,43 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement class="weather-screen">
+    <ui:VisualElement class="header">
+      <ui:Label text="ENV-LINK" class="title" />
+      <ui:Label text="RUV / LIVE" class="muted small" />
+    </ui:VisualElement>
+    <ui:VisualElement class="rule" />
+    <ui:Label text="CURRENT WEATHER" class="muted section-label" />
+    <ui:VisualElement class="current-row">
+      <ui:Image name="current-icon" class="current-icon" />
+      <ui:Label name="current-name" text="SUNNY" class="current-name" />
+    </ui:VisualElement>
+    <ui:Label name="current-effect" text="Perfect Weather" class="current-effect" />
+    <ui:Label name="current-time" text="CHANGES IN 01:30" class="current-time" />
+    <ui:VisualElement class="progress-track"><ui:VisualElement name="progress" class="progress" /></ui:VisualElement>
+    <ui:Label text="NEXT CONDITIONS" class="muted section-label" />
+    <ui:VisualElement class="forecast">
+      <ui:VisualElement class="forecast-top">
+        <ui:Image name="next-icon-0" class="forecast-icon" />
+        <ui:VisualElement class="forecast-heading">
+          <ui:Label name="next-name-0" text="FOG / MOON DUST" class="forecast-name" />
+          <ui:Label name="next-time-0" text="IN 01:30" class="forecast-time" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+      <ui:Label name="next-effect-0" text="Low Visibility" class="forecast-effect" />
+    </ui:VisualElement>
+    <ui:VisualElement class="forecast">
+      <ui:VisualElement class="forecast-top">
+        <ui:Image name="next-icon-1" class="forecast-icon" />
+        <ui:VisualElement class="forecast-heading">
+          <ui:Label name="next-name-1" text="TOXICITY" class="forecast-name" />
+          <ui:Label name="next-time-1" text="IN 02:45" class="forecast-time" />
+        </ui:VisualElement>
+      </ui:VisualElement>
+      <ui:Label name="next-effect-1" text="Drains your energy faster" class="forecast-effect" />
+    </ui:VisualElement>
+    <ui:VisualElement class="footer">
+      <ui:Label name="weather-energy" text="ENERGY DRAIN x1.0" class="small" />
+      <ui:Label name="weather-notice" text="BASE INTERIOR / SHELTERED" class="muted small" />
+      <ui:Label name="weather-clock" text="SURFACE FORECAST / T+00:00" class="muted tiny" />
+    </ui:VisualElement>
+  </ui:VisualElement>
+</ui:UXML>
