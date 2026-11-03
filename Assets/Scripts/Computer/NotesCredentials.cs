@@ -7,7 +7,9 @@ namespace MoonThemedGame.Computer
     [ExecuteAlways, DisallowMultipleComponent]
     public sealed class NotesCredentials : MonoBehaviour
     {
-        public const string Message = "Login: Apple\nPassword: 12345\n\nDon't forget to change\nyour password after\nlogging in.";
+        public const string Login = "Apple";
+        public const string Password = "12345";
+        public const string Message = "Login: " + Login + "\nPassword: " + Password + "\n\nDon't forget to change\nyour password after\nlogging in.";
         public Font font;
         public Material inkMaterial;
         public TextMesh lettering;
