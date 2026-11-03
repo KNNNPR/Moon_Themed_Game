@@ -30,3 +30,12 @@ https://github.com/google/fonts/tree/main/ofl/ptmono
 `Assets/StreamingAssets/ThirdPartyLicenses/PTMono-OFL.txt`.
 
 Используются белые версии SVG из существующей папки `Assets/Icons`.
+
+## Charge_Monitor
+
+Белая надпись CHARGE на чёрном фоне использует тот же CRT-эффект. Короткое
+мерцание выбирает случайную отдельную букву; порядок букв остаётся обычным.
+`ChargeMonitorGlass.mat` задаёт вероятность, частоту и длительность мерцания,
+а также остаточную яркость потускневшей буквы. Шейдер работает без отдельного
+компонента обновления. Скруглённый контур исходной поверхности сохранён.
+Повторное подключение: **Tools → Moon Game → Charge Monitor → Apply CHARGE Screen**.

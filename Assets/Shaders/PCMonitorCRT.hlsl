@@ -1,6 +1,29 @@
 #ifndef MOON_PC_MONITOR_CRT_INCLUDED
 #define MOON_PC_MONITOR_CRT_INCLUDED
 
+half3 CrtSampleDisplay(float2 uv, float time)
+{
+    half3 color = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv)).rgb;
+    #if defined(MOON_CHARGE_DISPLAY)
+        float rate = max(_LetterFlickerRate, 0.1);
+        float tick = floor(time * rate);
+        float phase = frac(time * rate) / rate;
+        float duration = min(_LetterFlickerDuration, 0.8 / rate);
+        float chance = frac(sin(tick * 12.9898 + 71.17) * 43758.5453);
+        uint chosen = (uint)floor(frac(sin(tick * 78.233 + 19.31) * 19341.137) * 6.0);
+        float start = frac(sin(tick * 39.346 + 3.71) * 27183.135) * max(0.0, 1.0 / rate - duration);
+        float pulse = saturate(min(phase - start, start + duration - phase) / 0.008);
+        float column = (uv.x - _LetterRect.x) / _LetterRect.z * 6.0;
+        float inside = step(0.0, column) * (1.0 - step(6.0, column));
+        float selected = 1.0 - step(0.5, abs(floor(column) - (float)chosen));
+        // One randomly chosen letter briefly loses brightness. Sampling the
+        // same mask for every glow tap keeps its phosphor halo in sync.
+        float flicker = pulse * inside * selected * step(chance, _LetterFlickerChance);
+        color *= lerp(1.0, _LetterFlickerFloor, flicker);
+    #endif
+    return color;
+}
+
 float2 CrtContentUV(float2 uv, float time)
 {
     float2 p = uv * 2.0 - 1.0;
@@ -15,14 +38,14 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
     float time = _PreviewTime >= 0.0 ? _PreviewTime : _Time.y;
     float2 uv = CrtContentUV(meshUV, time);
     float2 texel = _BaseMap_TexelSize.xy;
-    half3 source = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv)).rgb;
-    half3 glow = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv + float2(texel.x * 2.0, 0))).rgb;
-    glow += SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv - float2(texel.x * 2.0, 0))).rgb;
-    glow += SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv + float2(0, texel.y * 2.0))).rgb;
-    glow += SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv - float2(0, texel.y * 2.0))).rgb;
+    half3 source = CrtSampleDisplay(uv, time);
+    half3 glow = CrtSampleDisplay(uv + float2(texel.x * 2.0, 0), time);
+    glow += CrtSampleDisplay(uv - float2(texel.x * 2.0, 0), time);
+    glow += CrtSampleDisplay(uv + float2(0, texel.y * 2.0), time);
+    glow += CrtSampleDisplay(uv - float2(0, texel.y * 2.0), time);
     glow *= 0.25;
-    half3 wideGlow = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv + float2(texel.x * 5.0, texel.y * 3.0))).rgb;
-    wideGlow += SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, saturate(uv - float2(texel.x * 5.0, texel.y * 3.0))).rgb;
+    half3 wideGlow = CrtSampleDisplay(uv + float2(texel.x * 5.0, texel.y * 3.0), time);
+    wideGlow += CrtSampleDisplay(uv - float2(texel.x * 5.0, texel.y * 3.0), time);
     wideGlow *= 0.5;
     half scanline = 1.0 - _Scanlines * (0.5 + 0.5 * cos(uv.y * _BaseMap_TexelSize.w * 3.14159265));
     half flicker = 1.0 + sin(time * 39.0) * _Flicker;
