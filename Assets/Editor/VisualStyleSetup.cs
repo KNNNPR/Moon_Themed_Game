@@ -90,7 +90,7 @@ namespace MoonThemedGame.Editor
                 feature.fetchColorBuffer = true;
                 feature.requirements = ScriptableRenderPassInput.None;
                 feature.passIndex = 0;
-                feature.bindDepthStencilAttachment = false;
+                feature.bindDepthStencilAttachment = true;
                 feature.SetActive(true);
                 EditorUtility.SetDirty(feature);
                 var serialized = new SerializedObject(renderer);

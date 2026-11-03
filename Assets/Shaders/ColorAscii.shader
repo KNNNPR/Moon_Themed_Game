@@ -17,6 +17,7 @@ Shader "Moon Game/Color ASCII"
     {
         Tags { "RenderPipeline" = "UniversalPipeline" }
         ZTest Always ZWrite Off Cull Off
+        Stencil { Ref 1 ReadMask 1 Comp NotEqual Pass Keep }
         Pass
         {
             Name "Color ASCII"
