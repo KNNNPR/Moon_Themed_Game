@@ -130,7 +130,7 @@ namespace MoonThemedGame.Scavenger
             close = MakeLabel("[X]", 18, Muted);
             title.Add(close);
             window.Add(title);
-            var help = MakeLabel("The robot's signal goes through ONE satellite. Pick one that is IN RANGE (over the station, bright arc).\nIn the robot: keys 1 / 2 / 3. A rival intercept is beaten in the robot feed: [H] RF patch panel.", 12, Muted);
+            var help = MakeLabel("The robot's signal goes through ONE satellite. Pick one that is IN RANGE (over the station, bright arc).\nIn the robot: keys 1 / 2 / 3. A rival intercept is beaten in the robot feed: [H] tuner, pick a free channel.", 12, Muted);
             help.style.marginTop = 4;
             help.style.marginBottom = 8;
             help.style.whiteSpace = WhiteSpace.Normal;
@@ -425,7 +425,7 @@ namespace MoonThemedGame.Scavenger
             {
                 case RivalPhase.Incoming:
                     var target = network.satellites[network.RivalTarget].name;
-                    threatText.text = $"WARNING: rival {rival} is jamming CH{network.CarrierChannel + 1} via {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nIn the robot feed: [H] patch panel, retune to a free channel, LOCK.";
+                    threatText.text = $"WARNING: rival {rival} is jamming CH{network.CarrierChannel + 1} via {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nIn the robot feed: [H] tuner, plug a free channel, LOCK.";
                     threatText.style.color = Alarm;
                     break;
                 case RivalPhase.Hijacked:

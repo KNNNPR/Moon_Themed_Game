@@ -110,7 +110,7 @@ namespace MoonThemedGame.Scavenger
             if (phase == RivalPhase.Incoming)
             {
                 AddLog($"WARN rival carrier {network.rivalName} jamming CH{network.CarrierChannel + 1}");
-                AddLog("WARN RF surge - check patch panel [H]");
+                AddLog("WARN retune to a free channel [H]");
             }
             else if (phase == RivalPhase.None) AddLog($"CARRIER LOCKED CH{network.CarrierChannel + 1} - {network.rivalName} lost the signal");
         }
@@ -283,7 +283,7 @@ namespace MoonThemedGame.Scavenger
                     };
                     Alert(center, title, warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] RF PATCH PANEL - RE-PATCH ONTO A FREE CHANNEL AND LOCK"
+                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] TUNER - PLUG A FREE CHANNEL AND LOCK"
                         : link.Uplink == UplinkStatus.Hopping ? "RETUNING CARRIER..." : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
                     Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
@@ -304,7 +304,7 @@ namespace MoonThemedGame.Scavenger
             if (link.Powered) DrawSatellites(unit, line);
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - PATCH PANEL   ESC - BACK TO PC", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - TUNER   ESC - BACK TO PC", phosphor, 60, text);
         }
 
         string SatLine()
@@ -348,7 +348,7 @@ namespace MoonThemedGame.Scavenger
             }
             if (link.Uplink == UplinkStatus.Ok && network.Rival == RivalPhase.Incoming && network.RivalOnActive && Mathf.Repeat(Time.time * 3, 1) < 0.7f)
                 Draw(new Rect(0, unit * 7.2f, Screen.width, line),
-                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] PATCH PANEL", warning, 96, Centered(text));
+                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] TUNER", warning, 96, Centered(text));
             if (link.Uplink == UplinkStatus.Ok && !link.ViaRelay && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
             {
                 int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));

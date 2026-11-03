@@ -8,15 +8,12 @@ namespace MoonThemedGame.Scavenger
 
     public enum RivalPhase { None, Incoming, Hijacked }
 
-    public enum Polarization { RHCP, LHCP }
-
     // Each satellite is in range for `window` seconds out of every `period`;
     // its signal rises and falls over the window.
     [Serializable]
     public sealed class Satellite
     {
         public string name;
-        public Polarization polarization;
         [Min(10)] public float period = 180;
         [Min(5)] public float window = 100;
         public float offset;
@@ -38,9 +35,9 @@ namespace MoonThemedGame.Scavenger
     {
         public List<Satellite> satellites = new List<Satellite>
         {
-            new Satellite { name = "ARGUS", polarization = Polarization.RHCP, period = 180, window = 110, offset = 0 },
-            new Satellite { name = "HERMES", polarization = Polarization.LHCP, period = 180, window = 110, offset = 120 },
-            new Satellite { name = "VESTA", polarization = Polarization.RHCP, period = 180, window = 110, offset = 60 }
+            new Satellite { name = "ARGUS", period = 180, window = 110, offset = 0 },
+            new Satellite { name = "HERMES", period = 180, window = 110, offset = 120 },
+            new Satellite { name = "VESTA", period = 180, window = 110, offset = 60 }
         };
         [Tooltip("Warn the operator this many seconds before the active satellite leaves range.")]
         public float leaveWarning = 15;
@@ -88,8 +85,6 @@ namespace MoonThemedGame.Scavenger
         public event Action<Satellite> Selected;
         public event Action<RivalPhase> RivalChanged;
 
-        public event Action RivalAttack;
-
         // The rival locks onto the robot's carrier, not a satellite: switching satellites does not shake it off.
         public RivalPhase Rival { get; private set; }
         public int RivalTarget => Rival != RivalPhase.None ? ActiveIndex : -1;
@@ -118,7 +113,6 @@ namespace MoonThemedGame.Scavenger
                     RivalProgress = 0;
                     JamChannels();
                     SetRival(RivalPhase.Incoming);
-                    RivalAttack?.Invoke();
                     break;
                 case RivalPhase.Incoming:
                     if (!exposed) return;
