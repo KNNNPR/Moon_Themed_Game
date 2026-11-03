@@ -1,6 +1,8 @@
 using System.Collections;
 using MoonThemedGame.Computer;
+using MoonThemedGame.Rendering;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using Cursor = UnityEngine.Cursor;
 #if ENABLE_INPUT_SYSTEM
@@ -9,25 +11,34 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Connects the PC desktop to the robot: clicking SCAVENGER (or pressing E
-    // over it) switches the view to a camera on SCAV_BOT, Escape returns to the PC.
-    // Driving is not implemented yet. Installs itself on the PC monitor at
-    // runtime, so the Operator scene file does not need to change.
+    // Clicking SCAVENGER (or E over it) on the PC switches to the SCAV_BOT camera and robotStyle,
+    // Escape returns to the PC. Installs itself at runtime, so Operator.unity stays untouched.
     [DisallowMultipleComponent]
     public sealed class ScavengerLink : MonoBehaviour
     {
         public const string RobotName = "SCAV_BOT";
         const string ScavengerIcon = "scavenger";
+        const string InterferenceMaterial = "ScavengerInterference";
+        static readonly int InterferenceId = Shader.PropertyToID("_Interference");
+        static readonly int SignalLossId = Shader.PropertyToID("_SignalLoss");
 
         public PcMonitorTerminal terminal;
         public Transform robot;
         public Camera robotCamera;
+        public ScavengerRobotState state;
+        public VisualStyle robotStyle = VisualStyle.ColorAscii;
 
         Camera operatorCamera;
         AudioListener operatorListener;
+        Renderer interference;
+        Material interferenceMaterial;
+        VisualStyle stationStyle;
         CursorLockMode previousLock;
         bool previousCursorVisible, connected;
-        GUIStyle style;
+        float signalLoss;
+        string notice;
+        float noticeUntil;
+        GUIStyle style, bigStyle;
 
         public bool Connected => connected;
 
@@ -59,12 +70,16 @@ namespace MoonThemedGame.Scavenger
                 var model = GameObject.Find(RobotName);
                 if (model) robot = model.transform;
             }
-            if (!robot) Debug.LogWarning($"[Scavenger] No '{RobotName}' found in the scene; SCAVENGER will do nothing.", this);
-            else if (!robotCamera) robotCamera = CreateCamera(robot);
+            if (!robot)
+            {
+                Debug.LogWarning($"[Scavenger] No '{RobotName}' found in the scene; SCAVENGER will do nothing.", this);
+                return;
+            }
+            if (!robotCamera) robotCamera = CreateCamera(robot);
+            if (!state) state = robot.GetComponent<ScavengerRobotState>() ?? robot.gameObject.AddComponent<ScavengerRobotState>();
+            CreateInterference();
         }
 
-        // A camera behind and above the robot, parented to it so it stays put
-        // relative to the model. Distance follows the model's size.
         static Camera CreateCamera(Transform robot)
         {
             var renderers = robot.GetComponentsInChildren<Renderer>();
@@ -84,6 +99,7 @@ namespace MoonThemedGame.Scavenger
             camera.nearClipPlane = 0.05f;
             camera.fieldOfView = 65;
             camera.enabled = false;
+            camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
             host.AddComponent<AudioListener>().enabled = false;
             return camera;
         }
@@ -102,6 +118,30 @@ namespace MoonThemedGame.Scavenger
             return Vector3.forward;
         }
 
+        // Full-screen quad, drawn only while connected and the signal is failing.
+        void CreateInterference()
+        {
+            var source = Resources.Load<Material>(InterferenceMaterial);
+            var shader = source ? source.shader : Shader.Find("Moon Game/Scavenger Interference");
+            if (!shader)
+            {
+                Debug.LogWarning("[Scavenger] Interference shader is missing.", this);
+                return;
+            }
+            var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = $"{RobotName} / Interference";
+            Destroy(quad.GetComponent<Collider>());
+            quad.transform.SetParent(robotCamera.transform, false);
+            quad.transform.localPosition = Vector3.forward * (robotCamera.nearClipPlane + 0.05f);
+            quad.transform.localScale = Vector3.one * 0.05f;
+            interferenceMaterial = source ? new Material(source) : new Material(shader);
+            interference = quad.GetComponent<Renderer>();
+            interference.sharedMaterial = interferenceMaterial;
+            interference.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            interference.receiveShadows = false;
+            interference.enabled = false;
+        }
+
         void Update()
         {
             if (!robotCamera || !terminal) return;
@@ -118,9 +158,12 @@ namespace MoonThemedGame.Scavenger
             escape = Input.GetKeyDown(KeyCode.Escape);
             click = Input.GetMouseButtonDown(0);
 #endif
+            if (state) state.Active = connected && state.Status == RobotStatus.Online;
             if (connected)
             {
                 if (escape) Disconnect();
+                else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
+                UpdateInterference();
             }
             else if (terminal.IsFocused && terminal.HoveredIcon == ScavengerIcon && (click || interact))
             {
@@ -128,10 +171,32 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
+        void TryEvacuate()
+        {
+            if (state.OrderEvacuation(terminal)) Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
+            else Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
+        }
+
+        void Notify(string text)
+        {
+            notice = text;
+            noticeUntil = Time.time + 3;
+        }
+
+        void UpdateInterference()
+        {
+            if (!interferenceMaterial || !state) return;
+            signalLoss = Mathf.MoveTowards(signalLoss, state.HasSignal ? 0 : 1, Time.deltaTime * 3);
+            float amount = state.Interference;
+            interference.enabled = connected && (amount > 0 || signalLoss > 0);
+            interferenceMaterial.SetFloat(InterferenceId, amount);
+            interferenceMaterial.SetFloat(SignalLossId, signalLoss);
+        }
+
         public void Connect()
         {
             if (connected || !robotCamera) return;
-            terminal.ExitFocus(true); // puts the operator camera back where it was
+            terminal.ExitFocus(true);
             operatorCamera = Camera.main;
             if (operatorCamera)
             {
@@ -141,11 +206,15 @@ namespace MoonThemedGame.Scavenger
             }
             robotCamera.enabled = true;
             robotCamera.GetComponent<AudioListener>().enabled = true;
+            stationStyle = VisualStyleSwitcher.CurrentStyle;
+            VisualStyleSwitcher.SetStyle(robotStyle);
+            signalLoss = state && !state.HasSignal ? 1 : 0;
             previousLock = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             connected = true;
+            UpdateInterference();
         }
 
         public void Disconnect()
@@ -156,11 +225,14 @@ namespace MoonThemedGame.Scavenger
                 robotCamera.enabled = false;
                 robotCamera.GetComponent<AudioListener>().enabled = false;
             }
+            if (interference) interference.enabled = false;
+            VisualStyleSwitcher.SetStyle(stationStyle);
             if (operatorCamera) operatorCamera.enabled = true;
             if (operatorListener) operatorListener.enabled = true;
             Cursor.lockState = previousLock;
             Cursor.visible = previousCursorVisible;
             connected = false;
+            if (state) state.Active = false;
             if (isActiveAndEnabled) StartCoroutine(RefocusTerminal());
         }
 
@@ -174,12 +246,57 @@ namespace MoonThemedGame.Scavenger
         void OnGUI()
         {
             if (!connected) return;
-            style ??= new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(Screen.height / 40f) };
-            style.normal.textColor = Color.white;
-            float pad = Screen.height / 50f;
-            GUI.Label(new Rect(pad, pad, Screen.width, style.fontSize * 2), $"{RobotName} // LIVE FEED", style);
-            GUI.Label(new Rect(pad, Screen.height - pad - style.fontSize * 1.5f, Screen.width, style.fontSize * 2), "ESC — BACK TO PC", style);
+            float unit = Screen.height / 40f;
+            style ??= new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(unit) };
+            bigStyle ??= new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(unit * 2), alignment = TextAnchor.MiddleCenter };
+            style.normal.textColor = bigStyle.normal.textColor = Color.white;
+            float pad = unit;
+            float line = unit * 1.6f;
+
+            GUI.Label(new Rect(pad, pad, Screen.width, line), $"{RobotName} // {(state && state.HasSignal ? "LIVE FEED" : "NO SIGNAL")}", style);
+            if (state)
+            {
+                float width = unit * 10;
+                var bar = new Rect(Screen.width - pad - width, pad + line, width, unit * 0.6f);
+                GUI.Label(new Rect(bar.x, pad, width, line), $"CHARGE {Mathf.CeilToInt(state.Normalized * 100)}%", style);
+                var previous = GUI.color;
+                GUI.color = new Color(1, 1, 1, 0.25f);
+                GUI.DrawTexture(bar, Texture2D.whiteTexture);
+                GUI.color = state.LowCharge || !state.HasSignal ? new Color(1, 0.3f, 0.2f) : Color.white;
+                GUI.DrawTexture(new Rect(bar.x, bar.y, bar.width * state.Normalized, bar.height), Texture2D.whiteTexture);
+                GUI.color = previous;
+                GUI.Label(new Rect(bar.x, bar.yMax + unit * 0.3f, width, line), $"STATUS {StatusText()}", style);
+
+                var center = new Rect(0, Screen.height * 0.38f, Screen.width, unit * 3);
+                var below = new Rect(0, center.yMax, Screen.width, unit * 2);
+                switch (state.Status)
+                {
+                    case RobotStatus.Failing:
+                        GUI.Label(center, $"SIGNAL LOSS IN {Mathf.CeilToInt(state.TimeLeft)}", bigStyle);
+                        break;
+                    case RobotStatus.Offline:
+                        GUI.Label(center, "ROBOT OFFLINE", bigStyle);
+                        GUI.Label(below, $"[E] ORDER EVACUATION — {state.evacuationCost} CR   (BALANCE {terminal.Credits} CR)", Centered());
+                        break;
+                    case RobotStatus.Evacuating:
+                        GUI.Label(center, $"EVACUATION EN ROUTE  {Mathf.CeilToInt(state.TimeLeft)}", bigStyle);
+                        break;
+                }
+            }
+            if (notice != null && Time.time < noticeUntil)
+                GUI.Label(new Rect(0, Screen.height * 0.62f, Screen.width, unit * 2), notice, Centered());
+            GUI.Label(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC — BACK TO PC", style);
         }
+
+        GUIStyle Centered() => new GUIStyle(style) { alignment = TextAnchor.MiddleCenter };
+
+        string StatusText() => state.Status switch
+        {
+            RobotStatus.Online => state.LowCharge ? "LOW CHARGE" : "ONLINE",
+            RobotStatus.Failing => "CRITICAL",
+            RobotStatus.Offline => "OFFLINE",
+            _ => "EVACUATING"
+        };
 
         void OnDisable() => Disconnect();
     }
