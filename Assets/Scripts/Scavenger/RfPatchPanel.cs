@@ -3,12 +3,13 @@ using Cursor = UnityEngine.Cursor;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Worn receiver patch panel in the robot feed ([H]). A rival intercept jams the carrier and knocks cables loose;
-    // the operator lights all four checklist lamps (correct chain on a free channel) and locks the carrier.
+    // Receiver patch terminal in the robot feed ([H]), in the same worn phosphor style as the feed.
+    // A rival intercept jams the carrier and knocks cables loose; the operator brings all four
+    // checklist lines to [OK] (correct chain on a free channel) and locks the carrier.
     [DisallowMultipleComponent]
     public sealed class RfPatchPanel : MonoBehaviour
     {
-        enum Out { AntR, AntL, LnaOut, Lo0, Lo1, Lo2, Lo3, MixIf }
+        enum Out { AntR, AntL, LnaOut, Tune0, Tune1, Tune2, Tune3, MixIf }
         enum In { LnaIn, MixRf, MixLo, DemodIn }
 
         struct Step
@@ -18,38 +19,28 @@ namespace MoonThemedGame.Scavenger
         }
 
         const int Outputs = 8, Inputs = 4;
+        static readonly string[] OutputNames = { "ANT-R", "ANT-L", "LNA", "CH1", "CH2", "CH3", "CH4", "IF" };
         static readonly string[] InputNames = { "LNA IN", "MIXER RF", "MIXER LO", "DEMOD IN" };
-        static readonly string[] StepNames = { "ANTENNA  ->  LNA IN", "LNA OUT  ->  MIXER RF", "LO  ->  MIXER LO", "MIXER IF  ->  DEMOD IN" };
-        static readonly Color[] CableColors =
-        {
-            new Color(0.78f, 0.25f, 0.2f), new Color(0.25f, 0.45f, 0.75f), new Color(0.8f, 0.66f, 0.22f),
-            new Color(0.35f, 0.7f, 0.4f), new Color(0.35f, 0.7f, 0.4f), new Color(0.35f, 0.7f, 0.4f), new Color(0.35f, 0.7f, 0.4f),
-            new Color(0.62f, 0.4f, 0.75f)
-        };
-        static readonly Color Metal = new Color(0.12f, 0.13f, 0.11f);
-        static readonly Color Paint = new Color(0.78f, 0.76f, 0.66f);
-        static readonly Color LampGreen = new Color(0.45f, 1f, 0.45f);
-        static readonly Color LampRed = new Color(1f, 0.3f, 0.2f);
-        static readonly Color Tape = new Color(0.86f, 0.8f, 0.58f);
-        static readonly Color Pencil = new Color(0.16f, 0.15f, 0.2f);
+        static readonly string[] StepNames = { "ANT->LNA IN  ", "LNA->MIXER RF", "CH->MIXER LO ", "IF->DEMOD IN " };
 
         ScavengerLink link;
         ScavengerFeedHud hud;
-        readonly int[] plug = { (int)Out.AntR, (int)Out.LnaOut, (int)Out.Lo0, (int)Out.MixIf };
+        readonly int[] plug = { (int)Out.AntR, (int)Out.LnaOut, (int)Out.Tune0, (int)Out.MixIf };
         int held = -1;
         string message;
-        Color messageColor;
-        float messageUntil, closeAt = -1, nextNoise, nextJitter;
+        bool messageAlarm;
+        float messageUntil, closeAt = -1, nextNoise;
         float[] noise = new float[0];
-        Vector2 jitter;
         CursorLockMode previousLock;
         bool previousVisible;
-        Texture2D circle, grime;
-        GUIStyle label, small, title, hand;
+        Texture2D dot;
+        GUIStyle text, center, right;
 
         public bool IsOpen { get; private set; }
 
         SatelliteNetwork Network => link ? link.Network : null;
+        Color Phosphor => hud ? hud.phosphor : new Color(0.78f, 0.96f, 0.8f);
+        Color Warning => hud ? hud.warning : new Color(1f, 0.3f, 0.22f);
 
         void Awake()
         {
@@ -113,18 +104,7 @@ namespace MoonThemedGame.Scavenger
             if (IsOpen && closeAt > 0 && Time.time >= closeAt) Close();
         }
 
-        float LoFrequency(int lo) => Network.channels[lo] - Network.intermediateFrequency;
-
         static string Ghz(float value) => value.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
-
-        string OutputName(int output) => output switch
-        {
-            (int)Out.AntR => "ANT RHCP",
-            (int)Out.AntL => "ANT LHCP",
-            (int)Out.LnaOut => "LNA OUT",
-            (int)Out.MixIf => "MIXER IF",
-            _ => "LO " + Ghz(LoFrequency(output - (int)Out.Lo0))
-        };
 
         Step[] Evaluate()
         {
@@ -138,26 +118,24 @@ namespace MoonThemedGame.Scavenger
             {
                 var polarization = antenna == (int)Out.AntR ? Polarization.RHCP : Polarization.LHCP;
                 steps[0] = satellite != null && polarization != satellite.polarization
-                    ? new Step { status = $"WRONG POL - {satellite.name} IS {satellite.polarization}" }
-                    : new Step { ok = true, status = $"OK  {polarization}" };
+                    ? new Step { status = $"WRONG POL, USE ANT-{(satellite.polarization == Polarization.RHCP ? "R" : "L")}" }
+                    : new Step { ok = true, status = $"{polarization}" };
             }
 
             int rf = plug[(int)In.MixRf];
             steps[1] = rf < 0 ? new Step { empty = true, status = "EMPTY" }
-                : rf != (int)Out.LnaOut ? new Step { status = "NEEDS LNA OUT" } : new Step { ok = true, status = "OK" };
+                : rf != (int)Out.LnaOut ? new Step { status = "NEEDS LNA" } : new Step { ok = true, status = "OK" };
 
-            int lo = plug[(int)In.MixLo] - (int)Out.Lo0;
+            int channel = plug[(int)In.MixLo] - (int)Out.Tune0;
             if (plug[(int)In.MixLo] < 0) steps[2] = new Step { empty = true, status = "EMPTY" };
-            else if (lo < 0 || lo >= network.channels.Length) steps[2] = new Step { status = "NEEDS AN LO" };
-            else
-            {
-                string tuned = $"TUNED CH{lo + 1} {Ghz(network.channels[lo])}";
-                steps[2] = network.IsJammed(lo) ? new Step { status = tuned + " - JAMMED" } : new Step { ok = true, status = tuned + " - FREE" };
-            }
+            else if (channel < 0 || channel >= network.channels.Length) steps[2] = new Step { status = "NEEDS A CHANNEL" };
+            else steps[2] = network.IsJammed(channel)
+                ? new Step { status = $"CH{channel + 1} JAMMED, PICK FREE" }
+                : new Step { ok = true, status = $"CH{channel + 1} FREE" };
 
             int demod = plug[(int)In.DemodIn];
             steps[3] = demod < 0 ? new Step { empty = true, status = "EMPTY" }
-                : demod != (int)Out.MixIf ? new Step { status = "NEEDS MIXER IF" } : new Step { ok = true, status = "OK" };
+                : demod != (int)Out.MixIf ? new Step { status = "NEEDS IF" } : new Step { ok = true, status = "OK" };
             return steps;
         }
 
@@ -170,121 +148,174 @@ namespace MoonThemedGame.Scavenger
                 if (steps[i].ok) continue;
                 bool attack = network.Rival == RivalPhase.Incoming;
                 network.PenalizeLock();
-                Say($"NO LOCK - STEP {i + 1}: {steps[i].status}" + (attack ? $"   +{Mathf.RoundToInt(network.lockPenalty * 100)}% TO RIVAL" : ""), LampRed);
+                Say($"ERR NO LOCK - LINE {i + 1}: {steps[i].status}" + (attack ? $"  +{Mathf.RoundToInt(network.lockPenalty * 100)}% TO RIVAL" : ""), true);
                 return;
             }
-            int lo = plug[(int)In.MixLo] - (int)Out.Lo0;
+            int channel = plug[(int)In.MixLo] - (int)Out.Tune0;
             bool repelled = network.Rival != RivalPhase.None;
-            network.Repel(lo);
-            Say(repelled ? $"CARRIER LOCKED ON CH{lo + 1} - {network.rivalName} LOST THE SIGNAL" : $"CARRIER STABLE ON CH{lo + 1}", LampGreen);
+            network.Repel(channel);
+            Say(repelled ? $"CARRIER LOCKED CH{channel + 1} - {network.rivalName} LOST THE SIGNAL" : $"CARRIER STABLE CH{channel + 1}", false);
             if (repelled) closeAt = Time.time + 1.4f;
         }
 
-        void Say(string text, Color color)
+        void Say(string value, bool alarm)
         {
-            message = text;
-            messageColor = color;
+            message = value;
+            messageAlarm = alarm;
             messageUntil = Time.time + 4;
         }
 
-        string Situation(out bool alarm)
+        static string Bar(float value, int cells)
         {
-            var network = Network;
-            alarm = network.Rival != RivalPhase.None;
-            return network.Rival switch
-            {
-                RivalPhase.Incoming => $"{network.rivalName} IS JAMMING YOUR CHANNEL AND KNOCKED CABLES OUT.  LIGHT ALL 4 LAMPS, THEN PRESS LOCK.",
-                RivalPhase.Hijacked => $"{network.rivalName} HAS HIJACKED THE SIGNAL.  LIGHT ALL 4 LAMPS ON A FREE CHANNEL, THEN PRESS LOCK.",
-                _ => network.Hopping ? "RECEIVER RETUNING..." : "NO RIVAL CARRIER.  PANEL OPEN FOR MAINTENANCE."
-            };
+            int filled = Mathf.Clamp(Mathf.RoundToInt(value * cells), 0, cells);
+            return "[" + new string('|', filled) + new string('.', cells - filled) + "]";
+        }
+
+        void Print(Rect rect, string value, Color color, int salt, GUIStyle style)
+        {
+            if (hud) hud.Draw(rect, value, color, 400 + salt, style);
+            else { style.normal.textColor = color; GUI.Label(rect, value, style); }
         }
 
         void OnGUI()
         {
             if (!IsOpen || !Network) return;
             GUI.depth = -10;
-            EnsureStyles();
-            var network = Network;
-            float h = Mathf.Min(Screen.height * 0.84f, Screen.width * 0.5f), w = h * 1.6f;
-            if (Time.time >= nextJitter)
-            {
-                nextJitter = Time.time + 0.07f;
-                float shake = network.Rival == RivalPhase.Incoming ? network.RivalProgress * 3 : network.Rival == RivalPhase.Hijacked ? 2 : 0;
-                jitter = Random.value < 0.35f ? new Vector2(Random.Range(-shake, shake), Random.Range(-shake, shake) * 0.4f) : Vector2.zero;
-            }
-            var panel = new Rect((Screen.width - w) * 0.5f + jitter.x, (Screen.height - h) * 0.5f + jitter.y, w, h);
+            if (hud) hud.EnsureStyles();
+            float h = Mathf.Min(Screen.height * 0.84f, Screen.width * 0.52f), w = h * 1.6f;
+            float line = h / 24f;
+            EnsureStyles(line);
+            var panel = new Rect((Screen.width - w) * 0.5f, (Screen.height - h) * 0.5f, w, h);
+            float pad = w * 0.035f;
+            float Row(float r) => panel.y + line * r;
 
             var outputs = new Vector2[Outputs];
-            for (int i = 0; i < Outputs; i++) outputs[i] = new Vector2(panel.x + w * (0.07f + 0.11f * i + (i >= 3 ? 0.02f : 0) + (i >= 7 ? 0.02f : 0)), panel.y + h * 0.66f);
+            for (int i = 0; i < Outputs; i++) outputs[i] = new Vector2(panel.x + w * (0.08f + 0.105f * i + (i >= 2 ? 0.02f : 0) + (i >= 3 ? 0.02f : 0) + (i >= 7 ? 0.02f : 0)), Row(13.6f));
             var inputs = new Vector2[Inputs];
-            for (int i = 0; i < Inputs; i++) inputs[i] = new Vector2(panel.x + w * (0.12f + 0.19f * i), panel.y + h * 0.84f);
-            float jack = h * 0.038f;
-            var lockButton = new Rect(panel.xMax - w * 0.2f, panel.yMax - h * 0.09f, w * 0.17f, h * 0.06f);
-            HandleInput(outputs, inputs, jack, lockButton);
+            for (int i = 0; i < Inputs; i++) inputs[i] = new Vector2(panel.x + w * (0.13f + 0.245f * i), Row(17.8f));
+            float reach = line * 0.9f;
+            var lockButton = new Rect(panel.xMax - pad - w * 0.24f, Row(21.4f), w * 0.24f, line * 1.3f);
+            HandleInput(outputs, inputs, reach, lockButton);
             if (Event.current.type != EventType.Repaint) return;
 
+            var network = Network;
+            var satellite = network.Active;
             var steps = Evaluate();
             bool ready = true;
             foreach (var step in steps) ready &= step.ok;
-            DrawHousing(panel);
-
-            Text(new Rect(panel.x + w * 0.035f, panel.y + h * 0.025f, w, h * 0.06f), "RF PATCH PANEL  MK-II", Paint, title);
-            Text(new Rect(panel.x + w * 0.4f, panel.y + h * 0.04f, w, h * 0.04f), "SER 0447-B   RCVR CHAIN 2.1-2.7 GHz", Paint * 0.6f, small);
-            Text(new Rect(panel.x, panel.y + h * 0.035f, w * 0.965f, h * 0.05f), "[H] / [ESC] CLOSE", Paint * 0.6f, Right(small));
-
-            string situation = Situation(out bool alarm);
-            var strip = new Rect(panel.x + w * 0.03f, panel.y + h * 0.1f, w * 0.94f, h * 0.055f);
-            bool blink = Mathf.Repeat(Time.time * 1.6f, 1) < 0.75f;
-            Fill(strip, alarm ? new Color(0.35f, 0.05f, 0.03f, blink ? 0.9f : 0.6f) : new Color(0, 0, 0, 0.35f));
-            Text(new Rect(strip.x + w * 0.01f, strip.y, strip.width, strip.height), (alarm ? "!  " : "") + situation, alarm ? new Color(1, 0.75f, 0.65f) : Paint * 0.75f, small);
-            if (network.Rival != RivalPhase.None)
-            {
-                float progress = network.Rival == RivalPhase.Hijacked ? 1 : network.RivalProgress;
-                var bar = new Rect(strip.x, strip.yMax + h * 0.006f, strip.width, h * 0.012f);
-                Fill(bar, new Color(0, 0, 0, 0.5f));
-                Fill(new Rect(bar.x, bar.y, bar.width * progress, bar.height), LampRed * 0.85f);
-                Text(new Rect(bar.x, bar.yMax, bar.width, h * 0.035f), network.Rival == RivalPhase.Hijacked ? "SIGNAL HIJACKED" : $"INTERCEPT {Mathf.RoundToInt(progress * 100)}%  - AT 100% THE SIGNAL IS HIJACKED", LampRed, Right(small));
-            }
-
-            DrawSpectrum(new Rect(panel.x + w * 0.03f, panel.y + h * 0.215f, w * 0.43f, h * 0.31f));
-            DrawChecklist(new Rect(panel.x + w * 0.49f, panel.y + h * 0.215f, w * 0.48f, h * 0.31f), steps, ready);
-
-            Group(outputs[0], outputs[1], jack, "ANTENNA");
-            Group(outputs[2], outputs[2], jack, "AMP");
-            Group(outputs[3], outputs[6], jack, "LO SYNTH");
-            Group(outputs[7], outputs[7], jack, "MIXER");
-            float line = h * 0.04f;
+            var phosphor = Phosphor;
+            var dim = phosphor * 0.6f;
+            var warning = Warning;
             var mouse = Event.current.mousePosition;
+
+            Fill(panel, new Color(0.004f, 0.012f, 0.008f, 0.96f));
+            Frame(panel, dim, 1);
+            Frame(new Rect(panel.x + 4, panel.y + 4, panel.width - 8, panel.height - 8), phosphor * 0.25f, 1);
+
+            Print(new Rect(panel.x + pad, Row(0.6f), w, line), "RF PATCH // RCVR-2   SER 0447-B", phosphor, 0, text);
+            Print(new Rect(panel.x, Row(0.6f), w - pad, line), "[H] / [ESC] EXIT", dim, 1, right);
+            Print(new Rect(panel.x + pad, Row(1.7f), w, line), $"SAT {(satellite != null ? satellite.name : "NONE")}   POL {(satellite != null ? satellite.polarization.ToString() : "--")}   CARRIER CH{network.CarrierChannel + 1}", dim, 2, text);
+
+            bool blink = Mathf.Repeat(Time.time * 1.6f, 1) < 0.7f;
+            switch (network.Rival)
+            {
+                case RivalPhase.Incoming:
+                    if (blink) Print(new Rect(panel.x + pad, Row(3f), w, line), $"ALERT  {network.rivalName} JAMMING THE CARRIER, CABLES KNOCKED LOOSE", warning, 3, text);
+                    Print(new Rect(panel.x + pad, Row(4f), w, line), $"INTERCEPT {Bar(network.RivalProgress, 24)} {Mathf.RoundToInt(network.RivalProgress * 100),3}%   AT 100% THE SIGNAL IS HIJACKED", warning, 4, text);
+                    break;
+                case RivalPhase.Hijacked:
+                    if (blink) Print(new Rect(panel.x + pad, Row(3f), w, line), $"ALERT  SIGNAL HIJACKED BY {network.rivalName}", warning, 3, text);
+                    Print(new Rect(panel.x + pad, Row(4f), w, line), "RE-PATCH ONTO A FREE CHANNEL AND LOCK TO TAKE IT BACK", warning, 4, text);
+                    break;
+                default:
+                    Print(new Rect(panel.x + pad, Row(3f), w, line), network.Hopping ? "RETUNING..." : "NO RIVAL CARRIER - MAINTENANCE MODE", dim, 3, text);
+                    break;
+            }
+            Print(new Rect(panel.x + pad, Row(5.2f), w, line), "> BRING LINES 1-4 TO [OK], THEN LOCK CARRIER", phosphor, 5, text);
+
+            float left = panel.x + pad, half = panel.x + w * 0.5f;
+            Print(new Rect(left, Row(6.6f), w, line), "SPECTRUM", phosphor, 6, text);
+            DrawSpectrum(left, Row(7.6f), line);
+            Print(new Rect(half, Row(6.6f), w, line), "CHECKLIST", phosphor, 7, text);
+            for (int i = 0; i < steps.Length; i++)
+            {
+                var color = steps[i].ok ? phosphor : steps[i].empty ? dim : warning;
+                Print(new Rect(half, Row(7.6f + i), w, line), $"{Tag(steps[i])} {i + 1} {StepNames[i]}  {steps[i].status}", color, 20 + i, text);
+            }
+            Print(new Rect(half, Row(11.6f), w, line), ready ? "[OK] 5 LOCK CARRIER - READY" : "[--] 5 LOCK CARRIER", ready ? phosphor : dim, 24, text);
+
+            Print(new Rect(left, Row(11.4f), w, line), "OUTPUTS", phosphor, 8, text);
             for (int i = 0; i < Outputs; i++)
             {
-                Text(new Rect(outputs[i].x - w * 0.06f, outputs[i].y - jack * 2f, w * 0.12f, line), OutputName(i), Paint, Center(small));
-                Jack(outputs[i], jack, Vector2.Distance(mouse, outputs[i]) < jack);
+                bool hover = Vector2.Distance(mouse, outputs[i]) < reach;
+                Print(new Rect(outputs[i].x - w * 0.05f, outputs[i].y - line * 1.1f, w * 0.1f, line), OutputName(i), hover ? Color.white : dim, 30 + i, center);
+                Jack(outputs[i], line, IsPlugged(i), hover, phosphor);
             }
+            Print(new Rect(left, Row(15.6f), w, line), "INPUTS", phosphor, 9, text);
             for (int i = 0; i < Inputs; i++)
             {
-                var stepColor = steps[i].ok ? LampGreen : steps[i].empty ? Paint * 0.5f : LampRed;
-                Text(new Rect(inputs[i].x - w * 0.08f, inputs[i].y + jack * 1f, w * 0.16f, line), $"{i + 1}  {InputNames[i]}", Paint, Center(small));
-                Jack(inputs[i], jack, held >= 0 && Vector2.Distance(mouse, inputs[i]) < jack * 1.6f);
-                Lamp(inputs[i] + new Vector2(0, -jack * 1.7f), jack * 0.32f, stepColor, !steps[i].empty);
+                bool hover = held >= 0 && Vector2.Distance(mouse, inputs[i]) < reach * 1.5f;
+                var color = steps[i].ok ? phosphor : steps[i].empty ? dim : warning;
+                Print(new Rect(inputs[i].x - w * 0.1f, inputs[i].y + line * 0.8f, w * 0.2f, line), $"{Tag(steps[i])} {i + 1} {InputNames[i]}", color, 40 + i, center);
+                Jack(inputs[i], line, plug[i] >= 0, hover, phosphor);
             }
             for (int i = 0; i < Inputs; i++)
-                if (plug[i] >= 0) Cable(outputs[plug[i]], inputs[i], CableColors[plug[i]], jack);
-            if (held >= 0) Cable(outputs[held], mouse, CableColors[held], jack);
+                if (plug[i] >= 0) Cable(outputs[plug[i]], inputs[i], line, phosphor * 0.75f, i);
+            if (held >= 0) Cable(outputs[held], mouse, line, Mathf.Repeat(Time.time * 4, 1) < 0.5f ? phosphor : phosphor * 0.7f, 9);
 
-            DrawTape(new Rect(panel.x + w * 0.78f, panel.y + h * 0.72f, w * 0.19f, h * 0.075f), -4, "LO = CH - 0.45 !!");
-            DrawTape(new Rect(panel.x + w * 0.78f, panel.y + h * 0.81f, w * 0.19f, h * 0.06f), 2, "ARGUS/VESTA = R   HERMES = L");
+            bool lockHover = lockButton.Contains(mouse);
+            if (ready || lockHover) Fill(lockButton, ready ? phosphor * (lockHover ? 0.85f : 0.6f) : phosphor * 0.15f);
+            Frame(lockButton, ready ? phosphor : dim, 1);
+            var lockColor = ready ? new Color(0.01f, 0.03f, 0.02f) : dim;
+            center.normal.textColor = lockColor;
+            GUI.Label(lockButton, "[ LOCK CARRIER ]", center);
 
-            bool hover = lockButton.Contains(mouse);
-            Fill(lockButton, ready ? new Color(0.1f, 0.3f, 0.1f, hover ? 1 : 0.8f) : new Color(0.05f, 0.05f, 0.05f, hover ? 0.9f : 0.7f));
-            Frame(lockButton, ready ? LampGreen * 0.8f : Paint * 0.4f, 2);
-            Text(lockButton, "LOCK CARRIER", ready ? LampGreen : Paint * 0.6f, Center(label));
+            var messageRect = new Rect(left, lockButton.y, w * 0.68f, lockButton.height);
             if (message != null && Time.time < messageUntil)
-                Text(new Rect(panel.x + w * 0.035f, lockButton.y, w * 0.74f, lockButton.height), message, messageColor, small);
+                Print(messageRect, message, messageAlarm ? warning : phosphor, 50, text);
             else
-                Text(new Rect(panel.x + w * 0.035f, lockButton.y, w * 0.74f, lockButton.height), "CLICK AN OUTPUT TO TAKE A CABLE, CLICK AN INPUT TO PLUG IT.  RIGHT CLICK - DROP.", Paint * 0.55f, small);
+                Print(messageRect, "> CLICK OUTPUT = TAKE CABLE   CLICK INPUT = PLUG   RMB = DROP", dim, 51, text);
+
+            for (float y = panel.y; y < panel.yMax; y += 3) Fill(new Rect(panel.x, y, panel.width, 1), new Color(0, 0, 0, 0.28f));
+            float roll = Mathf.Repeat(Time.time * 0.2f, 1.3f) - 0.15f;
+            Fill(new Rect(panel.x, panel.y + panel.height * roll, panel.width, panel.height * 0.06f), new Color(phosphor.r, phosphor.g, phosphor.b, 0.03f));
         }
 
-        void HandleInput(Vector2[] outputs, Vector2[] inputs, float jack, Rect lockButton)
+        static string Tag(Step step) => step.ok ? "[OK]" : step.empty ? "[--]" : "[!!]";
+
+        string OutputName(int output) => output >= (int)Out.Tune0 && output <= (int)Out.Tune3
+            ? $"{OutputNames[output]} {Ghz(Network.channels[output - (int)Out.Tune0])}"
+            : OutputNames[output];
+
+        bool IsPlugged(int output)
+        {
+            foreach (int p in plug) if (p == output) return true;
+            return held == output;
+        }
+
+        void DrawSpectrum(float x, float y, float line)
+        {
+            var network = Network;
+            int channels = network.channels.Length;
+            if (noise.Length != channels) noise = new float[channels];
+            if (Time.time >= nextNoise)
+            {
+                nextNoise = Time.time + 0.09f;
+                for (int c = 0; c < channels; c++)
+                {
+                    float value = network.IsJammed(c) ? Random.Range(0.7f, 1f) : c == network.CarrierChannel ? Random.Range(0.45f, 0.55f) : Random.Range(0.05f, 0.15f);
+                    noise[c] = Mathf.Lerp(noise[c], value, 0.6f);
+                }
+            }
+            for (int c = 0; c < channels; c++)
+            {
+                bool jammed = network.IsJammed(c);
+                string state = jammed ? "JAMMED" : c == network.CarrierChannel ? "CARRIER" : "FREE";
+                Print(new Rect(x, y + line * c, Screen.width, line), $"CH{c + 1} {Ghz(network.channels[c])} {Bar(noise[c], 14)} {state}", jammed ? Warning : Phosphor * (state == "FREE" ? 1 : 0.75f), 10 + c, text);
+            }
+        }
+
+        void HandleInput(Vector2[] outputs, Vector2[] inputs, float reach, Rect lockButton)
         {
             var e = Event.current;
             if (e.type != EventType.MouseDown) return;
@@ -294,14 +325,14 @@ namespace MoonThemedGame.Scavenger
             e.Use();
             if (lockButton.Contains(mouse)) { held = -1; TryLock(); return; }
             for (int i = 0; i < Outputs; i++)
-                if (Vector2.Distance(mouse, outputs[i]) < jack)
+                if (Vector2.Distance(mouse, outputs[i]) < reach)
                 {
                     for (int j = 0; j < Inputs; j++) if (plug[j] == i) plug[j] = -1;
                     held = i;
                     return;
                 }
             for (int i = 0; i < Inputs; i++)
-                if (Vector2.Distance(mouse, inputs[i]) < jack * 1.6f)
+                if (Vector2.Distance(mouse, inputs[i]) < reach * 1.5f)
                 {
                     int previous = plug[i];
                     if (held >= 0)
@@ -319,163 +350,31 @@ namespace MoonThemedGame.Scavenger
             held = -1;
         }
 
-        // Scuffed olive metal with grime, bevels and corner screws.
-        void DrawHousing(Rect panel)
+        void Jack(Vector2 position, float line, bool plugged, bool hover, Color phosphor)
         {
-            Fill(new Rect(panel.x + 6, panel.y + 8, panel.width, panel.height), new Color(0, 0, 0, 0.5f));
-            Fill(panel, Metal);
-            GUI.color = new Color(1, 1, 1, 0.9f);
-            GUI.DrawTexture(panel, grime);
-            GUI.color = Color.white;
-            Fill(new Rect(panel.x, panel.y, panel.width, 2), new Color(1, 1, 1, 0.12f));
-            Fill(new Rect(panel.x, panel.y, 2, panel.height), new Color(1, 1, 1, 0.08f));
-            Fill(new Rect(panel.x, panel.yMax - 3, panel.width, 3), new Color(0, 0, 0, 0.6f));
-            Fill(new Rect(panel.xMax - 3, panel.y, 3, panel.height), new Color(0, 0, 0, 0.6f));
-            float s = panel.height * 0.022f;
-            foreach (var corner in new[] { new Vector2(panel.x, panel.y), new Vector2(panel.xMax, panel.y), new Vector2(panel.x, panel.yMax), new Vector2(panel.xMax, panel.yMax) })
+            var rect = new Rect(position.x - line * 1.5f, position.y - line * 0.5f, line * 3, line);
+            center.normal.textColor = hover ? Color.white : plugged ? phosphor : phosphor * 0.55f;
+            GUI.Label(rect, plugged ? "(@)" : "( )", center);
+        }
+
+        // Phosphor dotted line hanging between the jacks; a free end follows the mouse.
+        void Cable(Vector2 from, Vector2 to, float line, Color color, int seed)
+        {
+            from.y += line * 0.45f;
+            float sag = line * 0.8f + Vector2.Distance(from, to) * 0.1f;
+            float size = line * 0.2f;
+            int segments = Mathf.Max(12, Mathf.RoundToInt(Vector2.Distance(from, to) / (size * 1.6f)));
+            float crawl = Time.time * 3 + seed;
+            for (int i = 0; i <= segments; i++)
             {
-                var c = corner + new Vector2(corner.x < panel.center.x ? s * 1.6f : -s * 1.6f, corner.y < panel.center.y ? s * 1.6f : -s * 1.6f);
-                GUI.color = new Color(0.32f, 0.32f, 0.3f);
-                GUI.DrawTexture(new Rect(c.x - s, c.y - s, s * 2, s * 2), circle);
-                GUI.color = Color.white;
-                var matrix = GUI.matrix;
-                GUIUtility.RotateAroundPivot(corner.x * 7 + corner.y * 3, c);
-                Fill(new Rect(c.x - s * 0.8f, c.y - s * 0.12f, s * 1.6f, s * 0.24f), new Color(0, 0, 0, 0.7f));
-                GUI.matrix = matrix;
+                float t = i / (float)segments;
+                var point = Vector2.Lerp(from, to, t) + Vector2.up * (sag * 4 * t * (1 - t));
+                float pulse = 0.65f + 0.35f * Mathf.Sin((t * segments * 0.5f - crawl) * 1.3f);
+                GUI.color = new Color(color.r, color.g, color.b, 0.15f * pulse);
+                GUI.DrawTexture(new Rect(point.x - size * 1.4f, point.y - size * 1.4f, size * 2.8f, size * 2.8f), dot);
+                GUI.color = new Color(color.r, color.g, color.b, pulse);
+                GUI.DrawTexture(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), dot);
             }
-        }
-
-        void DrawChecklist(Rect box, Step[] steps, bool ready)
-        {
-            Fill(box, new Color(0, 0, 0, 0.3f));
-            Frame(box, Paint * 0.3f, 1);
-            float row = box.height / 6.2f;
-            Text(new Rect(box.x + row * 0.3f, box.y + row * 0.15f, box.width, row), "CHECKLIST - EVERY LAMP MUST BE GREEN", Paint * 0.85f, small);
-            for (int i = 0; i < steps.Length; i++)
-            {
-                float y = box.y + row * (1.2f + i);
-                var color = steps[i].ok ? LampGreen : steps[i].empty ? Paint * 0.5f : LampRed;
-                Lamp(new Vector2(box.x + row * 0.6f, y + row * 0.5f), row * 0.22f, color, !steps[i].empty);
-                Text(new Rect(box.x + row * 1.1f, y, box.width, row), $"{i + 1}  {StepNames[i]}", Paint, small);
-                Text(new Rect(box.x, y, box.width - row * 0.3f, row), steps[i].status, color, Right(small));
-            }
-            float last = box.y + row * 5.2f;
-            Lamp(new Vector2(box.x + row * 0.6f, last + row * 0.5f), row * 0.22f, ready ? LampGreen : Paint * 0.5f, ready);
-            Text(new Rect(box.x + row * 1.1f, last, box.width, row), ready ? "5  PRESS LOCK CARRIER" : "5  LOCK CARRIER (WHEN 1-4 ARE GREEN)", ready ? LampGreen : Paint * 0.6f, small);
-        }
-
-        // Green CRT with scanlines and a slow rolling bar.
-        void DrawSpectrum(Rect box)
-        {
-            var network = Network;
-            var green = new Color(0.55f, 0.95f, 0.55f);
-            int channels = network.channels.Length, bins = 9;
-            if (noise.Length != channels * bins) noise = new float[channels * bins];
-            if (Time.time >= nextNoise)
-            {
-                nextNoise = Time.time + 0.08f;
-                for (int c = 0; c < channels; c++)
-                for (int b = 0; b < bins; b++)
-                {
-                    float value = Random.Range(0.04f, 0.14f);
-                    if (network.IsJammed(c)) value = Random.Range(0.5f, 0.98f);
-                    else if (c == network.CarrierChannel && Mathf.Abs(b - bins / 2) <= 1) value = b == bins / 2 ? 0.8f : 0.45f;
-                    noise[c * bins + b] = Mathf.Lerp(noise[c * bins + b], value, 0.6f);
-                }
-            }
-            Fill(new Rect(box.x - 4, box.y - 4, box.width + 8, box.height + 8), new Color(0.03f, 0.03f, 0.03f));
-            Fill(box, new Color(0.01f, 0.06f, 0.025f));
-            Text(new Rect(box.x + 6, box.y + 2, box.width, box.height * 0.12f), "SPECTRUM  - RED = JAMMED, PICK A FREE CHANNEL", green * 0.75f, small);
-            var plot = new Rect(box.x + box.width * 0.04f, box.y + box.height * 0.16f, box.width * 0.92f, box.height * 0.56f);
-            float column = plot.width / channels, bin = column * 0.8f / bins;
-            for (int c = 0; c < channels; c++)
-            {
-                bool jammed = network.IsJammed(c);
-                var tint = jammed ? LampRed : green;
-                for (int b = 0; b < bins; b++)
-                {
-                    float value = noise[c * bins + b];
-                    float bx = plot.x + column * c + column * 0.1f + bin * b;
-                    Fill(new Rect(bx, plot.yMax - plot.height * value, bin * 0.7f, plot.height * value), tint * (jammed ? 0.85f : 0.7f));
-                }
-                var labelRect = new Rect(plot.x + column * c, plot.yMax + 2, column, box.height * 0.11f);
-                Text(labelRect, $"CH{c + 1} {Ghz(network.channels[c])}", tint, Center(small));
-                string state = jammed ? "JAMMED" : c == network.CarrierChannel ? "CARRIER" : "FREE";
-                Text(new Rect(labelRect.x, labelRect.yMax, column, labelRect.height), state, tint * (jammed ? 1 : 0.75f), Center(small));
-            }
-            for (float y = box.y; y < box.yMax; y += 3) Fill(new Rect(box.x, y, box.width, 1), new Color(0, 0, 0, 0.35f));
-            float roll = Mathf.Repeat(Time.time * 0.25f, 1.3f) - 0.15f;
-            Fill(new Rect(box.x, box.y + box.height * roll, box.width, box.height * 0.08f), new Color(0.6f, 1, 0.6f, 0.04f));
-            Frame(box, new Color(0, 0, 0, 0.8f), 3);
-        }
-
-        void DrawTape(Rect rect, float angle, string note)
-        {
-            var matrix = GUI.matrix;
-            GUIUtility.RotateAroundPivot(angle, rect.center);
-            Fill(rect, new Color(Tape.r, Tape.g, Tape.b, 0.88f));
-            Fill(new Rect(rect.x, rect.y, rect.width, rect.height * 0.15f), new Color(1, 1, 1, 0.12f));
-            Text(rect, note, Pencil, hand);
-            GUI.matrix = matrix;
-        }
-
-        void Group(Vector2 from, Vector2 to, float jack, string name)
-        {
-            var rect = Rect.MinMaxRect(from.x - jack * 2f, from.y - jack * 3.4f, to.x + jack * 2f, from.y + jack * 1.6f);
-            Fill(rect, new Color(0, 0, 0, 0.18f));
-            Frame(rect, Paint * 0.3f, 1);
-            Text(new Rect(rect.x + 4, rect.y + 1, rect.width, jack), name, Paint * 0.55f, small);
-        }
-
-        void Jack(Vector2 center, float radius, bool highlight)
-        {
-            GUI.color = highlight ? new Color(0.85f, 0.8f, 0.55f) : new Color(0.42f, 0.4f, 0.34f);
-            GUI.DrawTexture(new Rect(center.x - radius * 0.85f, center.y - radius * 0.85f, radius * 1.7f, radius * 1.7f), circle);
-            GUI.color = new Color(0.2f, 0.19f, 0.16f);
-            GUI.DrawTexture(new Rect(center.x - radius * 0.62f, center.y - radius * 0.62f, radius * 1.24f, radius * 1.24f), circle);
-            GUI.color = Color.black;
-            GUI.DrawTexture(new Rect(center.x - radius * 0.38f, center.y - radius * 0.38f, radius * 0.76f, radius * 0.76f), circle);
-            GUI.color = Color.white;
-        }
-
-        void Lamp(Vector2 center, float radius, Color color, bool lit)
-        {
-            if (lit)
-            {
-                float flicker = 0.85f + 0.15f * Mathf.PerlinNoise(Time.time * 9, center.x * 0.1f);
-                GUI.color = new Color(color.r, color.g, color.b, 0.22f * flicker);
-                GUI.DrawTexture(new Rect(center.x - radius * 2.4f, center.y - radius * 2.4f, radius * 4.8f, radius * 4.8f), circle);
-                GUI.color = new Color(color.r, color.g, color.b, flicker);
-            }
-            else GUI.color = new Color(0.22f, 0.21f, 0.18f);
-            GUI.DrawTexture(new Rect(center.x - radius, center.y - radius, radius * 2, radius * 2), circle);
-            GUI.color = new Color(1, 1, 1, lit ? 0.5f : 0.12f);
-            GUI.DrawTexture(new Rect(center.x - radius * 0.45f, center.y - radius * 0.6f, radius * 0.5f, radius * 0.5f), circle);
-            GUI.color = Color.white;
-        }
-
-        // A cable hangs between its plugs; a free end follows the mouse.
-        void Cable(Vector2 from, Vector2 to, Color color, float jack)
-        {
-            float sag = jack * 1.2f + Vector2.Distance(from, to) * 0.12f;
-            float thickness = jack * 0.34f;
-            const int segments = 48;
-            for (int pass = 0; pass < 2; pass++)
-            {
-                GUI.color = pass == 0 ? new Color(0, 0, 0, 0.6f) : color;
-                float size = pass == 0 ? thickness * 1.45f : thickness;
-                for (int i = 0; i <= segments; i++)
-                {
-                    float t = i / (float)segments;
-                    var point = Vector2.Lerp(from, to, t) + Vector2.up * (sag * 4 * t * (1 - t)) + (pass == 0 ? new Vector2(1, 2) : Vector2.zero);
-                    GUI.DrawTexture(new Rect(point.x - size * 0.5f, point.y - size * 0.5f, size, size), circle);
-                }
-            }
-            GUI.color = color * 0.8f;
-            GUI.DrawTexture(new Rect(from.x - jack * 0.5f, from.y - jack * 0.5f, jack, jack), circle);
-            GUI.DrawTexture(new Rect(to.x - jack * 0.5f, to.y - jack * 0.5f, jack, jack), circle);
-            GUI.color = new Color(0.75f, 0.72f, 0.62f);
-            GUI.DrawTexture(new Rect(to.x - jack * 0.22f, to.y - jack * 0.22f, jack * 0.44f, jack * 0.44f), circle);
             GUI.color = Color.white;
         }
 
@@ -494,83 +393,31 @@ namespace MoonThemedGame.Scavenger
             Fill(new Rect(rect.xMax - width, rect.y, width, rect.height), color);
         }
 
-        // Worn print: a faint offset ghost and a slow flicker.
-        static void Text(Rect rect, string value, Color color, GUIStyle style)
+        void EnsureStyles(float line)
         {
-            float flicker = 0.82f + 0.18f * Mathf.PerlinNoise(Time.time * 3, rect.y * 0.05f);
-            style.normal.textColor = new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, 0.35f);
-            GUI.Label(new Rect(rect.x + 1, rect.y + 1, rect.width, rect.height), value, style);
-            style.normal.textColor = new Color(color.r, color.g, color.b, flicker);
-            GUI.Label(rect, value, style);
-        }
-
-        static GUIStyle Center(GUIStyle style) => new GUIStyle(style) { alignment = TextAnchor.MiddleCenter };
-        static GUIStyle Right(GUIStyle style) => new GUIStyle(style) { alignment = TextAnchor.MiddleRight };
-
-        void EnsureStyles()
-        {
-            int size = Mathf.RoundToInt(Mathf.Min(Screen.height * 0.84f, Screen.width * 0.5f) * 0.029f);
-            if (label == null || label.fontSize != size)
+            int size = Mathf.RoundToInt(line * 0.68f);
+            if (text == null || text.fontSize != size)
             {
-                label = new GUIStyle(GUI.skin.label) { fontSize = size, wordWrap = false, clipping = TextClipping.Overflow, alignment = TextAnchor.MiddleLeft };
-                if (hud && hud.font) label.font = hud.font;
-                small = new GUIStyle(label) { fontSize = Mathf.RoundToInt(size * 0.76f) };
-                title = new GUIStyle(label) { fontSize = Mathf.RoundToInt(size * 1.35f), fontStyle = FontStyle.Bold };
-                hand = new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(size * 0.95f), fontStyle = FontStyle.BoldAndItalic, alignment = TextAnchor.MiddleCenter, clipping = TextClipping.Overflow };
+                text = new GUIStyle(GUI.skin.label) { fontSize = size, richText = true, wordWrap = false, clipping = TextClipping.Overflow, alignment = TextAnchor.MiddleLeft };
+                if (hud && hud.font) text.font = hud.font;
+                center = new GUIStyle(text) { alignment = TextAnchor.MiddleCenter };
+                right = new GUIStyle(text) { alignment = TextAnchor.MiddleRight };
             }
-            if (!circle)
+            if (dot) return;
+            const int resolution = 32;
+            dot = new Texture2D(resolution, resolution, TextureFormat.RGBA32, false) { name = "Patch cable dot", hideFlags = HideFlags.HideAndDontSave };
+            for (int y = 0; y < resolution; y++)
+            for (int x = 0; x < resolution; x++)
             {
-                const int resolution = 64;
-                circle = new Texture2D(resolution, resolution, TextureFormat.RGBA32, false) { name = "Patch jack", hideFlags = HideFlags.HideAndDontSave };
-                for (int y = 0; y < resolution; y++)
-                for (int x = 0; x < resolution; x++)
-                {
-                    float d = new Vector2(x + 0.5f - resolution / 2f, y + 0.5f - resolution / 2f).magnitude;
-                    circle.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(resolution / 2f - d)));
-                }
-                circle.Apply();
+                float d = new Vector2(x + 0.5f - resolution / 2f, y + 0.5f - resolution / 2f).magnitude;
+                dot.SetPixel(x, y, new Color(1, 1, 1, Mathf.Clamp01(resolution / 2f - d)));
             }
-            if (!grime) grime = BuildGrime();
-        }
-
-        // Stains, rust blooms and scratches baked once into a texture laid over the panel.
-        static Texture2D BuildGrime()
-        {
-            const int width = 320, height = 200;
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false) { name = "Patch panel grime", hideFlags = HideFlags.HideAndDontSave, wrapMode = TextureWrapMode.Clamp };
-            var pixels = new Color[width * height];
-            for (int y = 0; y < height; y++)
-            for (int x = 0; x < width; x++)
-            {
-                float stain = Mathf.PerlinNoise(x * 0.025f + 3, y * 0.025f + 7) * 0.6f + Mathf.PerlinNoise(x * 0.09f, y * 0.09f) * 0.4f;
-                float rust = Mathf.Clamp01((Mathf.PerlinNoise(x * 0.05f + 40, y * 0.05f + 11) - 0.68f) * 4);
-                float edge = Mathf.Clamp01(1 - Mathf.Min(Mathf.Min(x, width - 1 - x), Mathf.Min(y, height - 1 - y)) / 18f);
-                var dark = new Color(0, 0, 0, Mathf.Clamp01((stain - 0.45f) * 0.9f + edge * 0.5f));
-                pixels[y * width + x] = Color.Lerp(dark, new Color(0.35f, 0.18f, 0.08f, 0.55f), rust);
-            }
-            var random = new System.Random(19);
-            for (int s = 0; s < 70; s++)
-            {
-                float x = random.Next(width), y = random.Next(height), angle = (float)random.NextDouble() * Mathf.PI;
-                int length = 8 + random.Next(40);
-                float alpha = 0.08f + (float)random.NextDouble() * 0.14f;
-                for (int i = 0; i < length; i++)
-                {
-                    int px = Mathf.RoundToInt(x + Mathf.Cos(angle) * i), py = Mathf.RoundToInt(y + Mathf.Sin(angle) * i);
-                    if (px < 0 || py < 0 || px >= width || py >= height) break;
-                    var c = pixels[py * width + px];
-                    pixels[py * width + px] = Color.Lerp(c, new Color(1, 1, 1, alpha), 0.8f);
-                }
-            }
-            texture.SetPixels(pixels);
-            texture.Apply();
-            return texture;
+            dot.Apply();
         }
 
         void OnDestroy()
         {
-            if (circle) Destroy(circle);
-            if (grime) Destroy(grime);
+            if (dot) Destroy(dot);
         }
     }
 }

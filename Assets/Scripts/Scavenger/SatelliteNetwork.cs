@@ -65,7 +65,6 @@ namespace MoonThemedGame.Scavenger
 
         [Header("Receiver")]
         public float[] channels = { 2.15f, 2.30f, 2.45f, 2.60f };
-        public float intermediateFrequency = 0.45f;
 
         static SatelliteNetwork instance;
         readonly RaycastHit[] hits = new RaycastHit[16];

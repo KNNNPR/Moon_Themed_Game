@@ -356,7 +356,7 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        void EnsureStyles()
+        internal void EnsureStyles()
         {
             if (text != null) return;
             int size = Mathf.RoundToInt(Screen.height / 46f);
@@ -422,7 +422,7 @@ namespace MoonThemedGame.Scavenger
         }
 
         // Phosphor bleed, line jitter, permanently faded glyphs and glitches that grow with interference.
-        void Draw(Rect rect, string message, Color color, int salt, GUIStyle style, bool worn = true)
+        internal void Draw(Rect rect, string message, Color color, int salt, GUIStyle style, bool worn = true)
         {
             float k = Interference;
             int slice = Mathf.FloorToInt(Time.time * 10);
