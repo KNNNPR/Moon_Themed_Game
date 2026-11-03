@@ -27,6 +27,7 @@ Material:
     m_Floats:
     - _Interference: 0
     - _SignalLoss: 0
+    - _Collapse: 0
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

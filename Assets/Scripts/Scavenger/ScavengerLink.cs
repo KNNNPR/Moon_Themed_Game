@@ -13,6 +13,8 @@ namespace MoonThemedGame.Scavenger
 {
     // Clicking SCAVENGER (or E over it) on the PC switches to the SCAV_BOT camera and robotStyle,
     // Escape returns to the PC. Installs itself at runtime, so Operator.unity stays untouched.
+    public enum LinkPhase { Off, Connecting, Live, Terminating }
+
     [DisallowMultipleComponent]
     public sealed class ScavengerLink : MonoBehaviour
     {
@@ -21,12 +23,17 @@ namespace MoonThemedGame.Scavenger
         const string InterferenceMaterial = "ScavengerInterference";
         static readonly int InterferenceId = Shader.PropertyToID("_Interference");
         static readonly int SignalLossId = Shader.PropertyToID("_SignalLoss");
+        static readonly int CollapseId = Shader.PropertyToID("_Collapse");
+        const int OverlayLayer = 31;
 
         public PcMonitorTerminal terminal;
         public Transform robot;
         public Camera robotCamera;
         public ScavengerRobotState state;
         public VisualStyle robotStyle = VisualStyle.ColorAscii;
+        [Min(0)] public float handshakeDuration = 1.6f;
+        [Min(0)] public float connectDuration = 2.4f;
+        [Min(0.01f)] public float terminateDuration = 0.7f;
 
         Camera operatorCamera;
         AudioListener operatorListener;
@@ -35,11 +42,15 @@ namespace MoonThemedGame.Scavenger
         Material interferenceMaterial;
         VisualStyle stationStyle;
         CursorLockMode previousLock;
-        bool previousCursorVisible, connected;
-        float signalLoss;
+        bool previousCursorVisible;
+        float phaseStart;
+        int sceneMask;
+        CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
 
-        public bool Connected => connected;
+        public LinkPhase Phase { get; private set; }
+        public float PhaseTime => Time.time - phaseStart;
+        public bool Connected => Phase != LinkPhase.Off;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void InstallOnLoad()
@@ -76,6 +87,9 @@ namespace MoonThemedGame.Scavenger
                 return;
             }
             if (!robotCamera) robotCamera = CreateCamera(robot);
+            sceneMask = robotCamera.cullingMask | 1 << OverlayLayer;
+            sceneClear = robotCamera.clearFlags;
+            robotCamera.backgroundColor = Color.black;
             if (!state && !robot.TryGetComponent(out state)) state = robot.gameObject.AddComponent<ScavengerRobotState>();
             CreateInterference();
         }
@@ -118,7 +132,7 @@ namespace MoonThemedGame.Scavenger
             return Vector3.forward;
         }
 
-        // Full-screen quad, drawn only while connected and the signal is failing.
+        // Full-screen quad on its own layer, so it still draws while the scene is blacked out.
         void CreateInterference()
         {
             var source = Resources.Load<Material>(InterferenceMaterial);
@@ -130,6 +144,7 @@ namespace MoonThemedGame.Scavenger
             }
             var quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             quad.name = $"{RobotName} / Interference";
+            quad.layer = OverlayLayer;
             Destroy(quad.GetComponent<Collider>());
             quad.transform.SetParent(robotCamera.transform, false);
             quad.transform.localPosition = Vector3.forward * (robotCamera.nearClipPlane + 0.05f);
@@ -158,17 +173,36 @@ namespace MoonThemedGame.Scavenger
             escape = Input.GetKeyDown(KeyCode.Escape);
             click = Input.GetMouseButtonDown(0);
 #endif
-            if (state) state.Active = connected && state.Status == RobotStatus.Online;
-            if (connected)
+            if (state) state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
+            switch (Phase)
             {
-                if (escape) Disconnect();
-                else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
-                UpdateInterference();
+                case LinkPhase.Off:
+                    if (terminal.IsFocused && terminal.HoveredIcon == ScavengerIcon && (click || interact)) Connect();
+                    return;
+                case LinkPhase.Connecting:
+                    if (escape) Terminate();
+                    else if (PhaseTime >= connectDuration) SetPhase(LinkPhase.Live);
+                    break;
+                case LinkPhase.Live:
+                    if (escape) Terminate();
+                    else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
+                    break;
+                case LinkPhase.Terminating:
+                    if (PhaseTime >= terminateDuration) { Disconnect(); return; }
+                    break;
             }
-            else if (terminal.IsFocused && terminal.HoveredIcon == ScavengerIcon && (click || interact))
-            {
-                Connect();
-            }
+            UpdateFeed();
+        }
+
+        void SetPhase(LinkPhase phase)
+        {
+            Phase = phase;
+            phaseStart = Time.time;
+        }
+
+        public void Terminate()
+        {
+            if (Phase == LinkPhase.Connecting || Phase == LinkPhase.Live) SetPhase(LinkPhase.Terminating);
         }
 
         void TryEvacuate()
@@ -177,19 +211,37 @@ namespace MoonThemedGame.Scavenger
             else hud.Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
         }
 
-        void UpdateInterference()
+        public bool HasPicture => (!state || state.HasSignal) && (Phase != LinkPhase.Connecting || PhaseTime >= handshakeDuration);
+
+        void UpdateFeed()
         {
-            if (!interferenceMaterial || !state) return;
-            signalLoss = Mathf.MoveTowards(signalLoss, state.HasSignal ? 0 : 1, Time.deltaTime * 3);
-            float amount = state.Interference;
-            interference.enabled = connected && (amount > 0 || signalLoss > 0);
-            interferenceMaterial.SetFloat(InterferenceId, amount);
-            interferenceMaterial.SetFloat(SignalLossId, signalLoss);
+            float k = state ? state.Interference : 0;
+            float loss = 0, collapse = 0;
+            bool picture = HasPicture;
+            if (Phase == LinkPhase.Connecting && picture)
+            {
+                float u = Mathf.InverseLerp(handshakeDuration, connectDuration, PhaseTime);
+                loss = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.25f, 1, u));
+                k = Mathf.Max(k, 1 - u);
+            }
+            else if (Phase == LinkPhase.Terminating)
+            {
+                float u = PhaseTime / terminateDuration;
+                k = Mathf.Max(k, Mathf.Clamp01(u * 3));
+                collapse = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.25f, 1, u));
+            }
+            robotCamera.cullingMask = picture ? sceneMask : 1 << OverlayLayer;
+            robotCamera.clearFlags = picture ? sceneClear : CameraClearFlags.SolidColor;
+            if (!interferenceMaterial) return;
+            interference.enabled = Connected && (k > 0 || loss > 0 || collapse > 0);
+            interferenceMaterial.SetFloat(InterferenceId, picture ? k : 0);
+            interferenceMaterial.SetFloat(SignalLossId, loss);
+            interferenceMaterial.SetFloat(CollapseId, collapse);
         }
 
         public void Connect()
         {
-            if (connected || !robotCamera) return;
+            if (Connected || !robotCamera) return;
             terminal.ExitFocus(true);
             operatorCamera = Camera.main;
             if (operatorCamera)
@@ -206,19 +258,18 @@ namespace MoonThemedGame.Scavenger
             robotCamera.GetComponent<AudioListener>().enabled = true;
             stationStyle = VisualStyleSwitcher.CurrentStyle;
             VisualStyleSwitcher.SetStyle(robotStyle);
-            signalLoss = state && !state.HasSignal ? 1 : 0;
             previousLock = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
-            connected = true;
+            SetPhase(LinkPhase.Connecting);
             hud.OnConnected();
-            UpdateInterference();
+            UpdateFeed();
         }
 
         public void Disconnect()
         {
-            if (!connected) return;
+            if (!Connected) return;
             if (robotCamera)
             {
                 robotCamera.enabled = false;
@@ -232,7 +283,7 @@ namespace MoonThemedGame.Scavenger
             Cursor.visible = previousCursorVisible;
             if (playerController) playerController.enabled = true;
             playerController = null;
-            connected = false;
+            Phase = LinkPhase.Off;
             if (state) state.Active = false;
             if (isActiveAndEnabled) StartCoroutine(RefocusTerminal());
         }
@@ -241,7 +292,7 @@ namespace MoonThemedGame.Scavenger
         IEnumerator RefocusTerminal()
         {
             yield return null;
-            if (!connected) terminal.Focus(true);
+            if (!Connected) terminal.Focus(true);
         }
 
         void OnDisable() => Disconnect();

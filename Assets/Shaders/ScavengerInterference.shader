@@ -6,6 +6,7 @@ Shader "Moon Game/Scavenger Interference"
     {
         _Interference("Interference", Range(0, 1)) = 0
         _SignalLoss("Signal Loss", Range(0, 1)) = 0
+        _Collapse("Tube Off Collapse", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -25,7 +26,7 @@ Shader "Moon Game/Scavenger Interference"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
             CBUFFER_START(UnityPerMaterial)
-                float _Interference, _SignalLoss;
+                float _Interference, _SignalLoss, _Collapse;
             CBUFFER_END
 
             struct Attributes { float4 positionOS:POSITION; float2 uv:TEXCOORD0; };
@@ -51,7 +52,14 @@ Shader "Moon Game/Scavenger Interference"
                 float t = _Time.y;
                 float k = saturate(_Interference);
                 float2 screen = GetNormalizedScreenSpaceUV(input.positionCS);
-                float2 uv = screen;
+                float2 pixel = screen * _ScaledScreenParams.xy;
+
+                // Tube switch-off: squash to a horizontal line, then to a dot.
+                float c = saturate(_Collapse);
+                float2 extent = float2(max(1 - saturate((c - 0.7) / 0.3), 0.002), max(1 - saturate(c / 0.7), 0.004));
+                float2 offset = screen - 0.5;
+                if (any(abs(offset) > extent * 0.5)) return half4(0, 0, 0, 1);
+                float2 uv = 0.5 + offset / extent;
 
                 float frame = floor(t * 24);
                 uv.x += (Hash(float2(floor(uv.y * 220), frame)) - 0.5) * 0.05 * k * k;
@@ -65,14 +73,14 @@ Shader "Moon Game/Scavenger Interference"
                 color.g = SampleSceneColor(uv).g;
                 color.b = SampleSceneColor(uv - float2(shift, 0)).b;
 
-                float2 pixel = screen * _ScaledScreenParams.xy;
                 float noise = Hash(floor(pixel * 0.5) + frac(t * 61.7) * 113);
                 color = lerp(color, noise.xxx, 0.65 * k * k);
                 color *= 1 - 0.25 * k * (0.5 + 0.5 * sin(pixel.y * PI));
                 color *= 1 - 0.35 * k * Hash(float2(frame, 1));
 
                 half3 snow = noise.xxx * 0.55 * (0.8 + 0.2 * sin(pixel.y * 0.5 + t * 40));
-                return half4(lerp(color, snow, saturate(_SignalLoss)), 1);
+                color = lerp(color, snow, saturate(_SignalLoss));
+                return half4(lerp(color, half3(1, 1, 1), saturate(c * 1.4)), 1);
             }
             ENDHLSL
         }
