@@ -8,13 +8,13 @@ using UnityEngine.InputSystem;
 namespace MoonThemedGame.Computer
 {
     // Operator login over the desktop until the first successful log in of the session.
+    // The credentials are the ones printed on the note next to the monitor.
     [DisallowMultipleComponent]
     public sealed class PcLogin : MonoBehaviour
     {
         enum Stage { Waiting, Verifying, Granted, Done }
 
-        public string user = "operator";
-        [Min(1)] public int maxPasswordLength = 12;
+        [Min(1)] public int maxLength = 16;
         public float verifyTime = 1.1f;
         public float grantedTime = 0.9f;
 
@@ -25,9 +25,10 @@ namespace MoonThemedGame.Computer
 
         PcMonitorTerminal terminal;
         VisualElement overlay, cursor;
-        Label password, status;
+        Label userField, password, status;
         Stage stage;
-        string typed = "";
+        string user = "", typed = "";
+        bool editingPassword;
         float stageTime;
 
         public bool Unlocked => stage == Stage.Done;
@@ -69,8 +70,9 @@ namespace MoonThemedGame.Computer
 
         void OnText(char c)
         {
-            if (!Accepting || char.IsControl(c) || typed.Length >= maxPasswordLength) return;
-            typed += c;
+            if (!Accepting || char.IsControl(c)) return;
+            if (editingPassword) { if (typed.Length < maxLength) typed += c; }
+            else if (user.Length < maxLength) user += c;
             status.text = "";
         }
 
@@ -82,32 +84,55 @@ namespace MoonThemedGame.Computer
             overlay.BringToFront();
             cursor?.BringToFront();
 
-            bool enter = false, backspace = false;
+            bool enter = false, backspace = false, tab = false;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
                 enter = Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame;
                 backspace = Keyboard.current.backspaceKey.wasPressedThisFrame;
+                tab = Keyboard.current.tabKey.wasPressedThisFrame;
             }
 #elif ENABLE_LEGACY_INPUT_MANAGER
             enter = Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter);
             backspace = Input.GetKeyDown(KeyCode.Backspace);
+            tab = Input.GetKeyDown(KeyCode.Tab);
             if (Accepting) foreach (char c in Input.inputString) OnText(c);
 #endif
             stageTime += Time.deltaTime;
             switch (stage)
             {
                 case Stage.Waiting:
-                    if (Accepting && backspace && typed.Length > 0) typed = typed.Substring(0, typed.Length - 1);
-                    if (Accepting && enter)
+                    if (!Accepting) break;
+                    if (backspace)
                     {
-                        if (typed.Length == 0) SetStatus("PASSWORD REQUIRED", Alarm);
+                        if (editingPassword && typed.Length > 0) typed = typed.Substring(0, typed.Length - 1);
+                        else if (editingPassword) editingPassword = false;
+                        else if (user.Length > 0) user = user.Substring(0, user.Length - 1);
+                    }
+                    if (tab) editingPassword = !editingPassword;
+                    else if (enter && !editingPassword)
+                    {
+                        if (user.Length == 0) SetStatus("USER REQUIRED", Alarm);
+                        else editingPassword = true;
+                    }
+                    else if (enter)
+                    {
+                        if (user.Length == 0) { editingPassword = false; SetStatus("USER REQUIRED", Alarm); }
+                        else if (typed.Length == 0) SetStatus("PASSWORD REQUIRED", Alarm);
                         else { SetStage(Stage.Verifying); SetStatus("VERIFYING", Muted); }
                     }
                     break;
                 case Stage.Verifying:
                     status.text = "VERIFYING" + new string('.', 1 + Mathf.FloorToInt(stageTime * 4) % 3);
-                    if (stageTime >= verifyTime) { SetStage(Stage.Granted); SetStatus($"ACCESS GRANTED - WELCOME, {user.ToUpperInvariant()}", Good); }
+                    if (stageTime < verifyTime) break;
+                    if (Valid) { SetStage(Stage.Granted); SetStatus($"ACCESS GRANTED - WELCOME, {user.ToUpperInvariant()}", Good); }
+                    else
+                    {
+                        SetStage(Stage.Waiting);
+                        SetStatus("ACCESS DENIED - INVALID USER OR PASSWORD", Alarm);
+                        typed = "";
+                        editingPassword = true;
+                    }
                     break;
                 case Stage.Granted:
                     if (stageTime >= grantedTime)
@@ -119,8 +144,15 @@ namespace MoonThemedGame.Computer
                     break;
             }
             bool caret = stage == Stage.Waiting && Mathf.Repeat(Time.time * 2, 1) < 0.5f;
-            password.text = new string('*', typed.Length) + (caret ? "_" : " ");
+            userField.text = user + (caret && !editingPassword ? "_" : " ");
+            password.text = new string('*', typed.Length) + (caret && editingPassword ? "_" : " ");
+            userField.style.color = editingPassword ? Muted : Text;
+            password.style.color = editingPassword ? Text : Muted;
         }
+
+        // Login is not case sensitive, the password is.
+        bool Valid => string.Equals(user.Trim(), NotesCredentials.Login, System.StringComparison.OrdinalIgnoreCase) &&
+            typed == NotesCredentials.Password;
 
         void SetStage(Stage value)
         {
@@ -150,11 +182,12 @@ namespace MoonThemedGame.Computer
             overlay.Add(Space(36));
             overlay.Add(MakeLabel("OPERATOR LOGIN", 18, Text));
             overlay.Add(Space(14));
-            overlay.Add(Field("USER", MakeLabel(user, 18, Text)));
-            password = MakeLabel("_", 18, Text);
+            userField = MakeLabel("_", 18, Text);
+            overlay.Add(Field("USER", userField));
+            password = MakeLabel(" ", 18, Muted);
             overlay.Add(Field("PASSWORD", password));
             overlay.Add(Space(18));
-            overlay.Add(MakeLabel("TYPE PASSWORD, PRESS [ENTER]", 13, Muted));
+            overlay.Add(MakeLabel("[ENTER] NEXT / LOG IN    [TAB] SWITCH FIELD", 13, Muted));
             overlay.Add(Space(10));
             status = MakeLabel("", 16, Muted);
             overlay.Add(status);

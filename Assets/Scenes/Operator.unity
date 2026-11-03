@@ -584,6 +584,81 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &665067227
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 665067229}
+  - component: {fileID: 665067228}
+  m_Layer: 0
+  m_Name: Moon Weather
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &665067228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 665067227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a49d14a2ac64c2e9bfc92748f81e436, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Weather.MoonWeatherSystem
+  assets: {fileID: 11400000, guid: 891b8d12f2e6ac442bec696551f1e214, type: 2}
+  startingWeather: 0
+  sunnyDuration: 90
+  dustDuration: 75
+  toxicityDuration: 75
+  meteorDuration: 90
+  forecastSeed: 415
+  shelterCenter: {x: 11.553133, y: 6.9, z: 2.0487976}
+  shelterSize: {x: 10.1, y: 6.7, z: 11.1}
+  additionalShelters:
+  - m_Center: {x: 22.4, y: 6.9, z: -0.3}
+    m_Extent: {x: 5.3, y: 3.35, z: 7.65}
+  - m_Center: {x: -4.95, y: 4.65, z: 2}
+    m_Extent: {x: 3.3, y: 3.1, z: 9.9}
+  dustDensity: 0.065
+  toxicDensity: 0.009
+  toxicOpacity: 0.28
+  atmosphereTransition: 3
+  toxicEnergyMultiplier: 2
+  warningSeconds: 5
+  fallSeconds: 1.6
+  meteorDiameterRange: {x: 1.4, y: 2.8}
+  meteorInterval: {x: 7, y: 12}
+  strikeDistance: {x: 14, y: 45}
+  nearbyRobotStrikeChance: 0.25
+  strikeRadius: 2.5
+  impactEnergyDamage: 35
+  shakeDistance: 20
+  groundLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!4 &665067229
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 665067227}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &665645739
 GameObject:
   m_ObjectHideFlags: 0
@@ -801,6 +876,119 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!1 &854061104
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 854061108}
+  - component: {fileID: 854061107}
+  - component: {fileID: 854061106}
+  - component: {fileID: 854061105}
+  m_Layer: 0
+  m_Name: Plane
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!64 &854061105
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854061104}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &854061106
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854061104}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &854061107
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854061104}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &854061108
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 854061104}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 8.33776, y: -0.18, z: -7.95027}
+  m_LocalScale: {x: 11.354023, y: 11.354023, z: 11.354023}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &960045982
 GameObject:
   m_ObjectHideFlags: 0
@@ -1359,6 +1547,7 @@ MonoBehaviour:
   interactionDistance: 5
   focusDuration: 0.9
   aimDotSize: 6
+  hoverHighlight: 0.85
 --- !u!64 &1508841710
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2222,6 +2411,7 @@ GameObject:
   - component: {fileID: 5682903847580339698}
   - component: {fileID: 1163597918630920185}
   - component: {fileID: 4613184937998619945}
+  - component: {fileID: 5682903847580339699}
   m_Layer: 0
   m_Name: Smaller_monitor
   m_TagString: Untagged
@@ -3007,7 +3197,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 192212095506373383}
-  m_Mesh: {fileID: -5581412205729491756, guid: 286a759e9efb7bf41b992e3f599fafae, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 0708030631b7f804d9b9d0850364947b, type: 2}
 --- !u!4 &1169847429316150798 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4521267639679053192, guid: ac2a6b6ff5b7b044d89f8d3150baf0a8, type: 3}
@@ -5186,7 +5376,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 47b94e9963d8b4e438974856a747525c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5933,6 +6123,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 543450652233334530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5682903847580339699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192212095506373383}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb1392d253bc429680dc6fccb12c54cf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Weather.WeatherMonitorDisplay
+  assets: {fileID: 11400000, guid: 891b8d12f2e6ac442bec696551f1e214, type: 2}
+  screenRenderer: {fileID: 4613184937998619945}
+  screenCenter: {x: 0.000000009536743, y: -1.1368684e-15, z: 0.000000008344649}
+  screenNormal: {x: 0.97650135, y: 0, z: 0.21551146}
+  screenUp: {x: -0.21551147, y: -0.00000011920929, z: 0.9765013}
+  screenSize: {x: 0.81138134, y: 1.3914673}
 --- !u!23 &5716720962854846663
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8856,3 +9064,5 @@ SceneRoots:
   - {fileID: 6961314583886788240}
   - {fileID: 3659962053519739499}
   - {fileID: 2177869261563972162}
+  - {fileID: 854061108}
+  - {fileID: 665067229}

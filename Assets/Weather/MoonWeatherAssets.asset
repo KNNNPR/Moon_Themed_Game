@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f7c347367c94c6fbda31d5136d487cd, type: 3}
+  m_Name: MoonWeatherAssets
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Weather.MoonWeatherAssets
+  layout: {fileID: 9197481963319205126, guid: 75c66795d1814d3d9eb73b2cf2f6c3db, type: 3}
+  styleSheet: {fileID: 7433441132597879392, guid: 894fc258768b4f5faf41b8429f35f2eb, type: 3}
+  theme: {fileID: -4733365628477956816, guid: 5f8fff5d1a4175f4cbb99e52905674fc, type: 3}
+  font: {fileID: 12800000, guid: f2c3b0d3542244afb35e4d6914801d2a, type: 3}
+  sunny: {fileID: 7388822144124034973, guid: 6ec0a85026a6460fbd5e991679149e2c, type: 3}
+  dust: {fileID: 7388822144124034973, guid: f2d99047b59048c18ee47e5fdc7db777, type: 3}
+  toxicity: {fileID: 7388822144124034973, guid: a6114a2e670e4e699a8a45e1586b2a43, type: 3}
+  meteors: {fileID: 7388822144124034973, guid: 16978389043849b9af09bcd0628fbcd5, type: 3}
+  screenMaterial: {fileID: 2100000, guid: 47b94e9963d8b4e438974856a747525c, type: 2}
+  atmosphereMaterial: {fileID: 2100000, guid: 644a0063bfd6a1c429fc7409ef498c6a, type: 2}
+  particleMaterial: {fileID: 2100000, guid: 54b4c9529af187d4ba80b66dc1a3fb7a, type: 2}
+  warningMaterial: {fileID: 2100000, guid: 7dcdd9fdd5c6be04c9680f9b572e7658, type: 2}
+  meteoritePrefab: {fileID: 5063872515012230940, guid: f54450673df87fe47a7f9702fc3669b1, type: 3}
+  resolution: {x: 640, y: 1080}
