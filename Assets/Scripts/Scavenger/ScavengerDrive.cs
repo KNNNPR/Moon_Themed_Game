@@ -6,10 +6,11 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Rigidbody rover with a raycast spring per wheel: W/S throttle, A/D skid-steer.
-    // Throttle and steering ramp in and out, so the robot has weight; wheels follow the
-    // ground and lift over obstacles. Where no collider is found the station floor
-    // height acts as ground, so the robot never falls through the level.
+    // Rigidbody rover with a sphere-cast spring per wheel: W/S throttle, A/D skid-steer.
+    // Throttle and steering ramp in and out, so the robot has weight. Each wheel is a sphere
+    // of its own radius, so its rim catches the edge of a step and rolls up onto it like a
+    // car onto a curb (up to about one wheel radius). Where no collider is found the
+    // hangar floor height acts as ground, so the robot never falls through the level.
     [DisallowMultipleComponent]
     public sealed class ScavengerDrive : MonoBehaviour
     {
@@ -46,7 +47,7 @@ namespace MoonThemedGame.Scavenger
         public bool controllable;
 
         readonly List<Wheel> wheels = new List<Wheel>();
-        readonly RaycastHit[] hits = new RaycastHit[8];
+        readonly RaycastHit[] hits = new RaycastHit[16];
         Rigidbody body;
         Collider[] own;
         float throttle, steer, length, groundHeight, stiffness, damper, upsideDown;
@@ -97,9 +98,14 @@ namespace MoonThemedGame.Scavenger
             float wheelRadius = wheels.Count > 0 ? wheels[0].radius : world.size.y * 0.25f;
             foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
             var hull = gameObject.AddComponent<BoxCollider>();
-            float bottom = local.min.y + wheelRadius * 1.2f / Mathf.Max(0.001f, transform.lossyScale.y);
+            float bottom = local.min.y + wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y);
             hull.center = new Vector3(local.center.x, (bottom + local.max.y) * 0.5f, local.center.z);
             hull.size = new Vector3(local.size.x * 0.85f, Mathf.Max(0.01f, local.max.y - bottom), local.size.z * 0.85f);
+            hull.sharedMaterial = new PhysicsMaterial("Scavenger hull")
+            {
+                dynamicFriction = 0, staticFriction = 0,
+                frictionCombine = PhysicsMaterialCombine.Minimum, bounceCombine = PhysicsMaterialCombine.Minimum
+            };
             own = new Collider[] { hull };
 
             body = gameObject.AddComponent<Rigidbody>();
@@ -172,37 +178,41 @@ namespace MoonThemedGame.Scavenger
             KeepUpright(dt);
         }
 
+        // `length` is how far the wheel centre hangs below its mount point.
         void Suspension(Wheel wheel, Vector3 up, float dt)
         {
             float rest = wheel.radius * travel;
             var mount = transform.TransformPoint(wheel.anchor) + up * rest;
-            float reach = rest * 2 + wheel.radius;
+            float lead = wheel.radius;
+            var origin = mount + up * lead;
             float previous = wheel.length;
-            wheel.grounded = CastGround(mount, -up, reach, out float distance, out wheel.normal);
-            wheel.length = wheel.grounded ? distance - wheel.radius : rest * 2;
+            wheel.grounded = CastGround(origin, -up, wheel.radius * 0.95f, rest * 2 + lead, out float distance, out wheel.contact, out wheel.normal);
+            wheel.length = wheel.grounded ? Mathf.Max(0, distance - lead) : rest * 2;
             if (!wheel.grounded) return;
-            wheel.contact = mount - up * distance;
             float compression = rest * 1.35f - wheel.length;
             float velocity = (previous - wheel.length) / dt;
             float force = Mathf.Max(0, stiffness * compression + damper * velocity);
             body.AddForceAtPosition(up * force, wheel.contact);
         }
 
-        bool CastGround(Vector3 origin, Vector3 direction, float reach, out float distance, out Vector3 normal)
+        bool CastGround(Vector3 origin, Vector3 direction, float radius, float reach, out float distance, out Vector3 contact, out Vector3 normal)
         {
             distance = float.MaxValue;
+            contact = origin;
             normal = Vector3.up;
-            int count = Physics.RaycastNonAlloc(origin, direction, hits, reach, ~0, QueryTriggerInteraction.Ignore);
+            int count = Physics.SphereCastNonAlloc(origin, radius, direction, hits, reach, ~0, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
-                if (System.Array.IndexOf(own, hits[i].collider) >= 0 || hits[i].collider.attachedRigidbody == body) continue;
-                if (hits[i].distance < distance) { distance = hits[i].distance; normal = hits[i].normal; }
+                var hit = hits[i];
+                if (hit.distance <= 0 || System.Array.IndexOf(own, hit.collider) >= 0 || hit.collider.attachedRigidbody == body) continue;
+                if (hit.distance < distance) { distance = hit.distance; contact = hit.point; normal = hit.normal; }
             }
             if (distance < float.MaxValue) return true;
             if (direction.y >= -0.1f) return false;
-            float planeDistance = (origin.y - groundHeight) / -direction.y;
+            float planeDistance = (origin.y - radius - groundHeight) / -direction.y;
             if (planeDistance < 0 || planeDistance > reach) return false;
             distance = planeDistance;
+            contact = origin + direction * distance - Vector3.up * radius;
             return true;
         }
 

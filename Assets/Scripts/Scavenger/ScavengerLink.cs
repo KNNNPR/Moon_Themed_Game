@@ -130,9 +130,24 @@ namespace MoonThemedGame.Scavenger
             var forward = DetectForward(robot, bounds.center);
             if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
             Drive = drive;
-            homePosition = robot.position;
-            homeRotation = robot.rotation;
+            var location = ScavengerStartLocation.Find();
+            if (!location) location = ScavengerStartLocation.BuildFor(robot).transform;
+            var marker = ScavengerStartLocation.Marker(location);
+            float rideHeight = robot.position.y - bounds.min.y;
             Drive.Setup(forward);
+            if (marker)
+            {
+                var facing = Vector3.ProjectOnPlane(marker.forward, Vector3.up);
+                if (facing.sqrMagnitude < 1e-4f) facing = Vector3.forward;
+                homePosition = marker.position + Vector3.up * rideHeight;
+                homeRotation = Quaternion.LookRotation(facing) * Quaternion.Inverse(Quaternion.LookRotation(forward));
+            }
+            else
+            {
+                homePosition = robot.position;
+                homeRotation = robot.rotation;
+            }
+            Drive.PlaceAt(homePosition, homeRotation);
             float unit = Drive.Length;
             if (baseRelayRange <= 0) baseRelayRange = unit * 6;
             if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
@@ -218,7 +233,7 @@ namespace MoonThemedGame.Scavenger
         void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
-        static Vector3 DetectForward(Transform robot, Vector3 center)
+        public static Vector3 DetectForward(Transform robot, Vector3 center)
         {
             foreach (var child in robot.GetComponentsInChildren<Transform>())
             {
