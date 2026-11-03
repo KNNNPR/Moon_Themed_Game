@@ -81,6 +81,24 @@ namespace MoonThemedGame.Scavenger
         public event Action<UplinkStatus> UplinkChanged;
         public float PhaseTime => Time.time - phaseStart;
         public bool Connected => Phase != LinkPhase.Off;
+        public float Degradation => Uplink == UplinkStatus.Ok ? 1 - UplinkQuality : 1;
+        public float Noise
+        {
+            get
+            {
+                float k = state ? state.Interference : 0;
+                return Uplink == UplinkStatus.Ok ? Mathf.Max(k, Degradation * Degradation * 0.75f) : k;
+            }
+        }
+        public float ExpectedLoss
+        {
+            get
+            {
+                if (Uplink != UplinkStatus.Ok) return 100;
+                float d = Degradation, k = state ? state.Interference : 0;
+                return Mathf.Min(99.9f, 0.35f + 80 * d * d + 60 * k * k);
+            }
+        }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void InstallOnLoad()
@@ -131,6 +149,7 @@ namespace MoonThemedGame.Scavenger
             robotColliders = robot.GetComponentsInChildren<Collider>(true);
             antenna = robot.InverseTransformPoint(bounds.center + Vector3.up * (bounds.extents.y + 0.05f));
             Network = SatelliteNetwork.Instance;
+            Network.RivalChanged += OnRivalChanged;
 
             var forward = DetectForward(robot, bounds.center);
             if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
@@ -283,11 +302,13 @@ namespace MoonThemedGame.Scavenger
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;
+            bool hop = false;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
                 interact = Keyboard.current.eKey.wasPressedThisFrame;
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
+                hop = Keyboard.current.hKey.wasPressedThisFrame;
                 if (Keyboard.current.digit1Key.wasPressedThisFrame) satelliteKey = 0;
                 else if (Keyboard.current.digit2Key.wasPressedThisFrame) satelliteKey = 1;
                 else if (Keyboard.current.digit3Key.wasPressedThisFrame) satelliteKey = 2;
@@ -296,6 +317,7 @@ namespace MoonThemedGame.Scavenger
 #elif ENABLE_LEGACY_INPUT_MANAGER
             interact = Input.GetKeyDown(KeyCode.E);
             escape = Input.GetKeyDown(KeyCode.Escape);
+            hop = Input.GetKeyDown(KeyCode.H);
             if (Input.GetKeyDown(KeyCode.Alpha1)) satelliteKey = 0;
             else if (Input.GetKeyDown(KeyCode.Alpha2)) satelliteKey = 1;
             else if (Input.GetKeyDown(KeyCode.Alpha3)) satelliteKey = 2;
@@ -306,6 +328,7 @@ namespace MoonThemedGame.Scavenger
                 state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
                 state.AtCharger = AtCharger;
             }
+            if (Network) Network.TickRival(Connected && !ViaRelay && Powered);
             if (Connected) RefreshUplink();
             switch (Phase)
             {
@@ -320,6 +343,7 @@ namespace MoonThemedGame.Scavenger
                     if (escape) Terminate();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
                     else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
+                    else if (hop && Network && !Network.FrequencyHop()) hud.Notify("NO RIVAL CARRIER - HOP NOT NEEDED");
                     break;
                 case LinkPhase.Terminating:
                     if (PhaseTime >= terminateDuration) { Disconnect(); return; }
@@ -350,6 +374,14 @@ namespace MoonThemedGame.Scavenger
             robotAscii.SetFloat("_BackgroundStrength", robotSceneBehindCharacters);
             robotAscii.SetFloat("_Density", robotCharacterDensity);
             return robotAscii;
+        }
+
+        void OnRivalChanged(RivalPhase phase)
+        {
+            if (phase != RivalPhase.Hijacked || !terminal) return;
+            int stolen = Mathf.Min(Network.hijackCreditLoss, terminal.Credits);
+            if (stolen > 0) terminal.SetCredits(terminal.Credits - stolen);
+            if (Connected && hud) hud.Notify($"SIGNAL HIJACKED BY {Network.rivalName}  DATA STOLEN -{stolen} CR");
         }
 
         void TryEvacuate()
@@ -386,8 +418,7 @@ namespace MoonThemedGame.Scavenger
 
         void UpdateFeed()
         {
-            float k = state ? state.Interference : 0;
-            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, (1 - UplinkQuality) * (1 - UplinkQuality) * 0.75f);
+            float k = Noise;
             bool picture = HasPicture;
             float loss = Powered && Uplink != UplinkStatus.Ok && HandshakeDone ? 1 : 0, collapse = 0;
             if (Phase == LinkPhase.Connecting && picture)
@@ -478,5 +509,10 @@ namespace MoonThemedGame.Scavenger
         }
 
         void OnDisable() => Disconnect();
+
+        void OnDestroy()
+        {
+            if (Network) Network.RivalChanged -= OnRivalChanged;
+        }
     }
 }
