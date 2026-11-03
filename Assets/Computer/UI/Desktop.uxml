@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+  <ui:VisualElement name="desktop" class="desktop">
+    <ui:Label text="PALE.HORSE.BUILD_RUV" class="build-label" />
+    <ui:VisualElement class="desktop-icons">
+      <ui:VisualElement name="shop" class="desktop-icon">
+        <ui:Image name="shop-image" class="icon-image" />
+        <ui:Label text="SHOP" view-data-key="shop" class="icon-label" />
+      </ui:VisualElement>
+      <ui:VisualElement name="scavenger" class="desktop-icon">
+        <ui:Image name="scavenger-image" class="icon-image" />
+        <ui:Label text="SCAVENGER" view-data-key="scavenger" class="icon-label" />
+      </ui:VisualElement>
+      <ui:VisualElement name="messages" class="desktop-icon">
+        <ui:Image name="messages-image" class="icon-image" />
+        <ui:Label text="MESSAGES" view-data-key="messages" class="icon-label" />
+      </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Image name="screen-cursor" class="screen-cursor" picking-mode="Ignore" />
+  </ui:VisualElement>
+</ui:UXML>
