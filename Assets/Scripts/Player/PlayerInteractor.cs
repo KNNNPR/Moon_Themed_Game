@@ -105,9 +105,12 @@ namespace MoonThemedGame.Interactions
             {
                 if (promptStyle == null)
                     promptStyle = new GUIStyle(GUI.skin.label)
-                        { alignment = TextAnchor.MiddleCenter, fontSize = 16 };
-                GUI.Label(new Rect(Screen.width / 2f - 160f, Screen.height / 2f + 18f,
-                    320f, 30f), target.Prompt, promptStyle);
+                        { alignment = TextAnchor.MiddleCenter, fontSize = 16, wordWrap = true };
+                string prompt = target.Prompt;
+                float width = Mathf.Max(1f, Mathf.Min(380f, Screen.width - 32f));
+                float height = promptStyle.CalcHeight(new GUIContent(prompt), width);
+                GUI.Label(new Rect((Screen.width - width) / 2f, Screen.height / 2f + 18f,
+                    width, height), prompt, promptStyle);
             }
             GUI.color = previous;
         }
