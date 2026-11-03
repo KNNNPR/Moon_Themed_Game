@@ -45,6 +45,7 @@ public class FirstPersonController : MonoBehaviour
 
     private void Update()
     {
+        if (MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput) return;
         if (Keyboard.current != null &&
             Keyboard.current.escapeKey.wasPressedThisFrame)
         {
@@ -66,6 +67,13 @@ public class FirstPersonController : MonoBehaviour
 
         UpdateLook();
         UpdateMovement();
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        var body = hit.rigidbody;
+        if (body && !body.isKinematic && body.GetComponent<MoonThemedGame.Interactions.HeldProp>() && hit.moveDirection.y > -0.3f)
+            body.AddForce(new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z) * 5, ForceMode.Force);
     }
 
     private void UpdateLook()

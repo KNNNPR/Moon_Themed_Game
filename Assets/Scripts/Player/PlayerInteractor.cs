@@ -38,6 +38,7 @@ namespace MoonThemedGame.Interactions
         void LateUpdate()
         {
             SetTarget(FindTarget());
+            if (target is HeldProp prop) prop.RadioInput();
             if (target && Keyboard.current != null &&
                 Keyboard.current.eKey.wasPressedThisFrame)
             {
@@ -46,7 +47,7 @@ namespace MoonThemedGame.Interactions
             }
         }
 
-        bool CanUseInput() => viewCamera && viewCamera.isActiveAndEnabled && movement &&
+        bool CanUseInput() => !GameSettingsMenu.BlockGameplayInput && viewCamera && viewCamera.isActiveAndEnabled && movement &&
             movement.isActiveAndEnabled && Cursor.lockState == CursorLockMode.Locked;
 
         Interactable FindTarget()
