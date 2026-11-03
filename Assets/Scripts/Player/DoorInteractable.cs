@@ -38,6 +38,9 @@ namespace MoonThemedGame.Interactions
             var renderers = movingPart.GetComponentsInChildren<MeshRenderer>();
             if (renderers.Length > 0)
             {
+                if (!outline) outline = GetComponent<InteractionOutline>();
+                if (!outline) outline = gameObject.AddComponent<InteractionOutline>();
+                outline.SetFixedGeometry(renderers);
                 Bounds bounds = renderers[0].bounds;
                 foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
                 if (useWorldSlideDirection)

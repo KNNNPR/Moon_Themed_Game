@@ -4,106 +4,143 @@ using UnityEngine.Rendering;
 
 namespace MoonThemedGame.Interactions
 {
-    // Keep this class/file name so existing scene references remain valid.
+    // Keep the class and file GUID to preserve existing scene references.
     [DisallowMultipleComponent]
-    [AddComponentMenu("Moon Game/Interactions/Interaction Highlight")]
+    [AddComponentMenu("Moon Game/Interactions/Interaction Outline")]
     public sealed class InteractionOutline : MonoBehaviour
     {
-        [Tooltip("Existing highlight material; a default is created when empty.")]
         public Material outlineMaterial;
         public MeshRenderer[] targets;
-        [Range(0f, 0.4f)] public float highlightAmount = 0.12f;
-        [Min(0.1f)] public float fadeSpeed = 12f;
+        [Range(1f, 8f)] public float widthPixels = 3f;
+        public Color outlineColor = new Color(1f, 0.95f, 0.75f, 1f);
+        [Min(0.1f)] public float fadeSpeed = 14f;
 
-        int amount;
-        readonly List<MeshRenderer> overlays = new List<MeshRenderer>();
-        readonly List<MeshRenderer> sources = new List<MeshRenderer>();
-        MaterialPropertyBlock properties;
-        Material ownedMaterial;
-        bool highlighted;
+        struct FixedMesh { public Mesh mesh; public Matrix4x4 matrix; public MeshRenderer source; }
+        readonly List<FixedMesh> fixedMeshes = new List<FixedMesh>();
+        bool fixedGeometry, highlighted;
         float opacity;
+        Material material;
+        CommandBuffer commands;
+        RenderTexture mask, contour;
+        Camera viewCamera;
 
-        void Awake() => InitializeRuntimeState();
-
-        void OnEnable() => InitializeRuntimeState();
-
-        void InitializeRuntimeState()
+        public void SetFixedGeometry(MeshRenderer[] renderers)
         {
-            // Native Unity objects must be created on the main thread, after construction.
-            if (properties == null) properties = new MaterialPropertyBlock();
-            amount = Shader.PropertyToID("_HighlightAmount");
+            fixedGeometry = true;
+            fixedMeshes.Clear();
+            foreach (var renderer in renderers)
+            {
+                if (!renderer) continue;
+                var filter = renderer.GetComponent<MeshFilter>();
+                if (filter && filter.sharedMesh)
+                    fixedMeshes.Add(new FixedMesh { mesh = filter.sharedMesh,
+                        matrix = renderer.localToWorldMatrix, source = renderer });
+            }
         }
 
-        public void SetHighlighted(bool value)
-        {
-            highlighted = value && isActiveAndEnabled;
-            if (highlighted && overlays.Count == 0) Build();
-        }
+        public void SetHighlighted(bool value) => highlighted = value && isActiveAndEnabled;
 
-        void Build()
+        bool EnsureResources(int width, int height)
         {
-            Material material = outlineMaterial;
             if (!material)
             {
-                var shader = Shader.Find("Moon Game/Interaction Highlight");
-                if (!shader)
-                {
-                    Debug.LogError("Interaction Highlight shader is unavailable.", this);
-                    return;
-                }
-                if (!ownedMaterial) ownedMaterial = new Material(shader)
-                    { hideFlags = HideFlags.HideAndDontSave };
-                material = ownedMaterial;
+                Shader shader = outlineMaterial ? outlineMaterial.shader : Shader.Find("Moon Game/Interaction Highlight");
+                if (!shader) return false;
+                material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
             }
-            var renderers = targets != null && targets.Length > 0
-                ? targets : GetComponentsInChildren<MeshRenderer>();
-            foreach (var source in renderers)
-            {
-                if (!source) continue;
-                var filter = source.GetComponent<MeshFilter>();
-                if (!filter || !filter.sharedMesh) continue;
-                var host = new GameObject("Interaction / soft white highlight")
-                    { hideFlags = HideFlags.DontSave, layer = source.gameObject.layer };
-                host.transform.SetParent(source.transform, false);
-                host.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
-                var overlay = host.AddComponent<MeshRenderer>();
-                var materials = new Material[filter.sharedMesh.subMeshCount];
-                for (int i = 0; i < materials.Length; i++) materials[i] = material;
-                overlay.sharedMaterials = materials;
-                overlay.shadowCastingMode = ShadowCastingMode.Off;
-                overlay.receiveShadows = false;
-                overlay.enabled = false;
-                overlays.Add(overlay);
-                sources.Add(source);
-            }
+            if (commands == null) commands = new CommandBuffer { name = "Interaction silhouette mask" };
+            if (mask && mask.width == width && mask.height == height) return true;
+            ReleaseTextures();
+            mask = new RenderTexture(width, height, 16, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear)
+                { name = "Interaction mask", hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp };
+            contour = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear)
+                { name = "Interaction contour", hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+            mask.Create();
+            contour.Create();
+            return true;
         }
 
         void LateUpdate()
         {
-            float target = highlighted ? highlightAmount : 0f;
-            opacity = Mathf.Lerp(opacity, target, 1f - Mathf.Exp(-fadeSpeed * Time.deltaTime));
-            if (Mathf.Abs(opacity - target) < 0.0001f) opacity = target;
-            if (properties == null) InitializeRuntimeState();
-            properties.SetFloat(amount, opacity);
-            for (int i = 0; i < overlays.Count; i++)
+            opacity = Mathf.Lerp(opacity, highlighted ? 1f : 0f, 1f - Mathf.Exp(-fadeSpeed * Time.deltaTime));
+            if (!highlighted && opacity < 0.002f)
             {
-                if (!overlays[i]) continue;
-                overlays[i].enabled = opacity > 0.0001f && sources[i] && sources[i].enabled;
-                overlays[i].SetPropertyBlock(properties);
+                opacity = 0f;
+                if (mask) ReleaseTextures();
+                return;
             }
+            viewCamera = Camera.main;
+            if (!viewCamera || !EnsureResources(Mathf.Max(1, viewCamera.pixelWidth), Mathf.Max(1, viewCamera.pixelHeight))) return;
+            var previous = RenderTexture.active;
+            try
+            {
+                commands.Clear();
+                commands.SetRenderTarget(mask);
+                commands.ClearRenderTarget(true, true, Color.clear);
+                commands.SetViewport(new Rect(0, 0, mask.width, mask.height));
+                material.SetMatrix("_OutlineViewProjection",
+                    GL.GetGPUProjectionMatrix(viewCamera.projectionMatrix, true) * viewCamera.worldToCameraMatrix);
+                if (fixedGeometry)
+                {
+                    foreach (var entry in fixedMeshes)
+                        if (entry.mesh && entry.source && entry.source.enabled && entry.source.gameObject.activeInHierarchy)
+                            for (int part = 0; part < entry.mesh.subMeshCount; part++)
+                                commands.DrawMesh(entry.mesh, entry.matrix, material, part, 0);
+                }
+                else
+                {
+                    // Re-read live renderers so newly installed robot parts also get a contour.
+                    var renderers = targets != null && targets.Length > 0 ? targets : GetComponentsInChildren<MeshRenderer>();
+                    foreach (var renderer in renderers)
+                    {
+                        if (!renderer || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                        var filter = renderer.GetComponent<MeshFilter>();
+                        if (!filter || !filter.sharedMesh) continue;
+                        for (int part = 0; part < filter.sharedMesh.subMeshCount; part++)
+                            commands.DrawRenderer(renderer, material, part, 0);
+                    }
+                }
+                Graphics.ExecuteCommandBuffer(commands);
+                material.SetFloat("_OutlineWidth", widthPixels);
+                Color color = outlineColor;
+                color.a *= opacity;
+                material.SetColor("_OutlineColor", color);
+                Graphics.Blit(mask, contour, material, 1);
+            }
+            finally { RenderTexture.active = previous; }
+        }
+
+        void OnGUI()
+        {
+            if (Event.current.type != EventType.Repaint || !contour || !viewCamera || opacity <= 0f) return;
+            var previous = GUI.color;
+            GUI.color = Color.white;
+            Rect viewport = viewCamera.pixelRect;
+            GUI.DrawTexture(new Rect(viewport.x, Screen.height - viewport.yMax, viewport.width, viewport.height),
+                contour, ScaleMode.StretchToFill, true);
+            GUI.color = previous;
+        }
+
+        void ReleaseTextures()
+        {
+            if (mask) { mask.Release(); Destroy(mask); mask = null; }
+            if (contour) { contour.Release(); Destroy(contour); contour = null; }
         }
 
         void OnDisable()
         {
             highlighted = false;
             opacity = 0f;
-            foreach (var overlay in overlays) if (overlay) overlay.enabled = false;
+            ReleaseTextures();
         }
 
         void OnDestroy()
         {
-            foreach (var overlay in overlays) if (overlay) Destroy(overlay.gameObject);
-            if (ownedMaterial) Destroy(ownedMaterial);
+            ReleaseTextures();
+            if (commands != null) commands.Release();
+            if (material) Destroy(material);
         }
     }
 }
