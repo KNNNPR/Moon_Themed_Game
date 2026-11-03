@@ -249,6 +249,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 423724945}
+  - component: {fileID: 423724946}
   m_Layer: 0
   m_Name: CameraEffect
   m_TagString: Untagged
@@ -273,6 +274,30 @@ Transform:
   - {fileID: 114106070}
   m_Father: {fileID: 466140502}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &423724946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423724944}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a993be28af8bf9045963f48b3c3ce8e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FirstPersonCameraEffects
+  player: {fileID: 960045985}
+  enableBob: 1
+  horizontalAmplitude: 0.0005
+  verticalAmplitude: 0.0008
+  stepLength: 1.5
+  enableTilt: 1
+  maxTilt: 0.7
+  referenceSpeed: 3.5
+  movementThreshold: 0.05
+  positionResponse: 14
+  tiltResponse: 10
+  teleportSpeedThreshold: 20
 --- !u!1 &436003901
 GameObject:
   m_ObjectHideFlags: 0
