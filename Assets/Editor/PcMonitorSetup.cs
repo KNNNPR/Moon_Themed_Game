@@ -187,7 +187,7 @@ namespace MoonThemedGame.Editor
                 terminal.BuildDisplay();
                 var authoredCameraPosition = Camera.main.transform.position;
                 var authoredCameraRotation = Camera.main.transform.rotation;
-                terminal.Focus();
+                terminal.Focus(true);
                 ShaderUtil.allowAsyncCompilation = false;
                 QualitySettings.SetQualityLevel(1, true);
                 await Task.Delay(1500);
@@ -216,7 +216,7 @@ namespace MoonThemedGame.Editor
                 QualitySettings.SetQualityLevel(1, true);
                 await Task.Delay(500);
                 terminal.HidePointer();
-                terminal.ExitFocus();
+                terminal.ExitFocus(true);
                 RequireCondition(Vector3.Distance(Camera.main.transform.position, authoredCameraPosition) < 0.001f && Quaternion.Angle(Camera.main.transform.rotation, authoredCameraRotation) < 0.01f, "Focus exit changed the authored camera.");
                 await Task.Delay(250);
                 SaveTexture(terminal.DisplayTexture, PreviewPath);
