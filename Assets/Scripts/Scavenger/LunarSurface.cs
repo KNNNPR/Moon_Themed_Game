@@ -4,9 +4,9 @@ using UnityEngine.Rendering;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Procedural patch of lunar surface the robot drives on. Everything scales with `unit`
-    // (the robot's length). Slopes stay gentle and obstacles are sparse with wide gaps,
-    // so every point of the patch can be reached.
+    // Procedural lunar surface around the station; the station floor is ground level.
+    // Everything scales with `unit` (the robot's length). Slopes stay gentle and obstacles
+    // are sparse with wide gaps, so every point of the patch can be reached.
     public sealed class LunarSurface : MonoBehaviour
     {
         struct Crater { public Vector2 center; public float radius, depth; }
@@ -16,23 +16,24 @@ namespace MoonThemedGame.Scavenger
         [Tooltip("Side of the square patch, in robot lengths.")]
         public float sizeInUnits = 140;
         [Range(32, 200)] public int cells = 128;
-        public float padRadiusInUnits = 4;
+        [Tooltip("Flat ground around the station, in world units.")]
+        public float flatRadius = 20;
 
         readonly List<Crater> craters = new List<Crater>();
         readonly List<Vector2> occupied = new List<Vector2>();
         System.Random random;
         float noiseX, noiseZ;
-        Material ground, rock, metal, padPaint;
+        Material ground, rock, metal;
 
         public float Size => sizeInUnits * unit;
         public float HalfSize => Size * 0.5f;
-        public Vector3 PadPosition => transform.TransformPoint(new Vector3(0, Height(0, 0), 0));
-
-        public static LunarSurface Create(Vector3 origin, float unit, int seed)
+        public static LunarSurface Create(Vector3 origin, float unit, float flatRadius, int seed)
         {
             var surface = new GameObject("Lunar Surface").AddComponent<LunarSurface>();
             surface.transform.position = origin;
             surface.unit = unit;
+            surface.flatRadius = flatRadius;
+            surface.sizeInUnits = Mathf.Max(surface.sizeInUnits, flatRadius / unit * 5);
             surface.seed = seed != 0 ? seed : Random.Range(1, int.MaxValue);
             surface.Generate();
             return surface;
@@ -48,27 +49,24 @@ namespace MoonThemedGame.Scavenger
             ground = MakeMaterial(new Color(0.55f, 0.55f, 0.56f));
             rock = MakeMaterial(new Color(0.38f, 0.37f, 0.37f));
             metal = MakeMaterial(new Color(0.45f, 0.42f, 0.38f));
-            padPaint = MakeMaterial(new Color(0.85f, 0.65f, 0.15f));
-
+            
             craters.Clear();
             int count = Mathf.RoundToInt(sizeInUnits * 0.18f);
             for (int i = 0; i < count; i++)
             {
                 float radius = Range(3, 11) * unit;
                 var center = new Vector2(Range(-HalfSize, HalfSize), Range(-HalfSize, HalfSize));
-                if (center.magnitude < padRadiusInUnits * unit + radius * 1.5f) continue;
+                if (center.magnitude < flatRadius + radius * 1.5f) continue;
                 craters.Add(new Crater { center = center, radius = radius, depth = radius * Range(0.12f, 0.2f) });
             }
 
             BuildGround();
-            BuildPad();
             occupied.Clear();
-            occupied.Add(Vector2.zero);
             ScatterRocks();
             BuildShelters();
         }
 
-        // Local-space height. Gentle noise, shallow bowl craters with soft rims, flat pad
+        // Local-space height. Gentle noise, shallow bowl craters with soft rims, flat ground
         // at the centre and a raised rim at the edge of the patch.
         public float Height(float x, float z)
         {
@@ -82,8 +80,7 @@ namespace MoonThemedGame.Scavenger
                 float rim = d - 1;
                 h += c.depth * 0.35f * Mathf.Exp(-rim * rim * 10);
             }
-            float pad = padRadiusInUnits * unit;
-            float flat = Mathf.SmoothStep(1, 0, Mathf.InverseLerp(pad, pad * 2.5f, new Vector2(x, z).magnitude));
+            float flat = Mathf.SmoothStep(1, 0, Mathf.InverseLerp(flatRadius, flatRadius + 12 * unit, new Vector2(x, z).magnitude));
             h = Mathf.Lerp(h, 0, flat);
             float edge = Mathf.Max(Mathf.Abs(x), Mathf.Abs(z));
             h += Mathf.SmoothStep(0, 1, Mathf.InverseLerp(HalfSize * 0.85f, HalfSize, edge)) * 6 * unit;
@@ -151,30 +148,9 @@ namespace MoonThemedGame.Scavenger
 
         Vector3 Point(float x, float z) => new Vector3(x, Height(x, z), z);
 
-        void BuildPad()
-        {
-            float r = padRadiusInUnits * unit;
-            Piece(PrimitiveType.Cylinder, new Vector3(0, 0.02f * unit, 0), new Vector3(r * 1.6f, 0.04f * unit, r * 1.6f), Quaternion.identity, metal, "Landing Pad");
-            Piece(PrimitiveType.Cylinder, new Vector3(0, 0.03f * unit, 0), new Vector3(r * 1.2f, 0.04f * unit, r * 1.2f), Quaternion.identity, padPaint, "Pad Ring");
-            Piece(PrimitiveType.Cylinder, new Vector3(0, 0.04f * unit, 0), new Vector3(r * 1.05f, 0.04f * unit, r * 1.05f), Quaternion.identity, metal, "Pad Centre");
-            for (int i = 0; i < 4; i++)
-            {
-                var direction = Quaternion.Euler(0, 45 + i * 90, 0) * Vector3.forward;
-                var post = Piece(PrimitiveType.Cylinder, direction * r * 0.85f + Vector3.up * 0.3f * unit, new Vector3(0.06f, 0.3f, 0.06f) * unit, Quaternion.identity, metal, "Pad Light");
-                var light = new GameObject("Beacon").AddComponent<Light>();
-                light.transform.SetParent(post.transform, false);
-                light.transform.localPosition = Vector3.up * 1.2f;
-                light.type = LightType.Point;
-                light.color = new Color(1f, 0.7f, 0.3f);
-                light.range = 3 * unit;
-                light.intensity = 3;
-                light.shadows = LightShadows.None;
-            }
-        }
-
         bool TryPlace(float clearance, out Vector2 spot)
         {
-            float pad = padRadiusInUnits * unit * 2;
+            float pad = flatRadius + 4 * unit;
             for (int attempt = 0; attempt < 30; attempt++)
             {
                 spot = new Vector2(Range(-HalfSize * 0.82f, HalfSize * 0.82f), Range(-HalfSize * 0.82f, HalfSize * 0.82f));

@@ -45,7 +45,7 @@ namespace MoonThemedGame.Scavenger
             if (icon == null && terminal.Root != null) Build();
             if (icon == null) return;
 
-            bool pointer = terminal.IsFocused && terminal.PointerActive;
+            bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point = terminal.PointerPosition;
             icon.EnableInClassList("pointer-over", pointer && icon.worldBound.Contains(point));
             if (IsOpen)
@@ -231,7 +231,7 @@ namespace MoonThemedGame.Scavenger
                 link.RefreshUplink();
                 bool ok = link.Uplink == UplinkStatus.Ok;
                 robotStatus.text = ok
-                    ? $"ROBOT SIGNAL: OK via {network.Active.name}"
+                    ? $"ROBOT SIGNAL: OK via {(link.ViaRelay ? "BASE RELAY" : network.Active.name)}"
                     : $"ROBOT SIGNAL: NONE - {ScavengerFeedHud.Reason(link.Uplink)}";
                 robotStatus.style.color = ok ? Good : Alarm;
             }

@@ -88,6 +88,7 @@ namespace MoonThemedGame.Scavenger
             if (!link.Connected) return;
             AddLog(status switch
             {
+                UplinkStatus.Ok when link.ViaRelay => "UPLINK via BASE RELAY",
                 UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
                 UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
                 UplinkStatus.Blocked => "ERR no sky view - robot under cover",
@@ -130,10 +131,10 @@ namespace MoonThemedGame.Scavenger
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
-            bool weak = link.Uplink == UplinkStatus.Ok && link.UplinkQuality < 0.35f;
+            bool weak = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && link.UplinkQuality < 0.35f;
             if (weak && !weakSignal) AddLog($"WARN {SatName} signal weak");
             weakSignal = weak;
-            bool leaving = link.Uplink == UplinkStatus.Ok && link.Network.ActiveLeavingSoon;
+            bool leaving = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && link.Network.ActiveLeavingSoon;
             if (leaving && !leavingSoon) AddLog($"WARN {SatName} leaves range in {Mathf.CeilToInt(link.Network.Active.TimeLeft(link.Network.Clock))}s");
             leavingSoon = leaving;
             if (Time.time >= nextLog)
@@ -276,6 +277,7 @@ namespace MoonThemedGame.Scavenger
 
         string SatLine()
         {
+            if (link.ViaRelay) return "LINK BASE RELAY  [||||]";
             var satellite = link.Network ? link.Network.Active : null;
             if (satellite == null) return "SAT NONE";
             float clock = link.Network.Clock;
@@ -311,7 +313,7 @@ namespace MoonThemedGame.Scavenger
                 var tint = !sat.InRange(clock) ? Dim(Dim(phosphor)) : active ? phosphor : Dim(phosphor);
                 Draw(new Rect(x, y + line * (i + 1), width, line), row, tint, 91 + i, text);
             }
-            if (link.Uplink == UplinkStatus.Ok && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
+            if (link.Uplink == UplinkStatus.Ok && !link.ViaRelay && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
             {
                 int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));
                 Draw(new Rect(0, unit * 6, Screen.width, line), $"{network.Active.name} LEAVES RANGE IN {left}s - SWITCH SATELLITE (1/2/3)", warning, 95, Centered(text));
