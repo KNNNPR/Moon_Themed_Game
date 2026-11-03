@@ -1,0 +1,23 @@
+.weather-screen { width: 640px; height: 1080px; padding: 32px; background-color: rgb(5,10,14); color: rgb(239,245,247); font-size: 23px; }
+.header { flex-direction: row; align-items: center; justify-content: space-between; }
+.title { font-size: 29px; color: white; }
+.muted { color: rgb(149,163,171); }
+.small { font-size: 18px; }
+.tiny { font-size: 15px; margin-top: 13px; }
+.rule { height: 1px; background-color: rgb(91,108,117); margin-top: 21px; margin-bottom: 23px; }
+.section-label { font-size: 18px; letter-spacing: 1px; }
+.current-row { flex-direction: row; align-items: center; margin-top: 24px; }
+.current-icon { width: 122px; height: 122px; margin-right: 25px; }
+.current-name { font-size: 33px; flex-shrink: 1; white-space: normal; color: white; }
+.current-effect { font-size: 25px; margin-top: 24px; height: 90px; white-space: normal; }
+.current-time { font-size: 24px; color: white; margin-top: 5px; }
+.progress-track { height: 3px; background-color: rgb(39,53,61); margin-top: 17px; margin-bottom: 24px; }
+.progress { height: 3px; width: 100%; background-color: rgb(207,225,232); }
+.forecast { margin-top: 20px; padding-bottom: 18px; border-bottom-width: 1px; border-bottom-color: rgb(55,71,79); }
+.forecast-top { flex-direction: row; align-items: center; }
+.forecast-icon { width: 66px; height: 66px; margin-right: 20px; }
+.forecast-heading { flex-grow: 1; flex-shrink: 1; }
+.forecast-name { font-size: 24px; white-space: normal; }
+.forecast-time { font-size: 20px; color: rgb(173,190,199); margin-top: 7px; }
+.forecast-effect { font-size: 21px; white-space: normal; margin-top: 15px; height: 58px; }
+.footer { position: absolute; left: 32px; right: 32px; bottom: 28px; }

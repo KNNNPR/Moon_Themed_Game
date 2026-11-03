@@ -65,7 +65,7 @@ namespace MoonThemedGame.Editor
 
         // Keep the authored rounded silhouette and triangles. Only the screen's
         // atlas UVs are replaced with an upright full-display mapping.
-        static Mesh MakeScreenMesh(Mesh source, Transform surface, out Vector3 center, out Vector3 normal, out Vector3 up, out Vector2 size)
+        public static Mesh MakeScreenMesh(Mesh source, Transform surface, out Vector3 center, out Vector3 normal, out Vector3 up, out Vector2 size)
         {
             using var data = MeshUtility.AcquireReadOnlyMeshData(source);
             using var vertices = new NativeArray<Vector3>(data[0].vertexCount, Allocator.Temp);
