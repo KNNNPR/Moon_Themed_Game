@@ -35,6 +35,10 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
         [Min(0.01f)] public float terminateDuration = 1.3f;
+        [Tooltip("Where the procedural surface is built, far from the station.")]
+        public Vector3 surfaceOrigin = new Vector3(0, 0, 6000);
+        [Tooltip("0 = new terrain every session.")]
+        public int surfaceSeed;
 
         Camera operatorCamera;
         AudioListener operatorListener;
@@ -49,13 +53,18 @@ namespace MoonThemedGame.Scavenger
         CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
         Collider[] robotColliders;
-        Vector3 antenna;
+        Vector3 antenna, lastSignalPoint;
+        float cameraSize, cameraYaw, nextBreadcrumb;
+        bool deployed, failsafe;
+        Light sun;
 
         public LinkPhase Phase { get; private set; }
         public SatelliteNetwork Network { get; private set; }
         public UplinkStatus Uplink { get; private set; } = UplinkStatus.Ok;
         public float UplinkQuality { get; private set; } = 1;
         public bool Powered => !state || state.HasSignal;
+        public LunarSurface Surface { get; private set; }
+        public ScavengerDrive Drive { get; private set; }
         public event Action<UplinkStatus> UplinkChanged;
         public float PhaseTime => Time.time - phaseStart;
         public bool Connected => Phase != LinkPhase.Off;
@@ -96,41 +105,109 @@ namespace MoonThemedGame.Scavenger
                 Debug.LogWarning($"[Scavenger] No '{RobotName}' found in the scene; SCAVENGER will do nothing.", this);
                 return;
             }
-            if (!robotCamera) robotCamera = CreateCamera(robot);
+            var bounds = RobotBounds(robot);
+            cameraSize = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
+            if (!robotCamera) robotCamera = CreateCamera();
             sceneMask = robotCamera.cullingMask | 1 << OverlayLayer;
-            sceneClear = robotCamera.clearFlags;
+            sceneClear = CameraClearFlags.SolidColor;
             robotCamera.backgroundColor = Color.black;
             if (!state && !robot.TryGetComponent(out state)) state = robot.gameObject.AddComponent<ScavengerRobotState>();
+            state.StatusChanged += OnStatusChanged;
             robotColliders = robot.GetComponentsInChildren<Collider>(true);
-            var bounds = new Bounds(robot.position, Vector3.zero);
-            foreach (var r in robot.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
             antenna = robot.InverseTransformPoint(bounds.center + Vector3.up * (bounds.extents.y + 0.05f));
             Network = SatelliteNetwork.Instance;
+
+            var forward = DetectForward(robot, bounds.center);
+            if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
+            Drive = drive;
+            Surface = LunarSurface.Create(surfaceOrigin, Mathf.Max(bounds.size.x, bounds.size.z), surfaceSeed);
+            Drive.Setup(Surface, forward);
+            sun = CreateSun();
             CreateInterference();
         }
 
-        static Camera CreateCamera(Transform robot)
+        static Bounds RobotBounds(Transform robot)
         {
             var renderers = robot.GetComponentsInChildren<Renderer>();
             var bounds = renderers.Length > 0 ? renderers[0].bounds : new Bounds(robot.position, Vector3.one);
             foreach (var r in renderers) bounds.Encapsulate(r.bounds);
-            float size = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
-            var forward = robot.TransformDirection(DetectForward(robot, bounds.center));
-            forward.y = 0;
-            forward = forward.sqrMagnitude > 0.001f ? forward.normalized : Vector3.forward;
+            return bounds;
+        }
 
+        Camera CreateCamera()
+        {
             var host = new GameObject($"{RobotName} / Feed Camera");
-            host.transform.SetParent(robot, false);
-            var look = bounds.center + Vector3.up * (size * 0.3f);
-            host.transform.position = bounds.center - forward * (size * 3.2f) + Vector3.up * (size * 1.3f);
-            host.transform.rotation = Quaternion.LookRotation(look - host.transform.position, Vector3.up);
+            SceneManager.MoveGameObjectToScene(host, robot.gameObject.scene);
             var camera = host.AddComponent<Camera>();
             camera.nearClipPlane = 0.05f;
+            camera.farClipPlane = 3000;
             camera.fieldOfView = 65;
             camera.enabled = false;
             camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
             host.AddComponent<AudioListener>().enabled = false;
             return camera;
+        }
+
+        static Light CreateSun()
+        {
+            var sun = new GameObject("Lunar Sun").AddComponent<Light>();
+            sun.type = LightType.Directional;
+            sun.transform.rotation = Quaternion.Euler(28, -35, 0);
+            sun.color = new Color(1f, 0.97f, 0.92f);
+            sun.intensity = 1.4f;
+            sun.shadows = LightShadows.Soft;
+            sun.enabled = false;
+            return sun;
+        }
+
+        // Chase view: follows the robot's heading with a little lag, ignores its tilt.
+        void LateUpdate()
+        {
+            if (!Connected || !robot || !Drive) return;
+            var target = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
+            cameraYaw = Mathf.LerpAngle(cameraYaw, target, 1 - Mathf.Exp(-4 * Time.deltaTime));
+            PlaceCamera(Mathf.Exp(-8 * Time.deltaTime));
+        }
+
+        void PlaceCamera(float keep)
+        {
+            var center = RobotBounds(robot).center;
+            var wanted = center + Quaternion.Euler(0, cameraYaw, 0) * new Vector3(0, cameraSize * 1.2f, -cameraSize * 3);
+            if (Surface) wanted.y = Mathf.Max(wanted.y, Surface.WorldHeight(wanted) + cameraSize * 0.4f);
+            var t = robotCamera.transform;
+            t.position = Vector3.Lerp(wanted, t.position, keep);
+            t.rotation = Quaternion.LookRotation(center + Vector3.up * cameraSize * 0.3f - t.position, Vector3.up);
+        }
+
+        void Deploy()
+        {
+            deployed = true;
+            Drive.PlaceAt(Surface.PadPosition, 0);
+            lastSignalPoint = robot.position;
+            hud.Notify("DEPLOYED TO SURFACE SITE");
+        }
+
+        void OnStatusChanged(RobotStatus status)
+        {
+            if (status != RobotStatus.Online || !deployed) return;
+            Drive.PlaceAt(Surface.PadPosition, 0);
+            lastSignalPoint = robot.position;
+        }
+
+        // Under cover the robot cannot hear commands, so it backs out to where it last had signal.
+        void UpdateDrive()
+        {
+            bool live = Phase == LinkPhase.Live && Powered;
+            Drive.controllable = live && Uplink == UplinkStatus.Ok;
+            if (live && Uplink == UplinkStatus.Ok && Time.time >= nextBreadcrumb)
+            {
+                nextBreadcrumb = Time.time + 0.5f;
+                lastSignalPoint = robot.position;
+            }
+            bool backOut = live && Uplink == UplinkStatus.Blocked;
+            if (backOut && !failsafe) hud.Notify("FAILSAFE: NO SKY - REVERSING TO LAST SIGNAL POINT");
+            failsafe = backOut;
+            Drive.autopilotTarget = backOut ? lastSignalPoint : null;
         }
 
         // The headlights sit at the front of the model; snap to the closest local axis.
@@ -216,6 +293,7 @@ namespace MoonThemedGame.Scavenger
                     break;
             }
             UpdateFeed();
+            if (Drive) UpdateDrive();
         }
 
         void SetPhase(LinkPhase phase)
@@ -291,6 +369,10 @@ namespace MoonThemedGame.Scavenger
                 playerController = controller && controller.enabled ? controller : null;
                 if (playerController) playerController.enabled = false;
             }
+            if (!deployed && Surface) Deploy();
+            if (sun) sun.enabled = true;
+            if (Drive) cameraYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
+            PlaceCamera(0);
             robotCamera.enabled = true;
             robotCamera.GetComponent<AudioListener>().enabled = true;
             stationStyle = VisualStyleSwitcher.CurrentStyle;
@@ -314,6 +396,12 @@ namespace MoonThemedGame.Scavenger
                 robotCamera.GetComponent<AudioListener>().enabled = false;
             }
             if (interference) interference.enabled = false;
+            if (sun) sun.enabled = false;
+            if (Drive)
+            {
+                Drive.controllable = false;
+                Drive.autopilotTarget = null;
+            }
             VisualStyleSwitcher.SetStyle(stationStyle);
             if (operatorCamera) operatorCamera.enabled = true;
             if (operatorListener) operatorListener.enabled = true;

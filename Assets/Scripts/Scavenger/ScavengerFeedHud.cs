@@ -271,7 +271,7 @@ namespace MoonThemedGame.Scavenger
             if (link.Powered) DrawSatellites(unit, line);
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC - BACK TO PC   1/2/3 - SATELLITE", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   ESC - BACK TO PC", phosphor, 60, text);
         }
 
         string SatLine()
