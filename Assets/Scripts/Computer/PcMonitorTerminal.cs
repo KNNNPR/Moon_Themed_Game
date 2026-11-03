@@ -30,6 +30,7 @@ namespace MoonThemedGame.Computer
         [Tooltip("Seconds the camera takes to move into the screen and back.")]
         [Min(0)] public float focusDuration = 0.9f;
         [Min(1)] public float aimDotSize = 6;
+        [Range(0, 2)] public float hoverHighlight = 0.85f;
 
         RenderTexture display;
         Material material;
@@ -169,10 +170,11 @@ namespace MoonThemedGame.Computer
             position = Input.mousePosition;
 #endif
             aimed = false;
-            if (IsTransitioning) { AdvanceTransition(); return; }
+            if (IsTransitioning) { UpdateHighlight(); AdvanceTransition(); return; }
             var camera = focusedCamera ? focusedCamera : Camera.main;
             if (focused)
             {
+                UpdateHighlight();
                 if (escape) { ExitFocus(); return; }
                 if (camera && TryGetPanelPosition(camera, position, out var panelPoint)) SetPointer(panelPoint);
                 else HidePointer();
@@ -183,6 +185,7 @@ namespace MoonThemedGame.Computer
             if (MoonThemedGame.Interactions.PlayerInteractor.Manages(camera) &&
                 TryGetComponent<MoonThemedGame.Interactions.TerminalInteractable>(out var adapter) && adapter.isActiveAndEnabled) return;
             aimed = camera && TryGetPanelPosition(camera, center, out _);
+            UpdateHighlight();
             if (aimed && interact) Focus();
         }
 
@@ -347,6 +350,13 @@ namespace MoonThemedGame.Computer
         {
             if (playerController) playerController.enabled = true;
             playerController = null;
+        }
+
+        void UpdateHighlight()
+        {
+            if (!material) return;
+            float target = aimed && !focused ? hoverHighlight : 0;
+            material.SetFloat("_HoverHighlight", Mathf.MoveTowards(material.GetFloat("_HoverHighlight"), target, Time.unscaledDeltaTime * 5));
         }
 
         void OnDisable()
