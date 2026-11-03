@@ -164,7 +164,7 @@ namespace MoonThemedGame.Scavenger
             sun.type = LightType.Directional;
             sun.transform.rotation = Quaternion.Euler(28, -35, 0);
             sun.color = new Color(1f, 0.97f, 0.92f);
-            sun.intensity = 1.4f;
+            sun.intensity = 0.9f;
             sun.shadows = LightShadows.Soft;
             sun.enabled = false;
             return sun;

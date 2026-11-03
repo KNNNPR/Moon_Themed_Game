@@ -352,6 +352,7 @@ namespace MoonThemedGame.Scavenger
         void Alert(Rect rect, string message, Color color, int salt)
         {
             float pulse = 0.8f + 0.2f * Mathf.Sin(Time.time * 6);
+            Backing(rect, message, big);
             CopyLayout(big);
             ghost.normal.textColor = new Color(color.r, color.g, color.b, 0.3f * pulse);
             for (int i = 0; i < 4; i++)
@@ -360,6 +361,19 @@ namespace MoonThemedGame.Scavenger
                 GUI.Label(new Rect(rect.x + o.x, rect.y + o.y, rect.width, rect.height), message, ghost);
             }
             Draw(rect, message, Color.Lerp(color, Color.white, 0.25f), salt, big, false);
+        }
+
+        // Dark plate behind the text so it reads over the busy ASCII feed.
+        static void Backing(Rect rect, string message, GUIStyle style)
+        {
+            var plain = new GUIStyle(style) { richText = false };
+            var size = plain.CalcSize(new GUIContent(message));
+            float x = style.alignment == TextAnchor.MiddleCenter ? rect.center.x - size.x * 0.5f : rect.x;
+            float y = style.alignment == TextAnchor.MiddleCenter ? rect.center.y - size.y * 0.5f : rect.y;
+            var previous = GUI.color;
+            GUI.color = new Color(0, 0, 0, 0.6f);
+            GUI.DrawTexture(new Rect(x - 4, y, size.x + 8, size.y), Texture2D.whiteTexture);
+            GUI.color = previous;
         }
 
         void CopyLayout(GUIStyle style)
@@ -378,6 +392,7 @@ namespace MoonThemedGame.Scavenger
             if (Hash(salt, slice, 1) < 0.03f + 0.3f * k) rect.x += (Hash(salt, slice, 2) - 0.5f) * (4 + 20 * k);
             float flicker = worn ? 0.88f + 0.12f * Hash(salt, slice, 3) : 1;
 
+            if (worn) Backing(rect, message, style);
             CopyLayout(style);
             ghost.normal.textColor = new Color(color.r, color.g, color.b, 0.12f * flicker);
             GUI.Label(new Rect(rect.x + 2, rect.y, rect.width, rect.height), message, ghost);

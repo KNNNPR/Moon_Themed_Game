@@ -46,9 +46,9 @@ namespace MoonThemedGame.Scavenger
             random = new System.Random(seed);
             noiseX = Range(0, 1000);
             noiseZ = Range(0, 1000);
-            ground = MakeMaterial(new Color(0.55f, 0.55f, 0.56f));
-            rock = MakeMaterial(new Color(0.38f, 0.37f, 0.37f));
-            metal = MakeMaterial(new Color(0.45f, 0.42f, 0.38f));
+            ground = MakeMaterial(new Color(0.2f, 0.2f, 0.21f));
+            rock = MakeMaterial(new Color(0.13f, 0.13f, 0.13f));
+            metal = MakeMaterial(new Color(0.3f, 0.27f, 0.23f));
             
             craters.Clear();
             int count = Mathf.RoundToInt(sizeInUnits * 0.18f);
