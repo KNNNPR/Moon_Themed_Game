@@ -416,6 +416,7 @@ MonoBehaviour:
   screenUp: {x: 0, y: 0.48769388, z: 0.8730147}
   screenSize: {x: 1.7107773, y: 0.8972249}
   language: 0
+  credits: 20
   interactionDistance: 5
 --- !u!64 &1508841710
 MeshCollider:

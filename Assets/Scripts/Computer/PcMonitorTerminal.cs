@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Cursor = UnityEngine.Cursor;
@@ -24,6 +25,7 @@ namespace MoonThemedGame.Computer
         public Vector3 screenUp = Vector3.up;
         public Vector2 screenSize = new Vector2(1.7f, 0.9f);
         public TerminalLanguage language;
+        [SerializeField, Min(0)] int credits = 20;
         [Min(1)] public float interactionDistance = 5;
 
         RenderTexture display;
@@ -46,6 +48,7 @@ namespace MoonThemedGame.Computer
         public Material ScreenMaterial => material;
         public bool IsFocused => focused;
         public string HoveredIcon { get; private set; }
+        public int Credits => credits;
 
         void OnEnable()
         {
@@ -90,12 +93,21 @@ namespace MoonThemedGame.Computer
             SetIcon("shop-image", assets.shopIcon);
             SetIcon("scavenger-image", assets.scavengerIcon);
             SetIcon("messages-image", assets.messagesIcon);
+            SetIcon("credit-image", assets.coinIcon);
             SetIcon("screen-cursor", assets.cursorIcon);
             cursor = root.Q("screen-cursor");
             cursor.style.display = DisplayStyle.None;
             cursor.pickingMode = PickingMode.Ignore;
             icons = new[] { root.Q("shop"), root.Q("scavenger"), root.Q("messages") };
             ApplyLanguage();
+            SetCredits(credits);
+        }
+
+        public void SetCredits(int amount)
+        {
+            credits = Mathf.Max(0, amount);
+            var label = root?.Q<Label>("credit-value");
+            if (label != null) label.text = credits.ToString(CultureInfo.InvariantCulture);
         }
 
         void SetIcon(string name, VectorImage icon)

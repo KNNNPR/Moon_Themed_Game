@@ -56,6 +56,7 @@ namespace MoonThemedGame.Editor
             assets.shopIcon = Require<VectorImage>(Folder + "/Icons/shop.svg");
             assets.scavengerIcon = Require<VectorImage>(Folder + "/Icons/scavenger.svg");
             assets.messagesIcon = Require<VectorImage>(Folder + "/Icons/messages.svg");
+            assets.coinIcon = Require<VectorImage>(Folder + "/Icons/coin.svg");
             assets.cursorIcon = Require<VectorImage>(Folder + "/Icons/cursor.svg");
             assets.translations = Require<TextAsset>(Folder + "/UI/TerminalText.json");
             assets.screenMaterial = material;
