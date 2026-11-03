@@ -12,13 +12,10 @@ namespace MoonThemedGame.Scavenger
         [Min(1)] public float capacity = 100;
         [Tooltip("Charge per second while the operator is connected.")]
         public float drainPerSecond = 1;
-        [Tooltip("Charge per second while docked in standby.")]
-        public float rechargePerSecond = 4;
         [Range(0, 1)] public float lowChargeThreshold = 0.2f;
         [Min(0)] public float shutdownDelay = 10;
         [Min(0)] public int evacuationCost = 15;
         [Min(0)] public float evacuationTime = 8;
-        public bool docked = true;
 
         float timer;
 
@@ -48,7 +45,6 @@ namespace MoonThemedGame.Scavenger
             {
                 case RobotStatus.Online:
                     if (Active) Charge = Mathf.Max(0, Charge - drainPerSecond * dt);
-                    else if (docked) Charge = Mathf.Min(capacity, Charge + rechargePerSecond * dt);
                     if (Charge <= 0) SetStatus(RobotStatus.Failing, shutdownDelay);
                     break;
                 case RobotStatus.Failing:

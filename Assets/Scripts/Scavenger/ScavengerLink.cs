@@ -36,9 +36,7 @@ namespace MoonThemedGame.Scavenger
         CursorLockMode previousLock;
         bool previousCursorVisible, connected;
         float signalLoss;
-        string notice;
-        float noticeUntil;
-        GUIStyle style, bigStyle;
+        ScavengerFeedHud hud;
 
         public bool Connected => connected;
 
@@ -61,6 +59,7 @@ namespace MoonThemedGame.Scavenger
         void Awake()
         {
             if (!terminal) terminal = GetComponent<PcMonitorTerminal>();
+            if (!TryGetComponent(out hud)) hud = gameObject.AddComponent<ScavengerFeedHud>();
         }
 
         void Start()
@@ -76,7 +75,7 @@ namespace MoonThemedGame.Scavenger
                 return;
             }
             if (!robotCamera) robotCamera = CreateCamera(robot);
-            if (!state) state = robot.GetComponent<ScavengerRobotState>() ?? robot.gameObject.AddComponent<ScavengerRobotState>();
+            if (!state && !robot.TryGetComponent(out state)) state = robot.gameObject.AddComponent<ScavengerRobotState>();
             CreateInterference();
         }
 
@@ -173,14 +172,8 @@ namespace MoonThemedGame.Scavenger
 
         void TryEvacuate()
         {
-            if (state.OrderEvacuation(terminal)) Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
-            else Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
-        }
-
-        void Notify(string text)
-        {
-            notice = text;
-            noticeUntil = Time.time + 3;
+            if (state.OrderEvacuation(terminal)) hud.Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
+            else hud.Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
         }
 
         void UpdateInterference()
@@ -214,6 +207,7 @@ namespace MoonThemedGame.Scavenger
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             connected = true;
+            hud.OnConnected();
             UpdateInterference();
         }
 
@@ -242,61 +236,6 @@ namespace MoonThemedGame.Scavenger
             yield return null;
             if (!connected) terminal.Focus(true);
         }
-
-        void OnGUI()
-        {
-            if (!connected) return;
-            float unit = Screen.height / 40f;
-            style ??= new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(unit) };
-            bigStyle ??= new GUIStyle(GUI.skin.label) { fontSize = Mathf.RoundToInt(unit * 2), alignment = TextAnchor.MiddleCenter };
-            style.normal.textColor = bigStyle.normal.textColor = Color.white;
-            float pad = unit;
-            float line = unit * 1.6f;
-
-            GUI.Label(new Rect(pad, pad, Screen.width, line), $"{RobotName} // {(state && state.HasSignal ? "LIVE FEED" : "NO SIGNAL")}", style);
-            if (state)
-            {
-                float width = unit * 10;
-                var bar = new Rect(Screen.width - pad - width, pad + line, width, unit * 0.6f);
-                GUI.Label(new Rect(bar.x, pad, width, line), $"CHARGE {Mathf.CeilToInt(state.Normalized * 100)}%", style);
-                var previous = GUI.color;
-                GUI.color = new Color(1, 1, 1, 0.25f);
-                GUI.DrawTexture(bar, Texture2D.whiteTexture);
-                GUI.color = state.LowCharge || !state.HasSignal ? new Color(1, 0.3f, 0.2f) : Color.white;
-                GUI.DrawTexture(new Rect(bar.x, bar.y, bar.width * state.Normalized, bar.height), Texture2D.whiteTexture);
-                GUI.color = previous;
-                GUI.Label(new Rect(bar.x, bar.yMax + unit * 0.3f, width, line), $"STATUS {StatusText()}", style);
-
-                var center = new Rect(0, Screen.height * 0.38f, Screen.width, unit * 3);
-                var below = new Rect(0, center.yMax, Screen.width, unit * 2);
-                switch (state.Status)
-                {
-                    case RobotStatus.Failing:
-                        GUI.Label(center, $"SIGNAL LOSS IN {Mathf.CeilToInt(state.TimeLeft)}", bigStyle);
-                        break;
-                    case RobotStatus.Offline:
-                        GUI.Label(center, "ROBOT OFFLINE", bigStyle);
-                        GUI.Label(below, $"[E] ORDER EVACUATION — {state.evacuationCost} CR   (BALANCE {terminal.Credits} CR)", Centered());
-                        break;
-                    case RobotStatus.Evacuating:
-                        GUI.Label(center, $"EVACUATION EN ROUTE  {Mathf.CeilToInt(state.TimeLeft)}", bigStyle);
-                        break;
-                }
-            }
-            if (notice != null && Time.time < noticeUntil)
-                GUI.Label(new Rect(0, Screen.height * 0.62f, Screen.width, unit * 2), notice, Centered());
-            GUI.Label(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC — BACK TO PC", style);
-        }
-
-        GUIStyle Centered() => new GUIStyle(style) { alignment = TextAnchor.MiddleCenter };
-
-        string StatusText() => state.Status switch
-        {
-            RobotStatus.Online => state.LowCharge ? "LOW CHARGE" : "ONLINE",
-            RobotStatus.Failing => "CRITICAL",
-            RobotStatus.Offline => "OFFLINE",
-            _ => "EVACUATING"
-        };
 
         void OnDisable() => Disconnect();
     }
