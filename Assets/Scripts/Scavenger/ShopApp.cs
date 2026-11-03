@@ -24,7 +24,7 @@ namespace MoonThemedGame.Scavenger
         {
             public Upgrade upgrade;
             public VisualElement root, preview, buy;
-            public Label level, value, buyLabel;
+            public Label level, value, next, buyLabel;
             public Wireframe wireframe;
             public float yaw;
         }
@@ -124,9 +124,11 @@ namespace MoonThemedGame.Scavenger
             if (!open) return;
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             window.BringToFront();
+            terminal.Root.Q("screen-cursor")?.BringToFront();
             Refresh();
         }
 
+        // Covers the desktop right of the icon column (SATELLITES and CREDIT included) so nothing shows through.
         void Build()
         {
             catalog = Resources.Load<ShopCatalog>("ShopCatalog");
@@ -138,32 +140,29 @@ namespace MoonThemedGame.Scavenger
             window.name = "shop-window";
             var s = window.style;
             s.position = Position.Absolute;
-            s.left = 300;
-            s.top = 14;
-            s.width = 640;
-            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 0.97f);
+            s.left = 196;
+            s.top = 8;
+            s.width = 756;
+            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 1);
             Border(window, Muted);
             s.paddingLeft = s.paddingRight = 10;
-            s.paddingTop = s.paddingBottom = 8;
+            s.paddingTop = s.paddingBottom = 6;
+            s.overflow = Overflow.Hidden;
             s.display = DisplayStyle.None;
 
             var title = Box();
             title.style.flexDirection = FlexDirection.Row;
-            title.style.justifyContent = Justify.SpaceBetween;
-            title.Add(MakeLabel("PARTS DEPOT // ROBOT UPGRADES", 18, Text));
+            title.style.alignItems = Align.Center;
+            title.style.marginBottom = 6;
+            var heading = MakeLabel("PARTS DEPOT // ROBOT UPGRADES", 18, Text);
+            heading.style.flexGrow = 1;
+            title.Add(heading);
+            balance = MakeLabel("", 15, Good);
+            balance.style.marginRight = 16;
+            title.Add(balance);
             close = MakeLabel("[X]", 18, Muted);
             title.Add(close);
             window.Add(title);
-
-            var info = Box();
-            info.style.flexDirection = FlexDirection.Row;
-            info.style.justifyContent = Justify.SpaceBetween;
-            info.style.marginTop = 2;
-            info.style.marginBottom = 6;
-            info.Add(MakeLabel("Parts are installed on the robot right away.", 12, Muted));
-            balance = MakeLabel("", 14, Good);
-            info.Add(balance);
-            window.Add(info);
 
             var grid = Box();
             grid.style.flexDirection = FlexDirection.Row;
@@ -173,7 +172,6 @@ namespace MoonThemedGame.Scavenger
             window.Add(grid);
 
             status = MakeLabel("", 14, Text);
-            status.style.marginTop = 2;
             status.style.height = 18;
             window.Add(status);
             desktop.Insert(index, window);
@@ -187,16 +185,17 @@ namespace MoonThemedGame.Scavenger
             card.wireframe = model ? BuildWireframe(model) : null;
 
             var root = card.root;
-            root.style.width = 306;
-            root.style.height = 118;
+            root.style.width = 362;
+            root.style.height = 136;
             root.style.marginBottom = 6;
             root.style.flexDirection = FlexDirection.Row;
             root.style.paddingLeft = root.style.paddingRight = 6;
             root.style.paddingTop = root.style.paddingBottom = 6;
+            root.style.overflow = Overflow.Hidden;
             Border(root, Edge);
 
             card.preview = Box();
-            card.preview.style.width = card.preview.style.height = 104;
+            card.preview.style.width = card.preview.style.height = 122;
             card.preview.style.flexShrink = 0;
             card.preview.style.backgroundColor = new Color(0, 0, 0, 0.4f);
             Border(card.preview, Edge);
@@ -205,25 +204,44 @@ namespace MoonThemedGame.Scavenger
 
             var column = Box();
             column.style.flexGrow = 1;
-            column.style.marginLeft = 8;
-            column.style.justifyContent = Justify.SpaceBetween;
-            var name = MakeLabel(RobotUpgrades.Title(upgrade), 15, Text);
-            column.Add(name);
+            column.style.flexShrink = 1;
+            column.style.minWidth = 0;
+            column.style.marginLeft = 10;
+            column.style.overflow = Overflow.Hidden;
+            column.Add(Line(RobotUpgrades.Title(upgrade), 15, Text));
             var description = MakeLabel(RobotUpgrades.Description(upgrade), 11, Muted);
             description.style.whiteSpace = WhiteSpace.Normal;
+            description.style.height = 28;
+            description.style.marginTop = 3;
+            description.style.overflow = Overflow.Hidden;
             column.Add(description);
-            card.level = MakeLabel("", 13, Text);
+            card.level = Line("", 13, Text);
+            card.level.style.marginTop = 2;
             column.Add(card.level);
-            card.value = MakeLabel("", 12, Muted);
+            card.value = Line("", 12, Muted);
             column.Add(card.value);
+            card.next = Line("", 12, Good);
+            column.Add(card.next);
+            var spacer = Box();
+            spacer.style.flexGrow = 1;
+            column.Add(spacer);
             card.buy = Box();
             card.buy.style.alignSelf = Align.FlexStart;
             card.buy.style.paddingLeft = card.buy.style.paddingRight = 4;
-            card.buyLabel = MakeLabel("", 14, Text);
+            card.buyLabel = Line("", 14, Text);
             card.buy.Add(card.buyLabel);
             column.Add(card.buy);
             root.Add(column);
             return root;
+        }
+
+        static Label Line(string value, int size, Color color)
+        {
+            var label = MakeLabel(value, size, color);
+            label.style.whiteSpace = WhiteSpace.NoWrap;
+            label.style.overflow = Overflow.Hidden;
+            label.style.textOverflow = TextOverflow.Ellipsis;
+            return label;
         }
 
         void Refresh()
@@ -232,11 +250,11 @@ namespace MoonThemedGame.Scavenger
             {
                 var upgrade = card.upgrade;
                 int level = RobotUpgrades.Level(upgrade), max = RobotUpgrades.MaxLevel(upgrade);
+                bool full = RobotUpgrades.IsMax(upgrade);
                 card.level.text = "LVL " + new string('#', level) + new string('.', max - level) + $"  {level}/{max}";
-                card.value.text = RobotUpgrades.IsMax(upgrade)
-                    ? RobotUpgrades.Value(upgrade, level)
-                    : $"{RobotUpgrades.Value(upgrade, level)}  ->  {RobotUpgrades.Value(upgrade, level + 1)}";
-                if (RobotUpgrades.IsMax(upgrade))
+                card.value.text = "NOW   " + RobotUpgrades.Value(upgrade, level);
+                card.next.text = full ? "NEXT  --" : "NEXT  " + RobotUpgrades.Value(upgrade, level + 1);
+                if (full)
                 {
                     card.buyLabel.text = "[INSTALLED]";
                     card.buyLabel.style.color = Good;

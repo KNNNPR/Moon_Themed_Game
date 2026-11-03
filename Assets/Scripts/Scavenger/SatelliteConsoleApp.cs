@@ -93,6 +93,7 @@ namespace MoonThemedGame.Scavenger
             if (!open) return;
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             window.BringToFront();
+            terminal.Root.Q("screen-cursor")?.BringToFront();
             Refresh();
         }
 
@@ -125,7 +126,7 @@ namespace MoonThemedGame.Scavenger
             s.left = 300;
             s.top = 20;
             s.width = 640;
-            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 0.97f);
+            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 1);
             Border(window, Muted);
             s.paddingLeft = s.paddingRight = 12;
             s.paddingTop = s.paddingBottom = 10;
