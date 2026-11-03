@@ -46,7 +46,6 @@ namespace MoonThemedGame.Computer
         float previousFov;
         CursorLockMode previousLock;
         bool focusCursorVisible, aimed;
-        // Camera move: 0 = standing, 1 = at the screen; direction +1 entering, -1 leaving.
         float transition;
         int transitionDirection;
         Vector3 focusPosition;
@@ -88,8 +87,6 @@ namespace MoonThemedGame.Computer
             panelSettings.scale = 1;
             panelSettings.clearColor = true;
             panelSettings.colorClearValue = new Color(0.006f, 0.009f, 0.012f, 1);
-            // Pointer ownership stays with this physical screen. No overlay panel
-            // is allowed to intercept global mouse events or gameplay UI.
             panelSettings.SetScreenToPanelSpaceFunction(_ => new Vector2(-10000, -10000));
             uiHost = new GameObject("PC MONITOR / UI surface") { hideFlags = HideFlags.HideAndDontSave };
             uiHost.transform.SetParent(transform, false);
@@ -224,9 +221,6 @@ namespace MoonThemedGame.Computer
             panelPoint = new Vector2(uv.x * assets.resolution.x, (1 - uv.y) * assets.resolution.y);
             return true;
         }
-
-        // Same mapping as PCMonitorCRT.hlsl: hit testing follows curved text
-        // and both moving waves, so hovering follows the visible icon.
         public static Vector2 WarpUV(Vector2 uv, float time, Material screen)
         {
             var p = uv * 2 - Vector2.one;
@@ -263,7 +257,6 @@ namespace MoonThemedGame.Computer
             hovering = false;
         }
 
-        // Moves the camera into the screen over focusDuration; instant skips the move.
         public void Focus(bool instant = false)
         {
             if (focused || !Camera.main) return;
@@ -285,7 +278,6 @@ namespace MoonThemedGame.Computer
             if (instant || focusDuration <= 0) { transition = 1; FinishTransition(); }
         }
 
-        // Moves the camera back to where it stood; instant skips the move.
         public void ExitFocus(bool instant = false)
         {
             if (!focused) return;
@@ -304,8 +296,8 @@ namespace MoonThemedGame.Computer
         void ApplyCameraPose()
         {
             if (!focusedCamera) return;
-            float t = transition * transition * (3 - 2 * transition); // ease in and out
-            // A slight dip mid-move reads as leaning in to the desk.
+            float t = transition * transition * (3 - 2 * transition); 
+
             var position = Vector3.Lerp(previousPosition, focusPosition, t) + Vector3.down * (Mathf.Sin(t * Mathf.PI) * 0.06f);
             focusedCamera.transform.SetPositionAndRotation(position, Quaternion.Slerp(previousRotation, focusRotation, t));
             focusedCamera.fieldOfView = Mathf.Lerp(previousFov, FocusFov, t);
