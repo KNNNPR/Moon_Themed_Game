@@ -59,6 +59,9 @@ namespace MoonThemedGame.Computer
         public bool IsTransitioning => transitionDirection != 0;
         public bool IsAimed => aimed;
         public string HoveredIcon { get; private set; }
+        public VisualElement Root => root;
+        public bool PointerActive { get; private set; }
+        public Vector2 PointerPosition { get; private set; }
         public int Credits => credits;
 
         void OnEnable()
@@ -237,6 +240,8 @@ namespace MoonThemedGame.Computer
             if (root == null) return;
             if (!hovering) { previousCursorVisible = Cursor.visible; Cursor.visible = false; hovering = true; }
             cursor.style.display = DisplayStyle.Flex;
+            PointerActive = true;
+            PointerPosition = point;
             cursor.style.left = Mathf.Clamp(point.x, 0, assets.resolution.x - 20);
             cursor.style.top = Mathf.Clamp(point.y, 0, assets.resolution.y - 30);
             HoveredIcon = null;
@@ -251,6 +256,7 @@ namespace MoonThemedGame.Computer
         public void HidePointer()
         {
             if (cursor != null) cursor.style.display = DisplayStyle.None;
+            PointerActive = false;
             if (icons != null) foreach (var icon in icons) icon.RemoveFromClassList("pointer-over");
             HoveredIcon = null;
             if (!hovering) return;

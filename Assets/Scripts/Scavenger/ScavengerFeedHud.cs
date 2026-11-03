@@ -36,9 +36,18 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
+        bool subscribed, lowElevation;
 
         ScavengerRobotState State => link ? link.state : null;
-        float Interference => State ? State.Interference : 0;
+        float Interference
+        {
+            get
+            {
+                float k = State ? State.Interference : 0;
+                if (link && link.Phase == LinkPhase.Terminating) k = Mathf.Max(k, Mathf.Clamp01(link.PhaseTime / link.terminateDuration * 2));
+                return k;
+            }
+        }
         float Uptime => Time.time - connectedAt;
 
         void Awake()
@@ -49,11 +58,19 @@ namespace MoonThemedGame.Scavenger
 
         public void OnConnected()
         {
+            if (!subscribed && link.Network)
+            {
+                link.UplinkChanged += OnUplinkChanged;
+                link.Network.Selected += OnHandover;
+                subscribed = true;
+            }
+            lowElevation = false;
             connectedAt = Time.time;
             packets = Random.Range(10000, 40000);
             log.Clear();
             AddLog("LINK ESTABLISHED  ch 0x3F2A");
             AddLog($"FW {firmware}");
+            OnUplinkChanged(link.Uplink);
             nextSample = nextLog = 0;
         }
 
@@ -63,6 +80,33 @@ namespace MoonThemedGame.Scavenger
             noticeUntil = Time.time + 3;
             AddLog(message);
         }
+
+        string SatName => link.Network && link.Network.Active != null ? link.Network.Active.name : "NONE";
+
+        void OnUplinkChanged(UplinkStatus status)
+        {
+            if (!link.Connected) return;
+            AddLog(status switch
+            {
+                UplinkStatus.Ok => $"UPLINK via {SatName}  EL {Mathf.RoundToInt(link.Network.Active.Elevation(link.Network.Clock))}",
+                UplinkStatus.BelowHorizon => $"ERR {SatName} below horizon - uplink lost",
+                UplinkStatus.Blocked => $"ERR line of sight to {SatName} blocked",
+                _ => "ERR no satellite selected"
+            });
+        }
+
+        void OnHandover(Satellite satellite)
+        {
+            if (link.Connected) AddLog($"HANDOVER -> {satellite.name}");
+        }
+
+        public static string Reason(UplinkStatus status) => status switch
+        {
+            UplinkStatus.BelowHorizon => "SATELLITE BELOW HORIZON",
+            UplinkStatus.Blocked => "LINE OF SIGHT BLOCKED - ROBOT UNDER COVER",
+            UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
+            _ => ""
+        };
 
         void AddLog(string line)
         {
@@ -75,7 +119,7 @@ namespace MoonThemedGame.Scavenger
         {
             if (!link || !link.Connected) return;
             var state = State;
-            bool signal = !state || state.HasSignal;
+            bool signal = link.HasPicture;
             float k = Interference;
             if (Time.time >= nextSample)
             {
@@ -86,11 +130,13 @@ namespace MoonThemedGame.Scavenger
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
+            bool low = link.Uplink == UplinkStatus.Ok && link.UplinkQuality < 0.3f;
+            if (low && !lowElevation) AddLog($"WARN {SatName} low elevation - signal weak");
+            lowElevation = low;
             if (Time.time >= nextLog)
             {
                 nextLog = Time.time + Random.Range(1.2f, 3f) * (k > 0.4f ? 0.5f : 1);
                 if (signal) AddLog(k > 0.2f && Random.value < k + 0.3f ? Pick(FailingLog) : Pick(RoutineLog));
-                else if (state && state.Status == RobotStatus.Offline) AddLog("NO CARRIER");
             }
         }
 
@@ -98,7 +144,7 @@ namespace MoonThemedGame.Scavenger
 
         static readonly string[] Handshake =
         {
-            "DIAL SCAV_BOT  ch 0x3F2A", "CARRIER", "HANDSHAKE", "AUTH OPERATOR", "VIDEO STREAM"
+            "DIAL SCAV_BOT  ch 0x3F2A", "SAT UPLINK", "HANDSHAKE", "AUTH OPERATOR", "VIDEO STREAM"
         };
 
         void OnGUI()
@@ -113,7 +159,7 @@ namespace MoonThemedGame.Scavenger
                     DrawHandshake(line);
                     return;
                 case LinkPhase.Terminating:
-                    Alert(new Rect(0, Screen.height * 0.38f, Screen.width, unit * 3), "CONNECTION TERMINATED", phosphor, 70);
+                    DrawTerminated(unit, line);
                     return;
             }
             DrawLive(unit, line);
@@ -123,7 +169,8 @@ namespace MoonThemedGame.Scavenger
         {
             float t = link.PhaseTime;
             float step = link.handshakeDuration / Handshake.Length;
-            bool carrier = !State || State.HasSignal;
+            bool power = link.Powered;
+            bool uplink = link.Uplink == UplinkStatus.Ok;
             var origin = new Vector2(Screen.width * 0.3f, Screen.height * 0.36f);
             Draw(new Rect(origin.x, origin.y - line * 1.5f, Screen.width, line), "ESTABLISHING CONNECTION" + Dots(t), phosphor, 80, text);
             for (int i = 0; i < Handshake.Length; i++)
@@ -133,10 +180,23 @@ namespace MoonThemedGame.Scavenger
                 string result;
                 if (i == 0) result = "";
                 else if (shown < step * 0.8f) result = " " + new string('.', 1 + Mathf.FloorToInt(shown / step * 10));
-                else result = i == Handshake.Length - 1 && !carrier ? " ......... NO CARRIER" : " ......... OK";
-                var tint = result.EndsWith("NO CARRIER") ? warning : phosphor;
+                else if (i == 1) result = uplink ? $" ({SatName}) .... OK" : $" ({SatName}) .... FAIL";
+                else result = i == Handshake.Length - 1 && !(power && uplink) ? " ......... NO CARRIER" : " ......... OK";
+                var tint = result.EndsWith("NO CARRIER") || result.EndsWith("FAIL") ? warning : phosphor;
                 Draw(new Rect(origin.x, origin.y + line * i, Screen.width, line), "> " + Handshake[i] + result, tint, 81 + i, text);
             }
+        }
+
+        void DrawTerminated(float unit, float line)
+        {
+            var center = new Rect(0, Screen.height * 0.36f, Screen.width, unit * 3);
+            float u = link.PhaseTime / link.terminateDuration;
+            if (Mathf.Repeat(Time.time * 14, 1) < 0.15f && u > 0.5f) return;
+            Alert(center, "CONNECTION TERMINATED", warning, 70);
+            int up = Mathf.FloorToInt(Uptime);
+            Draw(new Rect(0, center.yMax + unit * 0.5f, Screen.width, line),
+                $"LINK CLOSED BY OPERATOR   SESSION {up / 60:00}:{up % 60:00}   PKT {packets}", phosphor, 71, Centered(text));
+            Draw(new Rect(0, center.yMax + unit * 0.5f + line, Screen.width, line), $"UPLINK {SatName} RELEASED", Dim(phosphor), 72, Centered(text));
         }
 
         static string Dots(float t) => new string('.', 1 + Mathf.FloorToInt(t * 3) % 3);
@@ -145,7 +205,7 @@ namespace MoonThemedGame.Scavenger
         {
             var state = State;
             float pad = unit;
-            bool signal = !state || state.HasSignal;
+            bool signal = link.HasPicture;
             var inv = CultureInfo.InvariantCulture;
 
             if (signal)
@@ -160,6 +220,7 @@ namespace MoonThemedGame.Scavenger
                     $"LINK 0x3F2A  PKT {packets}  LOSS {loss.ToString("0.0", inv)}%",
                     $"LAT {Mathf.RoundToInt(latency)}ms  RSSI {Mathf.RoundToInt(rssi)}dBm",
                     $"POS {position.x.ToString("0.00", inv)} {position.y.ToString("0.00", inv)} {position.z.ToString("0.00", inv)}  HDG {Mathf.RoundToInt(heading):000}",
+                    SatLine(),
                     $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C",
                     $"UPTIME {up / 3600:00}:{up / 60 % 60:00}:{up % 60:00}"
                 };
@@ -176,14 +237,20 @@ namespace MoonThemedGame.Scavenger
             {
                 float width = unit * 11;
                 float x = Screen.width - pad - width;
-                var tint = state.LowCharge || !signal ? warning : phosphor;
+                var tint = state.LowCharge || !link.Powered ? warning : phosphor;
                 Draw(new Rect(x, pad, width, line), $"CHARGE {Mathf.CeilToInt(state.Normalized * 100):000}%", tint, 20, text);
                 Draw(new Rect(x, pad + line, width, line), Bar(state.Normalized, 16), tint, 21, text);
                 Draw(new Rect(x, pad + line * 2, width, line), $"STATUS {StatusText(state)}", tint, 22, text);
 
                 var center = new Rect(0, Screen.height * 0.38f, Screen.width, unit * 3);
                 var below = new Rect(0, center.yMax + unit * 0.5f, Screen.width, line);
-                switch (state.Status)
+                if (link.Powered && link.Uplink != UplinkStatus.Ok)
+                {
+                    Alert(center, "NO UPLINK", warning, 34);
+                    Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
+                    Draw(new Rect(0, below.yMax, Screen.width, line), "SELECT ANOTHER SATELLITE IN SAT-LINK ON THE PC", Dim(phosphor), 36, Centered(text));
+                }
+                else switch (state.Status)
                 {
                     case RobotStatus.Failing:
                         Alert(center, $"SIGNAL LOSS IN {Mathf.CeilToInt(state.TimeLeft)}", warning, 30);
@@ -200,6 +267,14 @@ namespace MoonThemedGame.Scavenger
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
             Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "ESC - BACK TO PC", phosphor, 60, text);
+        }
+
+        string SatLine()
+        {
+            var satellite = link.Network ? link.Network.Active : null;
+            if (satellite == null) return "SAT NONE";
+            float clock = link.Network.Clock;
+            return $"SAT {satellite.name}  EL {Mathf.RoundToInt(satellite.Elevation(clock)):00}  AZ {Mathf.RoundToInt(satellite.Azimuth(clock)):000}  Q {Mathf.RoundToInt(link.UplinkQuality * 100):000}%";
         }
 
         void EnsureStyles()

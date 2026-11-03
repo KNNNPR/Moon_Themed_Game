@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using MoonThemedGame.Computer;
 using MoonThemedGame.Rendering;
@@ -33,7 +34,7 @@ namespace MoonThemedGame.Scavenger
         public VisualStyle robotStyle = VisualStyle.ColorAscii;
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
-        [Min(0.01f)] public float terminateDuration = 0.7f;
+        [Min(0.01f)] public float terminateDuration = 1.3f;
 
         Camera operatorCamera;
         AudioListener operatorListener;
@@ -47,8 +48,15 @@ namespace MoonThemedGame.Scavenger
         int sceneMask;
         CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
+        Collider[] robotColliders;
+        Vector3 antenna;
 
         public LinkPhase Phase { get; private set; }
+        public SatelliteNetwork Network { get; private set; }
+        public UplinkStatus Uplink { get; private set; } = UplinkStatus.Ok;
+        public float UplinkQuality { get; private set; } = 1;
+        public bool Powered => !state || state.HasSignal;
+        public event Action<UplinkStatus> UplinkChanged;
         public float PhaseTime => Time.time - phaseStart;
         public bool Connected => Phase != LinkPhase.Off;
 
@@ -65,7 +73,9 @@ namespace MoonThemedGame.Scavenger
         static void Install()
         {
             var terminal = FindAnyObjectByType<PcMonitorTerminal>();
-            if (terminal && !terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
+            if (!terminal) return;
+            if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
+            if (!terminal.GetComponent<SatelliteConsoleApp>()) terminal.gameObject.AddComponent<SatelliteConsoleApp>();
         }
 
         void Awake()
@@ -91,6 +101,11 @@ namespace MoonThemedGame.Scavenger
             sceneClear = robotCamera.clearFlags;
             robotCamera.backgroundColor = Color.black;
             if (!state && !robot.TryGetComponent(out state)) state = robot.gameObject.AddComponent<ScavengerRobotState>();
+            robotColliders = robot.GetComponentsInChildren<Collider>(true);
+            var bounds = new Bounds(robot.position, Vector3.zero);
+            foreach (var r in robot.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
+            antenna = robot.InverseTransformPoint(bounds.center + Vector3.up * (bounds.extents.y + 0.05f));
+            Network = SatelliteNetwork.Instance;
             CreateInterference();
         }
 
@@ -174,6 +189,7 @@ namespace MoonThemedGame.Scavenger
             click = Input.GetMouseButtonDown(0);
 #endif
             if (state) state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
+            if (Connected) RefreshUplink();
             switch (Phase)
             {
                 case LinkPhase.Off:
@@ -211,13 +227,25 @@ namespace MoonThemedGame.Scavenger
             else hud.Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
         }
 
-        public bool HasPicture => (!state || state.HasSignal) && (Phase != LinkPhase.Connecting || PhaseTime >= handshakeDuration);
+        public void RefreshUplink()
+        {
+            if (!robot || !Network) return;
+            var status = Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out float quality);
+            UplinkQuality = quality;
+            if (status == Uplink) return;
+            Uplink = status;
+            UplinkChanged?.Invoke(status);
+        }
+
+        bool HandshakeDone => Phase != LinkPhase.Connecting || PhaseTime >= handshakeDuration;
+        public bool HasPicture => Powered && Uplink == UplinkStatus.Ok && HandshakeDone;
 
         void UpdateFeed()
         {
             float k = state ? state.Interference : 0;
-            float loss = 0, collapse = 0;
+            if (Uplink == UplinkStatus.Ok) k = Mathf.Max(k, (1 - UplinkQuality) * 0.45f);
             bool picture = HasPicture;
+            float loss = Powered && Uplink != UplinkStatus.Ok && HandshakeDone ? 1 : 0, collapse = 0;
             if (Phase == LinkPhase.Connecting && picture)
             {
                 float u = Mathf.InverseLerp(handshakeDuration, connectDuration, PhaseTime);
@@ -227,8 +255,9 @@ namespace MoonThemedGame.Scavenger
             else if (Phase == LinkPhase.Terminating)
             {
                 float u = PhaseTime / terminateDuration;
-                k = Mathf.Max(k, Mathf.Clamp01(u * 3));
-                collapse = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.25f, 1, u));
+                k = Mathf.Max(k, Mathf.Clamp01(u * 4));
+                if (picture) loss = Mathf.Max(loss, Mathf.Sin(Mathf.Clamp01(u / 0.4f) * Mathf.PI) * (Mathf.Repeat(Time.time * 9, 1) < 0.5f ? 0.9f : 0.4f));
+                collapse = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.4f, 1, u));
             }
             robotCamera.cullingMask = picture ? sceneMask : 1 << OverlayLayer;
             robotCamera.clearFlags = picture ? sceneClear : CameraClearFlags.SolidColor;
@@ -263,6 +292,7 @@ namespace MoonThemedGame.Scavenger
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             SetPhase(LinkPhase.Connecting);
+            RefreshUplink();
             hud.OnConnected();
             UpdateFeed();
         }
