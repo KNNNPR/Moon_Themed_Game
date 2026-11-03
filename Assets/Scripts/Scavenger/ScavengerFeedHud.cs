@@ -249,7 +249,7 @@ namespace MoonThemedGame.Scavenger
                     $"LAT {Mathf.RoundToInt(latency)}ms  RSSI {Mathf.RoundToInt(rssi)}dBm",
                     $"POS {position.x.ToString("0.00", inv)} {position.y.ToString("0.00", inv)} {position.z.ToString("0.00", inv)}  HDG {Mathf.RoundToInt(heading):000}",
                     SatLine(),
-                    $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C",
+                    $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C  CARGO {(state ? state.Cargo : 0)}/{(state ? state.cargoCapacity : 0)}{(RobotUpgrades.Lamps ? "  LAMP HI" : "")}",
                     $"UPTIME {up / 3600:00}:{up / 60 % 60:00}:{up % 60:00}"
                 };
                 for (int i = 0; i < left.Length; i++)

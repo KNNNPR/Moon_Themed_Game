@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using MoonThemedGame.Computer;
+using MoonThemedGame.Weather;
 using MoonThemedGame.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -62,6 +63,8 @@ namespace MoonThemedGame.Scavenger
         CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
         RfPatchPanel patch;
+        float baseCapacity, baseDrain, baseSpeed, baseAcceleration;
+        Light lampBeam;
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -117,6 +120,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal) return;
             if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
             if (!terminal.GetComponent<SatelliteConsoleApp>()) terminal.gameObject.AddComponent<SatelliteConsoleApp>();
+            if (!terminal.GetComponent<ShopApp>()) terminal.gameObject.AddComponent<ShopApp>();
         }
 
         void Awake()
@@ -180,6 +184,50 @@ namespace MoonThemedGame.Scavenger
             Drive.PlaceAt(homePosition, homeRotation);
             if (baseRelayRange <= 0) baseRelayRange = Drive.Length * 6;
             CreateInterference();
+
+            baseCapacity = state.capacity;
+            baseDrain = state.drainPerSecond;
+            baseSpeed = Drive.maxSpeed;
+            baseAcceleration = Drive.acceleration;
+            RobotUpgrades.Changed += ApplyUpgrades;
+            ApplyUpgrades();
+            WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
+        }
+
+        void ApplyUpgrades()
+        {
+            if (!state || !Drive) return;
+            state.capacity = baseCapacity * RobotUpgrades.CapacityScale;
+            state.drainPerSecond = baseDrain * RobotUpgrades.DrainScale;
+            state.cargoCapacity = RobotUpgrades.CargoSlots;
+            Drive.maxSpeed = baseSpeed * RobotUpgrades.SpeedScale;
+            Drive.acceleration = baseAcceleration * RobotUpgrades.SpeedScale;
+            if (RobotUpgrades.Lamps && !lampBeam) lampBeam = CreateLampBeam();
+            if (lampBeam) lampBeam.enabled = RobotUpgrades.Lamps;
+        }
+
+        Light CreateLampBeam()
+        {
+            Vector3 position = robot.TransformPoint(cameraTarget);
+            foreach (Transform child in robot.GetComponentsInChildren<Transform>())
+            {
+                if (child.name != "Headlights") continue;
+                var lamp = child.GetComponentInChildren<Renderer>();
+                position = lamp ? lamp.bounds.center : child.position;
+                break;
+            }
+            var host = new GameObject("Fog Lamp Beam");
+            host.transform.SetParent(robot, false);
+            host.transform.SetPositionAndRotation(position + Drive.Forward * 0.05f, Quaternion.LookRotation(Drive.Forward, Vector3.up) * Quaternion.Euler(6, 0, 0));
+            var light = host.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.range = Drive.Length * 14;
+            light.spotAngle = 70;
+            light.innerSpotAngle = 35;
+            light.intensity = 12;
+            light.color = new Color(1f, 0.95f, 0.82f);
+            light.shadows = LightShadows.None;
+            return light;
         }
 
         static Bounds RobotBounds(Transform robot)
@@ -516,6 +564,8 @@ namespace MoonThemedGame.Scavenger
         void OnDestroy()
         {
             if (Network) Network.RivalChanged -= OnRivalChanged;
+            RobotUpgrades.Changed -= ApplyUpgrades;
+            WeatherAtmosphereFeature.DensityScale = null;
         }
     }
 }

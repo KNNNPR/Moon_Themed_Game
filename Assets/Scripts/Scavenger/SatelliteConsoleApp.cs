@@ -82,10 +82,18 @@ namespace MoonThemedGame.Scavenger
                 if (cards[i].root.worldBound.Contains(point)) { network.Select(i); Refresh(); return; }
         }
 
+        public void Close()
+        {
+            if (window != null) SetOpen(false);
+        }
+
         void SetOpen(bool open)
         {
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
-            if (open) Refresh();
+            if (!open) return;
+            if (TryGetComponent(out ShopApp shop)) shop.Close();
+            window.BringToFront();
+            Refresh();
         }
 
         void Build()
