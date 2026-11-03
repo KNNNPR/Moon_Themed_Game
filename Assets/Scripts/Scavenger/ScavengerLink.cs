@@ -97,7 +97,7 @@ namespace MoonThemedGame.Scavenger
         public void Connect()
         {
             if (connected || !robot || !robotCamera) return;
-            terminal.ExitFocus(); // puts the operator camera back where it was
+            terminal.ExitFocus(true); // puts the operator camera back where it was
             operatorCamera = Camera.main;
             if (operatorCamera)
             {
@@ -140,7 +140,7 @@ namespace MoonThemedGame.Scavenger
         IEnumerator RefocusTerminal()
         {
             yield return null;
-            if (!connected) terminal.Focus();
+            if (!connected) terminal.Focus(true);
         }
 
         void OnGUI()
