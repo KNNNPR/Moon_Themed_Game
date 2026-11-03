@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4e2d3c5f6a74899b0c1d2e3f4051627, type: 3}
+  m_Name: ShopCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.ShopCatalog
+  battery: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  wheel: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  headlights: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  cargoBay: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
