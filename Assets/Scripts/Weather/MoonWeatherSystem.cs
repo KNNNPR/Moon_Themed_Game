@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace MoonThemedGame.Weather
 {
-    public enum WeatherKind { Sunny, MoonDust, Toxicity, MeteoriteRain }
+    public enum WeatherKind { Sunny, MoonDust, Radiation, MeteoriteRain }
     public readonly struct WeatherForecast
     {
         public readonly WeatherKind kind;
@@ -69,13 +69,13 @@ namespace MoonThemedGame.Weather
 
         public static string Name(WeatherKind kind) => kind switch
         {
-            WeatherKind.MoonDust => "FOG / MOON DUST", WeatherKind.Toxicity => "TOXICITY",
+            WeatherKind.MoonDust => "FOG / MOON DUST", WeatherKind.Radiation => "RADIATION",
             WeatherKind.MeteoriteRain => "METEORITE RAIN", _ => "SUNNY"
         };
         public static string Effect(WeatherKind kind) => kind switch
         {
             WeatherKind.MoonDust => "Low Visibility",
-            WeatherKind.Toxicity => "Drains your energy faster",
+            WeatherKind.Radiation => "Drains your energy faster",
             WeatherKind.MeteoriteRain => "Meteorites drop from the sky,\nwhen hit - drains your energy",
             _ => "Perfect Weather"
         };
@@ -94,7 +94,7 @@ namespace MoonThemedGame.Weather
 
         public float Duration(WeatherKind kind) => Mathf.Max(1, kind switch
         {
-            WeatherKind.MoonDust => dustDuration, WeatherKind.Toxicity => toxicityDuration,
+            WeatherKind.MoonDust => dustDuration, WeatherKind.Radiation => toxicityDuration,
             WeatherKind.MeteoriteRain => meteorDuration, _ => sunnyDuration
         });
         public WeatherForecast Forecast(int index) => index == 0
@@ -114,7 +114,7 @@ namespace MoonThemedGame.Weather
             }
             return false;
         }
-        public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Toxicity && !IsSheltered(position) ? toxicEnergyMultiplier : 1;
+        public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? toxicEnergyMultiplier : 1;
 
         public void SetWeather(WeatherKind kind, float duration = -1)
         {
@@ -129,9 +129,9 @@ namespace MoonThemedGame.Weather
 
         public void SnapAtmosphere()
         {
-            Density = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Toxicity ? toxicDensity : 0;
-            AtmosphereTint = Current == WeatherKind.Toxicity ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
-            OpacityLimit = Current == WeatherKind.Toxicity ? toxicOpacity : 0.96f;
+            Density = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
+            AtmosphereTint = Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
+            OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
         }
 
         public void AdvanceSchedule(float seconds)
@@ -157,11 +157,11 @@ namespace MoonThemedGame.Weather
         void Update()
         {
             AdvanceSchedule(Time.deltaTime);
-            float target = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Toxicity ? toxicDensity : 0;
+            float target = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
-            AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Toxicity ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f), blend);
-            OpacityLimit = Mathf.Lerp(OpacityLimit, Current == WeatherKind.Toxicity ? toxicOpacity : 0.96f, blend);
+            AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f), blend);
+            OpacityLimit = Mathf.Lerp(OpacityLimit, Current == WeatherKind.Radiation ? toxicOpacity : 0.96f, blend);
             UpdateParticles();
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)
             {
@@ -197,7 +197,7 @@ namespace MoonThemedGame.Weather
             int count = particles.GetParticles(liveParticles);
             for (int i = 0; i < count; i++) if (IsSheltered(liveParticles[i].position)) liveParticles[i].remainingLifetime = 0;
             particles.SetParticles(liveParticles, count);
-            bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Toxicity;
+            bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation;
             if (!dust && !toxic) return;
             emissionRemainder += Time.deltaTime * (dust ? 45 : 12);
             var camera = Camera.main;
@@ -276,7 +276,7 @@ namespace MoonThemedGame.Weather
         void OnDestroy() { if (Active == this) Active = null; }
         [ContextMenu("Weather / Sunny")] void Sunny() => SetWeather(WeatherKind.Sunny);
         [ContextMenu("Weather / Moon Dust")] void Dust() => SetWeather(WeatherKind.MoonDust);
-        [ContextMenu("Weather / Toxicity")] void Toxic() => SetWeather(WeatherKind.Toxicity);
+        [ContextMenu("Weather / Radiation")] void Toxic() => SetWeather(WeatherKind.Radiation);
         [ContextMenu("Weather / Meteorite Rain")] void Meteors() => SetWeather(WeatherKind.MeteoriteRain);
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState() => Active = null;
     }
