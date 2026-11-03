@@ -7,7 +7,7 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Scavenger
 {
-    // SAT-LINK desktop app: which satellite the robot's signal goes through, and when each one is in range.
+    // SAT-LINK desktop app: orbit map, which satellite carries the robot's signal, and rival intercepts.
     [DisallowMultipleComponent]
     public sealed class SatelliteConsoleApp : MonoBehaviour
     {
@@ -26,9 +26,11 @@ namespace MoonThemedGame.Scavenger
         PcMonitorTerminal terminal;
         ScavengerLink link;
         SatelliteNetwork network;
-        VisualElement icon, window, close;
+        VisualElement icon, window, close, map, threat, hop;
         Card[] cards;
-        Label robotStatus;
+        Label robotStatus, threatText, hopLabel;
+        Label[] mapLabels;
+        Label rivalLabel;
         float nextRefresh;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
@@ -54,6 +56,9 @@ namespace MoonThemedGame.Scavenger
                     card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor =
                         pointer && card.root.worldBound.Contains(point) ? Text : new Color(1, 1, 1, 0.12f);
                 close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
+                bool canHop = network.Rival != RivalPhase.None && !network.Hopping;
+                hopLabel.style.color = !canHop ? Muted : pointer && hop.worldBound.Contains(point) ? Color.white : Alarm;
+                map.MarkDirtyRepaint();
             }
             if (pointer && Clicked()) HandleClick(point);
             if (IsOpen && Time.time >= nextRefresh) Refresh();
@@ -75,6 +80,7 @@ namespace MoonThemedGame.Scavenger
             if (icon.worldBound.Contains(point)) { SetOpen(!IsOpen); return; }
             if (!IsOpen) return;
             if (close.worldBound.Contains(point)) { SetOpen(false); return; }
+            if (hop.worldBound.Contains(point)) { network.FrequencyHop(); Refresh(); return; }
             for (int i = 0; i < cards.Length; i++)
                 if (cards[i].root.worldBound.Contains(point)) { network.Select(i); Refresh(); return; }
         }
@@ -111,9 +117,9 @@ namespace MoonThemedGame.Scavenger
             window.name = "sat-link";
             var s = window.style;
             s.position = Position.Absolute;
-            s.left = 372;
-            s.top = 36;
-            s.width = 440;
+            s.left = 300;
+            s.top = 20;
+            s.width = 640;
             s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 0.97f);
             Border(window, Muted);
             s.paddingLeft = s.paddingRight = 12;
@@ -127,20 +133,194 @@ namespace MoonThemedGame.Scavenger
             close = MakeLabel("[X]", 18, Muted);
             title.Add(close);
             window.Add(title);
-            var help = MakeLabel("The robot's signal goes through ONE satellite.\nPick one that is IN RANGE. In the robot: keys 1 / 2 / 3.", 12, Muted);
+            var help = MakeLabel("The robot's signal goes through ONE satellite. Pick one that is IN RANGE (over the station, bright arc).\nIn the robot: keys 1 / 2 / 3. A rival intercept is beaten by FREQ HOP (H) or by switching satellite.", 12, Muted);
             help.style.marginTop = 4;
             help.style.marginBottom = 8;
             help.style.whiteSpace = WhiteSpace.Normal;
             window.Add(help);
 
+            var body = Box();
+            body.style.flexDirection = FlexDirection.Row;
+            window.Add(body);
+            body.Add(BuildMap());
+            var column = Box();
+            column.style.flexGrow = 1;
+            column.style.marginLeft = 10;
+            body.Add(column);
             cards = new Card[network.satellites.Count];
-            for (int i = 0; i < cards.Length; i++) window.Add(BuildCard(i));
+            for (int i = 0; i < cards.Length; i++) column.Add(BuildCard(i));
+            column.Add(BuildThreat());
 
             robotStatus = MakeLabel("", 14, Text);
             robotStatus.style.marginTop = 8;
             robotStatus.style.whiteSpace = WhiteSpace.Normal;
             window.Add(robotStatus);
             desktop.Insert(index, window);
+        }
+
+        const float MapSize = 240;
+
+        VisualElement BuildMap()
+        {
+            map = Box();
+            map.style.width = map.style.height = MapSize;
+            map.style.flexShrink = 0;
+            map.style.backgroundColor = new Color(0, 0, 0, 0.35f);
+            Border(map, new Color(1, 1, 1, 0.12f));
+            map.generateVisualContent += DrawMap;
+            mapLabels = new Label[network.satellites.Count];
+            for (int i = 0; i < mapLabels.Length; i++)
+            {
+                mapLabels[i] = MakeLabel(network.satellites[i].name, 11, Text);
+                mapLabels[i].style.position = Position.Absolute;
+                map.Add(mapLabels[i]);
+            }
+            rivalLabel = MakeLabel(network.rivalName, 11, Alarm);
+            rivalLabel.style.position = Position.Absolute;
+            map.Add(rivalLabel);
+            var station = MakeLabel("STATION", 10, Muted);
+            station.style.position = Position.Absolute;
+            station.style.left = MapSize * 0.5f - 18;
+            station.style.top = MapSize * 0.5f + 4;
+            map.Add(station);
+            return map;
+        }
+
+        VisualElement BuildThreat()
+        {
+            threat = Box();
+            threat.style.marginTop = 2;
+            threat.style.paddingLeft = threat.style.paddingRight = 8;
+            threat.style.paddingTop = threat.style.paddingBottom = 6;
+            Border(threat, new Color(1, 1, 1, 0.12f));
+            var row = Box();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.justifyContent = Justify.SpaceBetween;
+            row.style.alignItems = Align.Center;
+            threatText = MakeLabel("", 13, Muted);
+            threatText.style.whiteSpace = WhiteSpace.Normal;
+            threatText.style.flexShrink = 1;
+            row.Add(threatText);
+            hop = Box();
+            hop.style.paddingLeft = hop.style.paddingRight = 6;
+            hop.style.flexShrink = 0;
+            hopLabel = MakeLabel("[FREQ HOP]", 14, Muted);
+            hop.Add(hopLabel);
+            row.Add(hop);
+            threat.Add(row);
+            return threat;
+        }
+
+        float OrbitRadius(int i) => MapSize * (0.2f + 0.085f * i);
+        float RivalRadius => MapSize * 0.46f;
+        Vector2 MapCenter => new Vector2(MapSize, MapSize) * 0.5f;
+        static Vector2 OnOrbit(Vector2 center, float radius, float angle) => center + new Vector2(Mathf.Sin(angle), -Mathf.Cos(angle)) * radius;
+
+        Vector2 SatellitePoint(int i) => OnOrbit(MapCenter, OrbitRadius(i), network.satellites[i].Angle(network.Clock));
+
+        Vector2 RivalPoint()
+        {
+            float clock = network.Clock;
+            if (network.Rival == RivalPhase.None || network.RivalTarget < 0)
+                return OnOrbit(MapCenter, RivalRadius, -clock * 2 * Mathf.PI / 260);
+            int target = network.RivalTarget;
+            float angle = network.satellites[target].Angle(clock);
+            float t = network.Rival == RivalPhase.Hijacked ? 1 : network.RivalProgress;
+            return OnOrbit(MapCenter, Mathf.Lerp(RivalRadius, OrbitRadius(target) + 10, t), angle - (1 - t) * 1.6f);
+        }
+
+        void DrawMap(MeshGenerationContext context)
+        {
+            if (network == null) return;
+            var p = context.painter2D;
+            var center = MapCenter;
+            float clock = network.Clock;
+            float blink = Mathf.Repeat(Time.time * 2, 1) < 0.6f ? 1 : 0.35f;
+
+            p.fillColor = new Color(0.55f, 0.58f, 0.6f, 0.9f);
+            p.BeginPath();
+            p.Arc(center, MapSize * 0.11f, 0, 360);
+            p.Fill();
+            var station = OnOrbit(center, MapSize * 0.11f, 0);
+            p.fillColor = Good;
+            p.BeginPath();
+            p.Arc(station, 3.5f, 0, 360);
+            p.Fill();
+
+            for (int i = 0; i < network.satellites.Count; i++)
+            {
+                var sat = network.satellites[i];
+                float radius = OrbitRadius(i);
+                bool active = i == network.ActiveIndex;
+                p.lineWidth = 1;
+                p.strokeColor = new Color(1, 1, 1, active ? 0.3f : 0.14f);
+                p.BeginPath();
+                p.Arc(center, radius, 0, 360);
+                p.Stroke();
+                float half = 180 * sat.window / sat.period;
+                p.lineWidth = 3;
+                p.strokeColor = new Color(Good.r, Good.g, Good.b, active ? 0.55f : 0.28f);
+                p.BeginPath();
+                p.Arc(center, radius, -90 - half, -90 + half);
+                p.Stroke();
+            }
+
+            for (int i = 0; i < network.satellites.Count; i++)
+            {
+                var sat = network.satellites[i];
+                var point = SatellitePoint(i);
+                bool active = i == network.ActiveIndex, inRange = sat.InRange(clock);
+                if (active && inRange)
+                {
+                    bool hijacked = network.Rival == RivalPhase.Hijacked && network.RivalOnActive;
+                    p.lineWidth = 1.5f;
+                    p.strokeColor = hijacked ? new Color(Alarm.r, Alarm.g, Alarm.b, blink) : network.Hopping ? new Color(1, 1, 1, 0.25f * blink) : new Color(Good.r, Good.g, Good.b, 0.8f);
+                    Dashed(p, station, point, 5, 4);
+                }
+                p.fillColor = inRange ? (active ? Color.white : Text * 0.85f) : Muted;
+                p.BeginPath();
+                p.Arc(point, active ? 5 : 3.5f, 0, 360);
+                p.Fill();
+                if (active)
+                {
+                    p.lineWidth = 1;
+                    p.strokeColor = Color.white;
+                    p.BeginPath();
+                    p.Arc(point, 8, 0, 360);
+                    p.Stroke();
+                }
+            }
+
+            var rival = RivalPoint();
+            bool attacking = network.Rival != RivalPhase.None && network.RivalTarget >= 0;
+            if (attacking)
+            {
+                p.lineWidth = 1.5f;
+                p.strokeColor = new Color(Alarm.r, Alarm.g, Alarm.b, blink);
+                Dashed(p, rival, SatellitePoint(network.RivalTarget), 3, 3);
+            }
+            p.fillColor = new Color(Alarm.r, Alarm.g, Alarm.b, attacking ? blink : 0.5f);
+            p.BeginPath();
+            p.MoveTo(rival + new Vector2(0, -5));
+            p.LineTo(rival + new Vector2(5, 0));
+            p.LineTo(rival + new Vector2(0, 5));
+            p.LineTo(rival + new Vector2(-5, 0));
+            p.ClosePath();
+            p.Fill();
+        }
+
+        static void Dashed(Painter2D p, Vector2 from, Vector2 to, float dash, float gap)
+        {
+            float length = Vector2.Distance(from, to);
+            if (length < 0.01f) return;
+            var direction = (to - from) / length;
+            p.BeginPath();
+            for (float d = 0; d < length; d += dash + gap)
+            {
+                p.MoveTo(from + direction * d);
+                p.LineTo(from + direction * Mathf.Min(length, d + dash));
+            }
+            p.Stroke();
         }
 
         VisualElement BuildCard(int i)
@@ -224,18 +404,51 @@ namespace MoonThemedGame.Scavenger
                 card.action.style.color = active ? Color.white : Muted;
                 card.name.style.color = inRange ? Text : Muted;
                 card.root.style.backgroundColor = active ? new Color(1, 1, 1, 0.07f) : Color.clear;
+                var point = SatellitePoint(i);
+                mapLabels[i].style.left = point.x + 8;
+                mapLabels[i].style.top = point.y - 7;
+                mapLabels[i].style.color = active ? Color.white : inRange ? Text : Muted;
             }
+            var rivalPoint = RivalPoint();
+            rivalLabel.style.left = rivalPoint.x + 7;
+            rivalLabel.style.top = rivalPoint.y - 7;
+            RefreshThreat();
 
             if (link && link.robot)
             {
                 link.RefreshUplink();
                 bool ok = link.Uplink == UplinkStatus.Ok;
+                var inv = System.Globalization.CultureInfo.InvariantCulture;
                 robotStatus.text = ok
-                    ? $"ROBOT SIGNAL: OK via {(link.ViaRelay ? "BASE RELAY" : network.Active.name)}"
+                    ? $"ROBOT SIGNAL: OK via {(link.ViaRelay ? "BASE RELAY" : network.Active.name)}   Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%   LOSS {link.ExpectedLoss.ToString("0.0", inv)}%"
                     : $"ROBOT SIGNAL: NONE - {ScavengerFeedHud.Reason(link.Uplink)}";
-                robotStatus.style.color = ok ? Good : Alarm;
+                robotStatus.style.color = ok && link.UplinkQuality >= 0.4f ? Good : Alarm;
             }
             else robotStatus.text = "ROBOT SIGNAL: --";
+        }
+
+        void RefreshThreat()
+        {
+            string rival = network.rivalName;
+            switch (network.Rival)
+            {
+                case RivalPhase.Incoming:
+                    var target = network.satellites[network.RivalTarget].name;
+                    threatText.text = $"WARNING: rival {rival} is intercepting {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nSignal is jammed. Hop frequency or switch satellite.";
+                    threatText.style.color = Alarm;
+                    break;
+                case RivalPhase.Hijacked:
+                    threatText.text = $"HIJACKED: {rival} took over {network.satellites[network.RivalTarget].name}.\nNo picture until you hop or switch satellite.";
+                    threatText.style.color = Alarm;
+                    break;
+                default:
+                    threatText.text = network.Hopping
+                        ? $"FREQUENCY HOP... {Mathf.CeilToInt(network.HopTimeLeft)}s"
+                        : $"THREATS: none. {rival} (rival) on outer orbit.";
+                    threatText.style.color = network.Hopping ? Text : Muted;
+                    break;
+            }
+            Border(threat, network.Rival != RivalPhase.None ? Alarm : new Color(1, 1, 1, 0.12f));
         }
 
         static string Clock(float seconds)
