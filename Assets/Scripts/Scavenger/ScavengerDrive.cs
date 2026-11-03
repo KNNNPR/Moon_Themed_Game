@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -5,121 +6,254 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Kinematic tank drive over the LunarSurface: W/S throttle, A/D turn. Follows the ground
-    // height and tilt, slides along rocks and shelter legs.
+    // Rigidbody rover with a raycast spring per wheel: W/S throttle, A/D skid-steer.
+    // Throttle and steering ramp in and out, so the robot has weight; wheels follow the
+    // ground and lift over obstacles. Where no collider is found the station floor
+    // height acts as ground, so the robot never falls through the level.
     [DisallowMultipleComponent]
     public sealed class ScavengerDrive : MonoBehaviour
     {
-        [Tooltip("Robot lengths per second.")]
-        public float speed = 1.6f;
-        public float reverseFactor = 0.6f;
-        [Tooltip("Robot lengths per second squared.")]
-        public float acceleration = 2.5f;
-        public float turnSpeed = 75;
-        public float tiltSharpness = 8;
+        sealed class Wheel
+        {
+            public Transform transform;
+            public Vector3 anchor;
+            public Vector3 centerInParent, pivotInParent, axleInParent;
+            public Quaternion restRotation;
+            public float radius, length, spin;
+            public bool grounded;
+            public Vector3 contact, normal;
+        }
 
-        public LunarSurface surface;
+        [Header("Drive (robot lengths)")]
+        public float maxSpeed = 1.3f;
+        public float reverseFactor = 0.6f;
+        public float acceleration = 1.1f;
+        public float turnSpeed = 70;
+        [Tooltip("How fast throttle follows the keys, per second.")]
+        public float throttleResponse = 1.6f;
+        public float steerResponse = 3;
+        [Range(0, 1)] public float lateralGrip = 0.85f;
+        public float coastDrag = 0.8f;
+
+        [Header("Body")]
+        public float mass = 400;
+        public float gravity = 4;
+        [Tooltip("Suspension travel as a share of the wheel radius.")]
+        public float travel = 0.6f;
+        [Range(0, 2)] public float dampingRatio = 0.8f;
+
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
 
+        readonly List<Wheel> wheels = new List<Wheel>();
+        readonly RaycastHit[] hits = new RaycastHit[8];
+        Rigidbody body;
         Collider[] own;
-        Transform[] wheels;
-        Renderer[] wheelRenderers;
-        float velocity, heading, length, rideHeight, probeRadius, probeHeight;
+        float throttle, steer, length, groundHeight, stiffness, damper, upsideDown;
 
-        public float Velocity => velocity;
         public float Length => length;
-        public Vector3 Heading => Quaternion.Euler(0, heading, 0) * Vector3.forward;
-
-        public void Setup(LunarSurface ground, Vector3 forward)
+        public Vector3 Forward => transform.TransformDirection(localForward);
+        public Vector3 Heading
         {
-            surface = ground;
-            localForward = forward;
-            own = GetComponentsInChildren<Collider>(true);
-            var found = new System.Collections.Generic.List<Transform>();
-            foreach (var child in GetComponentsInChildren<Transform>())
-                if (child.name.StartsWith("Wheel")) found.Add(child);
-            wheels = found.ToArray();
-            wheelRenderers = new Renderer[wheels.Length];
-            for (int i = 0; i < wheels.Length; i++) wheelRenderers[i] = wheels[i].GetComponentInChildren<Renderer>();
+            get
+            {
+                var flat = Forward;
+                flat.y = 0;
+                return flat.sqrMagnitude > 1e-4f ? flat.normalized : Vector3.forward;
+            }
+        }
+        public float ForwardSpeed => body ? Vector3.Dot(body.linearVelocity, Forward) : 0;
 
-            var bounds = WorldBounds();
-            length = Mathf.Max(bounds.size.x, bounds.size.z);
-            rideHeight = transform.position.y - bounds.min.y;
-            probeRadius = Mathf.Min(bounds.extents.x, bounds.extents.z) * 0.8f;
-            probeHeight = bounds.center.y - transform.position.y;
-            heading = Quaternion.LookRotation(Flat(transform.TransformDirection(localForward))).eulerAngles.y;
+        public void Setup(Vector3 forward)
+        {
+            localForward = forward;
+            var renderers = GetComponentsInChildren<Renderer>();
+            var local = LocalBounds(renderers);
+            var world = WorldBounds(renderers);
+            length = Mathf.Max(world.size.x, world.size.z);
+            groundHeight = world.min.y;
+
+            foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
+            var axle = Vector3.Cross(transform.up, Forward).normalized;
+            foreach (var child in GetComponentsInChildren<Transform>())
+            {
+                if (!child.name.StartsWith("Wheel")) continue;
+                var r = child.GetComponentInChildren<Renderer>();
+                if (!r) continue;
+                var parent = child.parent;
+                var center = r.bounds.center;
+                wheels.Add(new Wheel
+                {
+                    transform = child,
+                    anchor = transform.InverseTransformPoint(center),
+                    centerInParent = parent.InverseTransformPoint(center),
+                    pivotInParent = child.localPosition - parent.InverseTransformPoint(center),
+                    axleInParent = parent.InverseTransformDirection(axle),
+                    restRotation = child.localRotation,
+                    radius = r.bounds.extents.y
+                });
+            }
+
+            float wheelRadius = wheels.Count > 0 ? wheels[0].radius : world.size.y * 0.25f;
+            foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
+            var hull = gameObject.AddComponent<BoxCollider>();
+            float bottom = local.min.y + wheelRadius * 1.2f / Mathf.Max(0.001f, transform.lossyScale.y);
+            hull.center = new Vector3(local.center.x, (bottom + local.max.y) * 0.5f, local.center.z);
+            hull.size = new Vector3(local.size.x * 0.85f, Mathf.Max(0.01f, local.max.y - bottom), local.size.z * 0.85f);
+            own = new Collider[] { hull };
+
+            body = gameObject.AddComponent<Rigidbody>();
+            body.mass = mass;
+            body.useGravity = false;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+            body.linearDamping = 0.05f;
+            body.angularDamping = 1.5f;
+            body.centerOfMass = transform.InverseTransformPoint(new Vector3(world.center.x, world.min.y + wheelRadius, world.center.z));
+
+            int count = Mathf.Max(1, wheels.Count);
+            float sag = travel * wheelRadius * 0.35f;
+            stiffness = mass * gravity / count / Mathf.Max(0.001f, sag);
+            damper = 2 * dampingRatio * Mathf.Sqrt(stiffness * mass / count);
         }
 
-        Bounds WorldBounds()
+        Bounds LocalBounds(Renderer[] renderers)
         {
-            var renderers = GetComponentsInChildren<Renderer>();
-            var bounds = renderers.Length > 0 ? renderers[0].bounds : new Bounds(transform.position, Vector3.one);
+            bool first = true;
+            var result = new Bounds();
+            foreach (var r in renderers)
+            {
+                var b = r.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    var p = transform.InverseTransformPoint(corner);
+                    if (first) { result = new Bounds(p, Vector3.zero); first = false; }
+                    else result.Encapsulate(p);
+                }
+            }
+            return result;
+        }
+
+        static Bounds WorldBounds(Renderer[] renderers)
+        {
+            var bounds = renderers.Length > 0 ? renderers[0].bounds : new Bounds();
             foreach (var r in renderers) bounds.Encapsulate(r.bounds);
             return bounds;
         }
 
-        static Vector3 Flat(Vector3 v)
+        public void PlaceAt(Vector3 position, Quaternion rotation)
         {
-            v.y = 0;
-            return v.sqrMagnitude > 1e-4f ? v.normalized : Vector3.forward;
+            throttle = steer = 0;
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+            body.position = position;
+            body.rotation = rotation;
+            transform.SetPositionAndRotation(position, rotation);
         }
 
-        public void PlaceAt(Vector3 position, float yaw)
+        void FixedUpdate()
         {
-            heading = yaw;
-            velocity = 0;
-            var ground = surface ? surface.WorldHeight(position) : position.y;
-            transform.position = new Vector3(position.x, ground + rideHeight, position.z);
-            transform.rotation = Orientation(surface ? surface.WorldNormal(position) : Vector3.up);
-        }
+            if (!body) return;
+            float dt = Time.fixedDeltaTime;
+            var input = controllable ? ReadInput() : Vector2.zero;
+            throttle = Mathf.MoveTowards(throttle, input.y, throttleResponse * dt);
+            steer = Mathf.MoveTowards(steer, input.x, steerResponse * dt);
 
-        Quaternion Orientation(Vector3 normal) =>
-            Quaternion.LookRotation(Vector3.ProjectOnPlane(Heading, normal), normal) * Quaternion.Inverse(Quaternion.LookRotation(localForward, Vector3.up));
-
-        void Update()
-        {
-            if (!surface) return;
-            float dt = Time.deltaTime;
-            Vector2 input = controllable ? ReadInput() : Vector2.zero;
-
-            heading += input.x * turnSpeed * dt;
-            float target = input.y * speed * length * (input.y < 0 ? reverseFactor : 1);
-            velocity = Mathf.MoveTowards(velocity, target, acceleration * length * dt);
-
-            var move = Heading * (velocity * dt);
-            move = Slide(move);
-            var position = surface.ClampInside(transform.position + move, length);
-            position.y = surface.WorldHeight(position) + rideHeight;
-            transform.position = position;
-            var normal = surface.WorldNormal(position);
-            transform.rotation = Quaternion.Slerp(transform.rotation, Orientation(normal), 1 - Mathf.Exp(-tiltSharpness * dt));
-            SpinWheels(dt);
-        }
-
-        Vector3 Slide(Vector3 move)
-        {
-            float distance = move.magnitude;
-            if (distance < 1e-5f) return move;
-            var origin = transform.position + Vector3.up * probeHeight;
-            for (int pass = 0; pass < 2; pass++)
+            body.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
+            int grounded = 0;
+            var up = transform.up;
+            foreach (var wheel in wheels)
             {
-                var direction = move.normalized;
-                bool blocked = false;
-                foreach (var hit in Physics.SphereCastAll(origin, probeRadius, direction, move.magnitude + 0.05f * length, ~0, QueryTriggerInteraction.Ignore))
-                {
-                    if (System.Array.IndexOf(own, hit.collider) >= 0 || hit.transform.name == "Ground" || hit.distance <= 0) continue;
-                    var normal = Flat(hit.normal);
-                    move = Vector3.ProjectOnPlane(move, normal);
-                    move.y = 0;
-                    blocked = true;
-                    break;
-                }
-                if (!blocked) break;
-                if (pass == 1) return Vector3.zero;
+                Suspension(wheel, up, dt);
+                if (wheel.grounded) grounded++;
             }
-            if (Mathf.Abs(Vector3.Dot(move.normalized, Heading)) < 0.2f) velocity *= 0.5f;
-            return move;
+            if (grounded > 0) Traction(grounded);
+            KeepUpright(dt);
+        }
+
+        void Suspension(Wheel wheel, Vector3 up, float dt)
+        {
+            float rest = wheel.radius * travel;
+            var mount = transform.TransformPoint(wheel.anchor) + up * rest;
+            float reach = rest * 2 + wheel.radius;
+            float previous = wheel.length;
+            wheel.grounded = CastGround(mount, -up, reach, out float distance, out wheel.normal);
+            wheel.length = wheel.grounded ? distance - wheel.radius : rest * 2;
+            if (!wheel.grounded) return;
+            wheel.contact = mount - up * distance;
+            float compression = rest * 1.35f - wheel.length;
+            float velocity = (previous - wheel.length) / dt;
+            float force = Mathf.Max(0, stiffness * compression + damper * velocity);
+            body.AddForceAtPosition(up * force, wheel.contact);
+        }
+
+        bool CastGround(Vector3 origin, Vector3 direction, float reach, out float distance, out Vector3 normal)
+        {
+            distance = float.MaxValue;
+            normal = Vector3.up;
+            int count = Physics.RaycastNonAlloc(origin, direction, hits, reach, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                if (System.Array.IndexOf(own, hits[i].collider) >= 0 || hits[i].collider.attachedRigidbody == body) continue;
+                if (hits[i].distance < distance) { distance = hits[i].distance; normal = hits[i].normal; }
+            }
+            if (distance < float.MaxValue) return true;
+            if (direction.y >= -0.1f) return false;
+            float planeDistance = (origin.y - groundHeight) / -direction.y;
+            if (planeDistance < 0 || planeDistance > reach) return false;
+            distance = planeDistance;
+            return true;
+        }
+
+        void Traction(int grounded)
+        {
+            var forward = Forward;
+            float speed = Vector3.Dot(body.linearVelocity, forward);
+            float limit = maxSpeed * length * (throttle < 0 ? reverseFactor : 1);
+            float accel = throttle * acceleration * length;
+            if (Mathf.Abs(speed) > limit && Mathf.Sign(speed) == Mathf.Sign(throttle)) accel = 0;
+            if (Mathf.Approximately(throttle, 0)) accel = -speed * coastDrag;
+
+            // Side slip is taken from the body's travel, not per wheel, so skid-steering still turns.
+            foreach (var wheel in wheels)
+            {
+                if (!wheel.grounded) continue;
+                var drive = Vector3.ProjectOnPlane(forward, wheel.normal).normalized;
+                var side = Vector3.Cross(wheel.normal, drive);
+                float slip = Vector3.Dot(body.linearVelocity, side);
+                var force = drive * accel - side * slip * lateralGrip / Time.fixedDeltaTime;
+                body.AddForceAtPosition(force * (body.mass / grounded), wheel.contact);
+            }
+
+            var up = transform.up;
+            float yaw = Vector3.Dot(body.angularVelocity, up);
+            float wanted = steer * turnSpeed * Mathf.Deg2Rad;
+            body.AddTorque(up * (wanted - yaw) * 4, ForceMode.Acceleration);
+        }
+
+        void KeepUpright(float dt)
+        {
+            upsideDown = Vector3.Dot(transform.up, Vector3.up) < 0.3f ? upsideDown + dt : 0;
+            if (upsideDown < 2.5f) return;
+            upsideDown = 0;
+            PlaceAt(body.position + Vector3.up * length * 0.5f, Quaternion.LookRotation(Heading) * Quaternion.Inverse(Quaternion.LookRotation(localForward)));
+        }
+
+        void LateUpdate()
+        {
+            var up = transform.up;
+            float speed = ForwardSpeed;
+            foreach (var wheel in wheels)
+            {
+                float lift = wheel.radius * travel - wheel.length;
+                var parent = wheel.transform.parent;
+                wheel.spin += speed / Mathf.Max(0.01f, wheel.radius) * Mathf.Rad2Deg * Time.deltaTime;
+                var spin = Quaternion.AngleAxis(wheel.spin, wheel.axleInParent);
+                var offset = parent.InverseTransformVector(up * lift);
+                wheel.transform.localPosition = wheel.centerInParent + offset + spin * wheel.pivotInParent;
+                wheel.transform.localRotation = spin * wheel.restRotation;
+            }
         }
 
         static Vector2 ReadInput()
@@ -139,19 +273,6 @@ namespace MoonThemedGame.Scavenger
             if (Input.GetKey(KeyCode.A)) input.x -= 1;
 #endif
             return input;
-        }
-
-        void SpinWheels(float dt)
-        {
-            if (wheels == null) return;
-            float radius = Mathf.Max(0.05f, length * 0.12f);
-            float angle = velocity / radius * Mathf.Rad2Deg * dt;
-            var axis = Vector3.Cross(transform.up, transform.TransformDirection(localForward));
-            for (int i = 0; i < wheels.Length; i++)
-            {
-                var pivot = wheelRenderers[i] ? wheelRenderers[i].bounds.center : wheels[i].position;
-                wheels[i].RotateAround(pivot, axis, angle);
-            }
         }
     }
 }

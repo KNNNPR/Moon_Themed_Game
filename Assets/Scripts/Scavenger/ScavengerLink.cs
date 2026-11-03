@@ -39,9 +39,13 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
         [Min(0.01f)] public float terminateDuration = 1.3f;
-        public const string StationName = "Pale_Horse";
-        [Tooltip("0 = new terrain every session.")]
-        public int surfaceSeed;
+        [Header("Base")]
+        [Tooltip("Within this distance of the hangar the feed uses the base antenna. 0 = six robot lengths.")]
+        [Min(0)] public float baseRelayRange;
+        [Tooltip("The CHARGE station; found by name (Charge_monitor) when empty.")]
+        public Transform charger;
+        [Tooltip("How close to the charger the robot must park. 0 = robot length + 1.5 m.")]
+        [Min(0)] public float chargerRange;
 
         Camera operatorCamera;
         AudioListener operatorListener;
@@ -60,15 +64,14 @@ namespace MoonThemedGame.Scavenger
         Vector3 antenna;
         float cameraSize, cameraYaw;
         Vector3 homePosition;
-        float homeYaw;
-        Light sun;
+        Quaternion homeRotation;
+        RobotStatus lastStatus;
 
         public LinkPhase Phase { get; private set; }
         public SatelliteNetwork Network { get; private set; }
         public UplinkStatus Uplink { get; private set; } = UplinkStatus.Ok;
         public float UplinkQuality { get; private set; } = 1;
         public bool Powered => !state || state.HasSignal;
-        public LunarSurface Surface { get; private set; }
         public ScavengerDrive Drive { get; private set; }
         // Near the station the feed goes through the base antenna, not a satellite.
         public bool ViaRelay { get; private set; }
@@ -128,15 +131,13 @@ namespace MoonThemedGame.Scavenger
             var forward = DetectForward(robot, bounds.center);
             if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
             Drive = drive;
-            float unit = Mathf.Max(bounds.size.x, bounds.size.z);
-            var station = StationBounds(bounds);
-            var origin = new Vector3(station.center.x, bounds.min.y - 0.01f * unit, station.center.z);
-            Surface = LunarSurface.Create(origin, unit, Mathf.Min(Mathf.Max(station.extents.x, station.extents.z) + 2 * unit, 30 * unit), surfaceSeed);
-            Drive.Setup(Surface, forward);
             homePosition = robot.position;
-            homeYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
-            Drive.PlaceAt(homePosition, homeYaw);
-            sun = CreateSun();
+            homeRotation = robot.rotation;
+            Drive.Setup(forward);
+            float unit = Drive.Length;
+            if (baseRelayRange <= 0) baseRelayRange = unit * 6;
+            if (!charger) charger = FindCharger();
+            if (chargerRange <= 0) chargerRange = unit + 1.5f;
             CreateInterference();
         }
 
@@ -162,18 +163,6 @@ namespace MoonThemedGame.Scavenger
             return camera;
         }
 
-        static Light CreateSun()
-        {
-            var sun = new GameObject("Lunar Sun").AddComponent<Light>();
-            sun.type = LightType.Directional;
-            sun.transform.rotation = Quaternion.Euler(28, -35, 0);
-            sun.color = new Color(1f, 0.97f, 0.92f);
-            sun.intensity = 0.9f;
-            sun.shadows = LightShadows.Soft;
-            sun.enabled = false;
-            return sun;
-        }
-
         // Chase view: follows the robot's heading with a little lag, ignores its tilt.
         void LateUpdate()
         {
@@ -187,30 +176,35 @@ namespace MoonThemedGame.Scavenger
         {
             var center = RobotBounds(robot).center;
             var wanted = center + Quaternion.Euler(0, cameraYaw, 0) * new Vector3(0, cameraSize * 1.2f, -cameraSize * 3);
-            if (Surface) wanted.y = Mathf.Max(wanted.y, Surface.WorldHeight(wanted) + cameraSize * 0.4f);
+            wanted.y = Mathf.Max(wanted.y, center.y);
             var t = robotCamera.transform;
             t.position = Vector3.Lerp(wanted, t.position, keep);
             t.rotation = Quaternion.LookRotation(center + Vector3.up * cameraSize * 0.3f - t.position, Vector3.up);
         }
 
-        Bounds StationBounds(Bounds fallback)
+        static Transform FindCharger()
         {
-            var station = GameObject.Find(StationName);
-            if (!station) return fallback;
-            Bounds? result = null;
-            foreach (var r in station.GetComponentsInChildren<Renderer>())
+            foreach (var t in FindObjectsByType<Transform>(FindObjectsSortMode.None))
+                if (t.name.Replace("_", "").Replace(" ", "").Equals("CHARGEMONITOR", StringComparison.OrdinalIgnoreCase)) return t;
+            return null;
+        }
+
+        public bool AtCharger
+        {
+            get
             {
-                if (r.transform.IsChildOf(robot)) continue;
-                if (result is Bounds b) { b.Encapsulate(r.bounds); result = b; }
-                else result = r.bounds;
+                if (!charger || !robot) return false;
+                var offset = charger.position - RobotBounds(robot).center;
+                offset.y = 0;
+                return offset.magnitude <= chargerRange;
             }
-            return result ?? fallback;
         }
 
         void OnStatusChanged(RobotStatus status)
         {
-            if (status != RobotStatus.Online || !Drive) return;
-            Drive.PlaceAt(homePosition, homeYaw);
+            bool evacuated = lastStatus == RobotStatus.Evacuating && status == RobotStatus.Online;
+            lastStatus = status;
+            if (evacuated && Drive) Drive.PlaceAt(homePosition, homeRotation);
         }
 
         void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok;
@@ -277,7 +271,11 @@ namespace MoonThemedGame.Scavenger
             else if (Input.GetKeyDown(KeyCode.Alpha3)) satelliteKey = 2;
             click = Input.GetMouseButtonDown(0);
 #endif
-            if (state) state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
+            if (state)
+            {
+                state.Active = Phase == LinkPhase.Live && state.Status == RobotStatus.Online;
+                state.AtCharger = AtCharger;
+            }
             if (Connected) RefreshUplink();
             switch (Phase)
             {
@@ -333,9 +331,9 @@ namespace MoonThemedGame.Scavenger
         public void RefreshUplink()
         {
             if (!robot || !Network) return;
-            var offset = robot.position - (Surface ? Surface.transform.position : robot.position);
+            var offset = robot.position - homePosition;
             offset.y = 0;
-            bool relay = Surface && offset.magnitude < Surface.flatRadius;
+            bool relay = offset.magnitude < baseRelayRange;
             float quality, cover;
             UplinkStatus status;
             if (relay)
@@ -399,7 +397,6 @@ namespace MoonThemedGame.Scavenger
                 playerController = controller && controller.enabled ? controller : null;
                 if (playerController) playerController.enabled = false;
             }
-            if (sun) sun.enabled = true;
             if (Drive) cameraYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
             PlaceCamera(0);
             robotCamera.enabled = true;
@@ -426,7 +423,6 @@ namespace MoonThemedGame.Scavenger
                 robotCamera.GetComponent<AudioListener>().enabled = false;
             }
             if (interference) interference.enabled = false;
-            if (sun) sun.enabled = false;
             if (Drive)
             {
                 Drive.controllable = false;

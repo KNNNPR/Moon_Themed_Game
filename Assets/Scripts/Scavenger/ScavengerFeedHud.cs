@@ -36,7 +36,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, weakSignal, leavingSoon, covered;
+        bool subscribed, weakSignal, leavingSoon, covered, charging;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -64,7 +64,7 @@ namespace MoonThemedGame.Scavenger
                 link.Network.Selected += OnHandover;
                 subscribed = true;
             }
-            weakSignal = leavingSoon = covered = false;
+            weakSignal = leavingSoon = covered = charging = false;
             connectedAt = Time.time;
             packets = Random.Range(10000, 40000);
             log.Clear();
@@ -129,6 +129,10 @@ namespace MoonThemedGame.Scavenger
                 cellTemp = -34 + Random.Range(-0.4f, 0.4f);
                 if (signal) packets += Random.Range(20, 30);
             }
+            bool nowCharging = state && state.Charging;
+            if (nowCharging && !charging) AddLog("DOCKED AT CHARGE STATION - CHARGING");
+            else if (!nowCharging && charging) AddLog(state && state.Normalized >= 0.999f ? "CHARGE FULL" : "UNDOCKED FROM CHARGER");
+            charging = nowCharging;
             bool cover = link.Cover > 0.3f;
             if (cover && !covered) AddLog($"WARN overhead cover {Mathf.RoundToInt(link.Cover * 100)}% - signal degraded");
             else if (!cover && covered) AddLog("SKY CLEAR - signal restored");
@@ -345,6 +349,7 @@ namespace MoonThemedGame.Scavenger
 
         static string StatusText(ScavengerRobotState state) => state.Status switch
         {
+            _ when state.Charging => "CHARGING",
             RobotStatus.Online => state.LowCharge ? "LOW CHARGE" : "ONLINE",
             RobotStatus.Failing => "CRITICAL",
             RobotStatus.Offline => "OFFLINE",
