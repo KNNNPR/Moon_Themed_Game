@@ -25,6 +25,12 @@ namespace MoonThemedGame.Repair
         [Range(0.1f, 1.5f)] public float suspensionTravel = 0.6f;
         [Range(0.1f, 2f)] public float suspensionDamping = 0.9f;
 
+        static RepairRobotDropper activeDropper;
+        int lastDropFrame = -1;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetActiveDropper() => activeDropper = null;
+
         GameObject spawned;
         public RepairRobotTarget CurrentRobot => spawned ? spawned.GetComponent<RepairRobotTarget>() : null;
         public void ForgetCollectedRobot(RepairRobotTarget robot)
@@ -38,7 +44,24 @@ namespace MoonThemedGame.Repair
         {
             random = new System.Random();
             player = FindAnyObjectByType<FirstPersonController>();
+
+        }
+
+        void OnEnable()
+        {
+            if (activeDropper && activeDropper != this)
+            {
+                Debug.LogWarning("Duplicate Repair Robot Drop Point disabled; only one handles F.", this);
+                enabled = false;
+                return;
+            }
+            activeDropper = this;
             RepairCranePickup.ConnectScene(this);
+        }
+
+        void OnDisable()
+        {
+            if (activeDropper == this) activeDropper = null;
         }
 
         void Update()
@@ -53,12 +76,14 @@ namespace MoonThemedGame.Repair
 
         public void DropRobot()
         {
+            if (!isActiveAndEnabled || activeDropper != this || lastDropFrame == Time.frameCount) return;
             if (CurrentRobot && CurrentRobot.IsBeingCollected) return;
             if (!robotPrefab || parts == null || parts.Length == 0)
             {
                 Debug.LogError("Configure the robot prefab and parts on the drop point.", this);
                 return;
             }
+            lastDropFrame = Time.frameCount;
             if (spawned) { spawned.SetActive(false); Destroy(spawned); }
             Transform anchor = landingPoint ? landingPoint : transform;
             spawned = Instantiate(robotPrefab, anchor.position, anchor.rotation);

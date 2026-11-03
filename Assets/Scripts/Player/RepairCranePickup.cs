@@ -156,8 +156,10 @@ namespace MoonThemedGame.Repair
             craneAnimator.speed = 0f;
             if (attached)
             {
-                carried = candidate;
                 dropper.ForgetCollectedRobot(candidate);
+                candidate.gameObject.SetActive(false);
+                Destroy(candidate.gameObject);
+                carried = null;
             }
             else candidate.CancelCollection();
             candidate = null;
