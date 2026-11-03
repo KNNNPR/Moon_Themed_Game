@@ -93,7 +93,7 @@ namespace MoonThemedGame.Scavenger
                 UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
                 UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
                 UplinkStatus.Intercepted => $"ALERT {SatName} carrier hijacked by {link.Network.rivalName}",
-                UplinkStatus.Hopping => "FREQ HOP - carrier offline",
+                UplinkStatus.Hopping => "RECEIVER RETUNE - carrier offline",
                 _ => "ERR no satellite selected"
             });
         }
@@ -107,14 +107,18 @@ namespace MoonThemedGame.Scavenger
         {
             if (!link.Connected) return;
             var network = link.Network;
-            if (phase == RivalPhase.Incoming) AddLog($"WARN rival carrier {network.rivalName} locking on {SatName}");
-            else if (phase == RivalPhase.None) AddLog(network.Hopping ? $"FREQ HOP - {network.rivalName} lost the carrier" : $"{network.rivalName} lost track after handover");
+            if (phase == RivalPhase.Incoming)
+            {
+                AddLog($"WARN rival carrier {network.rivalName} jamming CH{network.CarrierChannel + 1}");
+                AddLog("WARN retune to a free channel [H]");
+            }
+            else if (phase == RivalPhase.None) AddLog($"CARRIER LOCKED CH{network.CarrierChannel + 1} - {network.rivalName} lost the signal");
         }
 
         public static string Reason(UplinkStatus status) => status switch
         {
             UplinkStatus.Intercepted => "SIGNAL HIJACKED BY RIVAL SATELLITE",
-            UplinkStatus.Hopping => "FREQUENCY HOP IN PROGRESS",
+            UplinkStatus.Hopping => "RECEIVER RETUNING TO NEW CHANNEL",
             UplinkStatus.OutOfRange => "SATELLITE OUT OF RANGE",
             UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
             _ => ""
@@ -245,7 +249,7 @@ namespace MoonThemedGame.Scavenger
                     $"LAT {Mathf.RoundToInt(latency)}ms  RSSI {Mathf.RoundToInt(rssi)}dBm",
                     $"POS {position.x.ToString("0.00", inv)} {position.y.ToString("0.00", inv)} {position.z.ToString("0.00", inv)}  HDG {Mathf.RoundToInt(heading):000}",
                     SatLine(),
-                    $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C",
+                    $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C  CARGO {(state ? state.Cargo : 0)}/{(state ? state.cargoCapacity : 0)}{(RobotUpgrades.Lamps ? "  LAMP HI" : "")}",
                     $"UPTIME {up / 3600:00}:{up / 60 % 60:00}:{up % 60:00}"
                 };
                 for (int i = 0; i < left.Length; i++)
@@ -274,12 +278,12 @@ namespace MoonThemedGame.Scavenger
                     string title = link.Uplink switch
                     {
                         UplinkStatus.Intercepted => "SIGNAL HIJACKED",
-                        UplinkStatus.Hopping => $"FREQUENCY HOP  {Mathf.CeilToInt(network.HopTimeLeft)}",
+                        UplinkStatus.Hopping => $"RETUNING  {Mathf.CeilToInt(network.HopTimeLeft)}",
                         _ => "NO UPLINK"
                     };
                     Alert(center, title, warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] FREQUENCY HOP   OR   1 / 2 / 3 SWITCH SATELLITE"
+                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] TUNER - PLUG A FREE CHANNEL AND LOCK"
                         : link.Uplink == UplinkStatus.Hopping ? "RETUNING CARRIER..." : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
                     Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
@@ -300,7 +304,7 @@ namespace MoonThemedGame.Scavenger
             if (link.Powered) DrawSatellites(unit, line);
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - FREQ HOP   ESC - BACK TO PC", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - TUNER   ESC - BACK TO PC", phosphor, 60, text);
         }
 
         string SatLine()
@@ -344,7 +348,7 @@ namespace MoonThemedGame.Scavenger
             }
             if (link.Uplink == UplinkStatus.Ok && network.Rival == RivalPhase.Incoming && network.RivalOnActive && Mathf.Repeat(Time.time * 3, 1) < 0.7f)
                 Draw(new Rect(0, unit * 7.2f, Screen.width, line),
-                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] FREQ HOP / 1-2-3 SWITCH", warning, 96, Centered(text));
+                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] TUNER", warning, 96, Centered(text));
             if (link.Uplink == UplinkStatus.Ok && !link.ViaRelay && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
             {
                 int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));
@@ -352,7 +356,7 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        void EnsureStyles()
+        internal void EnsureStyles()
         {
             if (text != null) return;
             int size = Mathf.RoundToInt(Screen.height / 46f);
@@ -418,7 +422,7 @@ namespace MoonThemedGame.Scavenger
         }
 
         // Phosphor bleed, line jitter, permanently faded glyphs and glitches that grow with interference.
-        void Draw(Rect rect, string message, Color color, int salt, GUIStyle style, bool worn = true)
+        internal void Draw(Rect rect, string message, Color color, int salt, GUIStyle style, bool worn = true)
         {
             float k = Interference;
             int slice = Mathf.FloorToInt(Time.time * 10);

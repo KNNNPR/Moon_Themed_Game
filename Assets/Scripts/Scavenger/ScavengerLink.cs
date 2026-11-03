@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using MoonThemedGame.Computer;
+using MoonThemedGame.Weather;
 using MoonThemedGame.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
@@ -61,6 +62,9 @@ namespace MoonThemedGame.Scavenger
         int sceneMask;
         CameraClearFlags sceneClear;
         ScavengerFeedHud hud;
+        RfPatchPanel patch;
+        float baseCapacity, baseDrain, baseSpeed, baseAcceleration;
+        Light lampBeam;
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -116,12 +120,14 @@ namespace MoonThemedGame.Scavenger
             if (!terminal) return;
             if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
             if (!terminal.GetComponent<SatelliteConsoleApp>()) terminal.gameObject.AddComponent<SatelliteConsoleApp>();
+            if (!terminal.GetComponent<ShopApp>()) terminal.gameObject.AddComponent<ShopApp>();
         }
 
         void Awake()
         {
             if (!terminal) terminal = GetComponent<PcMonitorTerminal>();
             if (!TryGetComponent(out hud)) hud = gameObject.AddComponent<ScavengerFeedHud>();
+            if (!TryGetComponent(out patch)) patch = gameObject.AddComponent<RfPatchPanel>();
         }
 
         void Start()
@@ -178,6 +184,50 @@ namespace MoonThemedGame.Scavenger
             Drive.PlaceAt(homePosition, homeRotation);
             if (baseRelayRange <= 0) baseRelayRange = Drive.Length * 6;
             CreateInterference();
+
+            baseCapacity = state.capacity;
+            baseDrain = state.drainPerSecond;
+            baseSpeed = Drive.maxSpeed;
+            baseAcceleration = Drive.acceleration;
+            RobotUpgrades.Changed += ApplyUpgrades;
+            ApplyUpgrades();
+            WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
+        }
+
+        void ApplyUpgrades()
+        {
+            if (!state || !Drive) return;
+            state.capacity = baseCapacity * RobotUpgrades.CapacityScale;
+            state.drainPerSecond = baseDrain * RobotUpgrades.DrainScale;
+            state.cargoCapacity = RobotUpgrades.CargoSlots;
+            Drive.maxSpeed = baseSpeed * RobotUpgrades.SpeedScale;
+            Drive.acceleration = baseAcceleration * RobotUpgrades.SpeedScale;
+            if (RobotUpgrades.Lamps && !lampBeam) lampBeam = CreateLampBeam();
+            if (lampBeam) lampBeam.enabled = RobotUpgrades.Lamps;
+        }
+
+        Light CreateLampBeam()
+        {
+            Vector3 position = robot.TransformPoint(cameraTarget);
+            foreach (Transform child in robot.GetComponentsInChildren<Transform>())
+            {
+                if (child.name != "Headlights") continue;
+                var lamp = child.GetComponentInChildren<Renderer>();
+                position = lamp ? lamp.bounds.center : child.position;
+                break;
+            }
+            var host = new GameObject("Fog Lamp Beam");
+            host.transform.SetParent(robot, false);
+            host.transform.SetPositionAndRotation(position + Drive.Forward * 0.05f, Quaternion.LookRotation(Drive.Forward, Vector3.up) * Quaternion.Euler(6, 0, 0));
+            var light = host.AddComponent<Light>();
+            light.type = LightType.Spot;
+            light.range = Drive.Length * 14;
+            light.spotAngle = 70;
+            light.innerSpotAngle = 35;
+            light.intensity = 12;
+            light.color = new Color(1f, 0.95f, 0.82f);
+            light.shadows = LightShadows.None;
+            return light;
         }
 
         static Bounds RobotBounds(Transform robot)
@@ -256,7 +306,7 @@ namespace MoonThemedGame.Scavenger
             if (evacuated && Drive) Drive.PlaceAt(homePosition, homeRotation);
         }
 
-        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok;
+        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
         public static Vector3 DetectForward(Transform robot, Vector3 center)
@@ -302,13 +352,13 @@ namespace MoonThemedGame.Scavenger
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;
-            bool hop = false;
+            bool panelKey = false;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
                 interact = Keyboard.current.eKey.wasPressedThisFrame;
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
-                hop = Keyboard.current.hKey.wasPressedThisFrame;
+                panelKey = Keyboard.current.hKey.wasPressedThisFrame;
                 if (Keyboard.current.digit1Key.wasPressedThisFrame) satelliteKey = 0;
                 else if (Keyboard.current.digit2Key.wasPressedThisFrame) satelliteKey = 1;
                 else if (Keyboard.current.digit3Key.wasPressedThisFrame) satelliteKey = 2;
@@ -317,7 +367,7 @@ namespace MoonThemedGame.Scavenger
 #elif ENABLE_LEGACY_INPUT_MANAGER
             interact = Input.GetKeyDown(KeyCode.E);
             escape = Input.GetKeyDown(KeyCode.Escape);
-            hop = Input.GetKeyDown(KeyCode.H);
+            panelKey = Input.GetKeyDown(KeyCode.H);
             if (Input.GetKeyDown(KeyCode.Alpha1)) satelliteKey = 0;
             else if (Input.GetKeyDown(KeyCode.Alpha2)) satelliteKey = 1;
             else if (Input.GetKeyDown(KeyCode.Alpha3)) satelliteKey = 2;
@@ -340,10 +390,11 @@ namespace MoonThemedGame.Scavenger
                     else if (PhaseTime >= connectDuration) SetPhase(LinkPhase.Live);
                     break;
                 case LinkPhase.Live:
-                    if (escape) Terminate();
+                    if (escape && patch.IsOpen) patch.Close();
+                    else if (escape) Terminate();
+                    else if (panelKey) patch.Toggle();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
                     else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
-                    else if (hop && Network && !Network.FrequencyHop()) hud.Notify("NO RIVAL CARRIER - HOP NOT NEEDED");
                     break;
                 case LinkPhase.Terminating:
                     if (PhaseTime >= terminateDuration) { Disconnect(); return; }
@@ -513,6 +564,8 @@ namespace MoonThemedGame.Scavenger
         void OnDestroy()
         {
             if (Network) Network.RivalChanged -= OnRivalChanged;
+            RobotUpgrades.Changed -= ApplyUpgrades;
+            WeatherAtmosphereFeature.DensityScale = null;
         }
     }
 }

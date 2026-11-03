@@ -26,9 +26,9 @@ namespace MoonThemedGame.Scavenger
         PcMonitorTerminal terminal;
         ScavengerLink link;
         SatelliteNetwork network;
-        VisualElement icon, window, close, map, threat, hop;
+        VisualElement icon, window, close, map, threat;
         Card[] cards;
-        Label robotStatus, threatText, hopLabel;
+        Label robotStatus, threatText;
         Label[] mapLabels;
         Label rivalLabel;
         float nextRefresh;
@@ -56,8 +56,6 @@ namespace MoonThemedGame.Scavenger
                     card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor =
                         pointer && card.root.worldBound.Contains(point) ? Text : new Color(1, 1, 1, 0.12f);
                 close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
-                bool canHop = network.Rival != RivalPhase.None && !network.Hopping;
-                hopLabel.style.color = !canHop ? Muted : pointer && hop.worldBound.Contains(point) ? Color.white : Alarm;
                 map.MarkDirtyRepaint();
             }
             if (pointer && Clicked()) HandleClick(point);
@@ -80,15 +78,23 @@ namespace MoonThemedGame.Scavenger
             if (icon.worldBound.Contains(point)) { SetOpen(!IsOpen); return; }
             if (!IsOpen) return;
             if (close.worldBound.Contains(point)) { SetOpen(false); return; }
-            if (hop.worldBound.Contains(point)) { network.FrequencyHop(); Refresh(); return; }
             for (int i = 0; i < cards.Length; i++)
                 if (cards[i].root.worldBound.Contains(point)) { network.Select(i); Refresh(); return; }
+        }
+
+        public void Close()
+        {
+            if (window != null) SetOpen(false);
         }
 
         void SetOpen(bool open)
         {
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
-            if (open) Refresh();
+            if (!open) return;
+            if (TryGetComponent(out ShopApp shop)) shop.Close();
+            window.BringToFront();
+            terminal.Root.Q("screen-cursor")?.BringToFront();
+            Refresh();
         }
 
         void Build()
@@ -120,7 +126,7 @@ namespace MoonThemedGame.Scavenger
             s.left = 300;
             s.top = 20;
             s.width = 640;
-            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 0.97f);
+            s.backgroundColor = new Color(0.02f, 0.04f, 0.055f, 1);
             Border(window, Muted);
             s.paddingLeft = s.paddingRight = 12;
             s.paddingTop = s.paddingBottom = 10;
@@ -133,7 +139,7 @@ namespace MoonThemedGame.Scavenger
             close = MakeLabel("[X]", 18, Muted);
             title.Add(close);
             window.Add(title);
-            var help = MakeLabel("The robot's signal goes through ONE satellite. Pick one that is IN RANGE (over the station, bright arc).\nIn the robot: keys 1 / 2 / 3. A rival intercept is beaten by FREQ HOP (H) or by switching satellite.", 12, Muted);
+            var help = MakeLabel("The robot's signal goes through ONE satellite. Pick one that is IN RANGE (over the station, bright arc).\nIn the robot: keys 1 / 2 / 3. A rival intercept is beaten in the robot feed: [H] tuner, pick a free channel.", 12, Muted);
             help.style.marginTop = 4;
             help.style.marginBottom = 8;
             help.style.whiteSpace = WhiteSpace.Normal;
@@ -201,12 +207,6 @@ namespace MoonThemedGame.Scavenger
             threatText.style.whiteSpace = WhiteSpace.Normal;
             threatText.style.flexShrink = 1;
             row.Add(threatText);
-            hop = Box();
-            hop.style.paddingLeft = hop.style.paddingRight = 6;
-            hop.style.flexShrink = 0;
-            hopLabel = MakeLabel("[FREQ HOP]", 14, Muted);
-            hop.Add(hopLabel);
-            row.Add(hop);
             threat.Add(row);
             return threat;
         }
@@ -434,16 +434,16 @@ namespace MoonThemedGame.Scavenger
             {
                 case RivalPhase.Incoming:
                     var target = network.satellites[network.RivalTarget].name;
-                    threatText.text = $"WARNING: rival {rival} is intercepting {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nSignal is jammed. Hop frequency or switch satellite.";
+                    threatText.text = $"WARNING: rival {rival} is jamming CH{network.CarrierChannel + 1} via {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nIn the robot feed: [H] tuner, plug a free channel, LOCK.";
                     threatText.style.color = Alarm;
                     break;
                 case RivalPhase.Hijacked:
-                    threatText.text = $"HIJACKED: {rival} took over {network.satellites[network.RivalTarget].name}.\nNo picture until you hop or switch satellite.";
+                    threatText.text = $"HIJACKED: {rival} took over {network.satellites[network.RivalTarget].name}.\nNo picture until the carrier is re-locked ([H] in the robot feed).";
                     threatText.style.color = Alarm;
                     break;
                 default:
                     threatText.text = network.Hopping
-                        ? $"FREQUENCY HOP... {Mathf.CeilToInt(network.HopTimeLeft)}s"
+                        ? $"RETUNING... {Mathf.CeilToInt(network.HopTimeLeft)}s"
                         : $"THREATS: none. {rival} (rival) on outer orbit.";
                     threatText.style.color = network.Hopping ? Text : Muted;
                     break;
