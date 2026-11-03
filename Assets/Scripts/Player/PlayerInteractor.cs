@@ -40,7 +40,7 @@ namespace MoonThemedGame.Interactions
             SetTarget(FindTarget());
             if (target is HeldProp prop) prop.RadioInput();
             if (target && Keyboard.current != null &&
-                Keyboard.current.eKey.wasPressedThisFrame)
+                GameControls.Pressed(GameCommand.Interact))
             {
                 target.Interact();
                 if (!CanUseInput()) SetTarget(null);
@@ -107,7 +107,7 @@ namespace MoonThemedGame.Interactions
                 if (promptStyle == null)
                     promptStyle = new GUIStyle(GUI.skin.label)
                         { alignment = TextAnchor.MiddleCenter, fontSize = 16, wordWrap = true };
-                string prompt = target.Prompt;
+                string prompt = GameControls.FormatPrompt(target.Prompt);
                 float width = Mathf.Max(1f, Mathf.Min(380f, Screen.width - 32f));
                 float height = promptStyle.CalcHeight(new GUIContent(prompt), width);
                 GUI.Label(new Rect((Screen.width - width) / 2f, Screen.height / 2f + 18f,
