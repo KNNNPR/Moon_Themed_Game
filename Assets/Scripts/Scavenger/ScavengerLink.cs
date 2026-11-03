@@ -44,7 +44,9 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float baseRelayRange;
         [Tooltip("The CHARGE station; found by name (Charge_monitor) when empty.")]
         public Transform charger;
-        [Tooltip("How close to the charger the robot must park. 0 = robot length + 1.5 m.")]
+        [Tooltip("Building the robot charges in; found around the charger when empty.")]
+        public Renderer chargeBuilding;
+        [Tooltip("Used only when no charge building is found: how close to the charger to park. 0 = robot length + 1.5 m.")]
         [Min(0)] public float chargerRange;
 
         Camera operatorCamera;
@@ -138,6 +140,9 @@ namespace MoonThemedGame.Scavenger
             if (baseRelayRange <= 0) baseRelayRange = unit * 6;
             if (!charger) charger = FindCharger();
             if (chargerRange <= 0) chargerRange = unit + 1.5f;
+            if (!chargeBuilding && charger) chargeBuilding = FindBuilding(charger, unit);
+            if (chargeBuilding) AddBuildingCollider(chargeBuilding);
+            else if (charger) Debug.LogWarning("[Scavenger] No building found around the CHARGE station; charging works within Charger Range.", charger);
             CreateInterference();
         }
 
@@ -189,10 +194,46 @@ namespace MoonThemedGame.Scavenger
             return null;
         }
 
+        // The smallest station mesh that contains the charger and fits the robot.
+        Renderer FindBuilding(Transform target, float robotLength)
+        {
+            Renderer best = null;
+            float bestVolume = float.MaxValue;
+            foreach (var r in target.root.GetComponentsInChildren<Renderer>())
+            {
+                if (r.transform == target || r.transform.IsChildOf(robot) || !r.TryGetComponent<MeshFilter>(out _)) continue;
+                var b = r.bounds;
+                b.Expand(0.3f);
+                if (!b.Contains(target.position) || b.size.x < robotLength * 1.5f || b.size.z < robotLength * 1.5f) continue;
+                float volume = b.size.x * b.size.y * b.size.z;
+                if (volume < bestVolume) { best = r; bestVolume = volume; }
+            }
+            if (best) Debug.Log($"[Scavenger] Charge building: {best.name}", best);
+            return best;
+        }
+
+        // Walls for the robot; the player keeps walking as before.
+        static void AddBuildingCollider(Renderer building)
+        {
+            if (!building.TryGetComponent(out Collider collider))
+            {
+                var mesh = building.GetComponent<MeshFilter>().sharedMesh;
+                if (!mesh) return;
+                var meshCollider = building.gameObject.AddComponent<MeshCollider>();
+                meshCollider.sharedMesh = mesh;
+                collider = meshCollider;
+            }
+            foreach (var player in FindObjectsByType<CharacterController>(FindObjectsSortMode.None))
+                Physics.IgnoreCollision(player, collider);
+        }
+
+        public bool InChargeBuilding => chargeBuilding && robot && chargeBuilding.bounds.Contains(RobotBounds(robot).center);
+
         public bool AtCharger
         {
             get
             {
+                if (chargeBuilding) return InChargeBuilding;
                 if (!charger || !robot) return false;
                 var offset = charger.position - RobotBounds(robot).center;
                 offset.y = 0;
@@ -339,7 +380,7 @@ namespace MoonThemedGame.Scavenger
             if (relay)
             {
                 cover = Network.Cover(robot.TransformPoint(antenna), robotColliders);
-                quality = Network.ApplyCover(1, cover);
+                quality = 1;
                 status = UplinkStatus.Ok;
             }
             else status = Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out quality, out cover);
