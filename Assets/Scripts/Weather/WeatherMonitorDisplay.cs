@@ -51,6 +51,7 @@ namespace MoonThemedGame.Weather
             var document = uiHost.AddComponent<UIDocument>(); document.panelSettings = panel; document.visualTreeAsset = assets.layout;
             root = document.rootVisualElement; root.style.width = assets.resolution.x; root.style.height = assets.resolution.y;
             root.style.unityFontDefinition = FontDefinition.FromFont(assets.font); root.styleSheets.Add(assets.styleSheet);
+            Loc.Stamp(root);
             Refresh();
             var collider = GetComponent<MeshCollider>();
             if (!collider) collider = gameObject.AddComponent<MeshCollider>();
@@ -120,24 +121,25 @@ namespace MoonThemedGame.Weather
             var weather = MoonWeatherSystem.Active;
             if (root == null || !weather) return;
             refreshAt = Time.time + 0.2f;
+            Loc.Apply(root);
             SetIcon("current-icon", weather.Current);
-            root.Q<Label>("current-name").text = MoonWeatherSystem.Name(weather.Current);
-            root.Q<Label>("current-effect").text = MoonWeatherSystem.Effect(weather.Current);
-            root.Q<Label>("current-time").text = "CHANGES IN " + Clock(weather.Remaining);
+            root.Q<Label>("current-name").text = Loc.T(MoonWeatherSystem.Name(weather.Current));
+            root.Q<Label>("current-effect").text = Loc.T(MoonWeatherSystem.Effect(weather.Current));
+            root.Q<Label>("current-time").text = Loc.F("CHANGES IN {0}", Clock(weather.Remaining));
             root.Q("progress").style.width = Length.Percent(weather.Remaining / weather.CurrentDuration * 100);
             for (int i = 0; i < 2; i++)
             {
                 var next = weather.Forecast(i); SetIcon("next-icon-" + i, next.kind);
-                root.Q<Label>("next-name-" + i).text = MoonWeatherSystem.Name(next.kind);
-                root.Q<Label>("next-time-" + i).text = "IN " + Clock(next.startsIn);
-                root.Q<Label>("next-effect-" + i).text = MoonWeatherSystem.Effect(next.kind);
+                root.Q<Label>("next-name-" + i).text = Loc.T(MoonWeatherSystem.Name(next.kind));
+                root.Q<Label>("next-time-" + i).text = Loc.F("IN {0}", Clock(next.startsIn));
+                root.Q<Label>("next-effect-" + i).text = Loc.T(MoonWeatherSystem.Effect(next.kind));
             }
             float multiplier = weather.Current == WeatherKind.Radiation ? weather.toxicEnergyMultiplier : 1;
-            root.Q<Label>("weather-energy").text = "ENERGY DRAIN x" + multiplier.ToString("0.0", CultureInfo.InvariantCulture);
+            root.Q<Label>("weather-energy").text = Loc.F("ENERGY DRAIN x{0}", multiplier.ToString("0.0", CultureInfo.InvariantCulture));
             root.Q<Label>("weather-notice").text = weather.Current == WeatherKind.MeteoriteRain
-                ? "IMPACT ZONES MARKED " + Mathf.Max(5,weather.warningSeconds).ToString("0",CultureInfo.InvariantCulture) + "s BEFORE"
-                : "BASE INTERIOR / SHELTERED";
-            root.Q<Label>("weather-clock").text = "SURFACE FORECAST / T+" + Clock(Time.time);
+                ? Loc.F("IMPACT ZONES MARKED {0}s BEFORE", Mathf.Max(5,weather.warningSeconds).ToString("0",CultureInfo.InvariantCulture))
+                : Loc.T("BASE INTERIOR / SHELTERED");
+            root.Q<Label>("weather-clock").text = Loc.F("SURFACE FORECAST / T+{0}", Clock(Time.time));
         }
         void SetIcon(string id, WeatherKind kind)
         {

@@ -263,7 +263,7 @@ namespace MoonThemedGame.Weather
                 {
                     state.ApplyEnergyDamage(impactEnergyDamage * (1 - distance / strikeRadius));
                     var link = FindAnyObjectByType<ScavengerLink>();
-                    if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify("METEOR IMPACT - ENERGY LOST");
+                    if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify(Loc.T("METEOR IMPACT - ENERGY LOST"));
                 }
             }
             WeatherImpactFx.Spawn(this, point, normal);

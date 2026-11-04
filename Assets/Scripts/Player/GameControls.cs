@@ -22,7 +22,7 @@ namespace MoonThemedGame.Interactions
                 if (Enum.IsDefined(typeof(Key), saved) && saved != (int)Key.None) keys[i]=(Key)saved;
             }
         }
-        public static string Name(GameCommand command) => names[(int)command];
+        public static string Name(GameCommand command) => Loc.T(names[(int)command]);
         public static Key Binding(GameCommand command) { Load(); return keys[(int)command]; }
         public static string Label(GameCommand command)
         {
@@ -36,11 +36,11 @@ namespace MoonThemedGame.Interactions
         public static bool SetBinding(GameCommand command, Key key, out string message)
         {
             Load();
-            if (key == Key.None || key == Key.Escape) { message="ESC is reserved for back / cancel."; return false; }
+            if (key == Key.None || key == Key.Escape) { message=Loc.T("ESC is reserved for back / cancel."); return false; }
             for(int i=0;i<keys.Length;i++) if (i!=(int)command && keys[i]==key)
-            { message="Already assigned: "+names[i]+"."; return false; }
+            { message=Loc.F("Already assigned: {0}.", Name((GameCommand)i)); return false; }
             keys[(int)command]=key; PlayerPrefs.SetInt("controls."+command,(int)key);
-            PlayerPrefs.Save(); Changed?.Invoke(); message="Saved: "+Name(command)+"  ["+Label(command)+"]"; return true;
+            PlayerPrefs.Save(); Changed?.Invoke(); message=Loc.F("Saved: {0}  [{1}]", Name(command), Label(command)); return true;
         }
         public static void ResetBindings()
         {

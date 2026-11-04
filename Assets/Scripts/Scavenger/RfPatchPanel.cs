@@ -79,13 +79,13 @@ namespace MoonThemedGame.Scavenger
             {
                 bool attack = network.Rival == RivalPhase.Incoming;
                 network.PenalizeLock();
-                string reason = plugged < 0 ? "TUNER IS EMPTY" : $"CH{plugged + 1} IS JAMMED";
-                Say($"ERR NO LOCK - {reason}" + (attack ? $"  +{Mathf.RoundToInt(network.lockPenalty * 100)}% TO RIVAL" : ""), true);
+                string reason = plugged < 0 ? Loc.T("TUNER IS EMPTY") : Loc.F("CH{0} IS JAMMED", plugged + 1);
+                Say(Loc.F("ERR NO LOCK - {0}", reason) + (attack ? Loc.F("  +{0}% TO RIVAL", Mathf.RoundToInt(network.lockPenalty * 100)) : ""), true);
                 return;
             }
             bool repelled = network.Rival != RivalPhase.None;
             network.Repel(plugged);
-            Say(repelled ? $"CARRIER LOCKED CH{plugged + 1} - {network.rivalName} LOST THE SIGNAL" : $"CARRIER STABLE CH{plugged + 1}", false);
+            Say(repelled ? Loc.F("CARRIER LOCKED CH{0} - {1} LOST THE SIGNAL", plugged + 1, network.rivalName) : Loc.F("CARRIER STABLE CH{0}", plugged + 1), false);
             if (repelled) closeAt = Time.time + 1.4f;
         }
 
@@ -108,10 +108,12 @@ namespace MoonThemedGame.Scavenger
             else { style.normal.textColor = color; GUI.Label(rect, value, style); }
         }
 
-        void OnGUI()
+        static Vector2 Pointer => Event.current.mousePosition;
+
+        // Drawn by ScavengerFeedHud right after the feed text, so it always sits on top of it.
+        internal void Gui()
         {
             if (!IsOpen || !Network) return;
-            GUI.depth = -10;
             if (hud) hud.EnsureStyles();
             var network = Network;
             int channels = network.channels.Length;
@@ -134,30 +136,30 @@ namespace MoonThemedGame.Scavenger
             var phosphor = Phosphor;
             var dim = phosphor * 0.6f;
             var warning = Warning;
-            var mouse = Event.current.mousePosition;
+            var mouse = Pointer;
 
             Fill(panel, new Color(0.004f, 0.012f, 0.008f, 0.96f));
             Frame(panel, dim, 1);
             Frame(new Rect(panel.x + 4, panel.y + 4, panel.width - 8, panel.height - 8), phosphor * 0.25f, 1);
 
-            Print(new Rect(panel.x + pad, Row(0.6f), w, line), "RCVR-2 // CARRIER TUNER", phosphor, 0, text);
-            Print(new Rect(panel.x, Row(0.6f), w - pad, line), "[H] / [ESC] EXIT", dim, 1, right);
+            Print(new Rect(panel.x + pad, Row(0.6f), w, line), Loc.T("RCVR-2 // CARRIER TUNER"), phosphor, 0, text);
+            Print(new Rect(panel.x, Row(0.6f), w - pad, line), Loc.T("[H] / [ESC] EXIT"), dim, 1, right);
 
             bool blink = Mathf.Repeat(Time.time * 1.6f, 1) < 0.7f;
             switch (network.Rival)
             {
                 case RivalPhase.Incoming:
-                    if (blink) Print(new Rect(panel.x + pad, Row(2f), w, line), $"ALERT  {network.rivalName} IS JAMMING THE CARRIER", warning, 2, text);
-                    Print(new Rect(panel.x + pad, Row(3f), w, line), $"INTERCEPT {Bar(network.RivalProgress, 20)} {Mathf.RoundToInt(network.RivalProgress * 100),3}%", warning, 3, text);
+                    if (blink) Print(new Rect(panel.x + pad, Row(2f), w, line), Loc.F("ALERT  {0} IS JAMMING THE CARRIER", network.rivalName), warning, 2, text);
+                    Print(new Rect(panel.x + pad, Row(3f), w, line), Loc.F("INTERCEPT {0} {1,3}%", Bar(network.RivalProgress, 20), Mathf.RoundToInt(network.RivalProgress * 100)), warning, 3, text);
                     break;
                 case RivalPhase.Hijacked:
-                    if (blink) Print(new Rect(panel.x + pad, Row(2f), w, line), $"ALERT  SIGNAL HIJACKED BY {network.rivalName}", warning, 2, text);
+                    if (blink) Print(new Rect(panel.x + pad, Row(2f), w, line), Loc.F("ALERT  SIGNAL HIJACKED BY {0}", network.rivalName), warning, 2, text);
                     break;
                 default:
-                    Print(new Rect(panel.x + pad, Row(2f), w, line), network.Hopping ? "RETUNING..." : "NO RIVAL CARRIER", dim, 2, text);
+                    Print(new Rect(panel.x + pad, Row(2f), w, line), Loc.T(network.Hopping ? "RETUNING..." : "NO RIVAL CARRIER"), dim, 2, text);
                     break;
             }
-            Print(new Rect(panel.x + pad, Row(4.3f), w, line), "> PLUG A FREE CHANNEL INTO THE TUNER, THEN LOCK", phosphor, 4, text);
+            Print(new Rect(panel.x + pad, Row(4.3f), w, line), Loc.T("> PLUG A FREE CHANNEL INTO THE TUNER, THEN LOCK"), phosphor, 4, text);
 
             if (noise.Length != channels) noise = new float[channels];
             if (Time.time >= nextNoise)
@@ -172,21 +174,22 @@ namespace MoonThemedGame.Scavenger
             for (int c = 0; c < channels; c++)
             {
                 bool jammed = network.IsJammed(c);
-                string state = jammed ? "JAMMED" : c == network.CarrierChannel ? "CARRIER" : "FREE";
-                Print(new Rect(panel.x + pad, Row(5.7f + c), w, line), $"CH{c + 1} {Ghz(network.channels[c])} GHz {Bar(noise[c], 18)} {state}", jammed ? warning : phosphor * (state == "FREE" ? 1 : 0.75f), 10 + c, text);
+                bool free = !jammed && c != network.CarrierChannel;
+                string state = Loc.T(jammed ? "JAMMED" : free ? "FREE" : "CARRIER");
+                Print(new Rect(panel.x + pad, Row(5.7f + c), w, line), Loc.F("CH{0} {1} GHz {2} {3}", c + 1, Ghz(network.channels[c]), Bar(noise[c], 18), state), jammed ? warning : phosphor * (free ? 1 : 0.75f), 10 + c, text);
             }
 
             for (int i = 0; i < channels; i++)
             {
                 bool hover = Vector2.Distance(mouse, outputs[i]) < reach;
                 var color = hover ? Color.white : network.IsJammed(i) ? warning : dim;
-                Print(new Rect(outputs[i].x - w * 0.08f, outputs[i].y - line * 1.1f, w * 0.16f, line), $"CH{i + 1}", color, 20 + i, center);
+                Print(new Rect(outputs[i].x - w * 0.08f, outputs[i].y - line * 1.1f, w * 0.16f, line), Loc.F("CH{0}", i + 1), color, 20 + i, center);
                 Jack(outputs[i], line, plugged == i || held == i, hover, phosphor);
             }
             var tunerColor = ready ? phosphor : plugged < 0 ? dim : warning;
             string tunerTag = ready ? "[OK]" : plugged < 0 ? "[--]" : "[!!]";
-            string tunerState = plugged < 0 ? "EMPTY" : network.IsJammed(plugged) ? $"CH{plugged + 1} JAMMED" : $"CH{plugged + 1} FREE";
-            Print(new Rect(tuner.x - w * 0.3f, tuner.y + line * 0.7f, w * 0.6f, line), $"{tunerTag} TUNER  {tunerState}", tunerColor, 30, center);
+            string tunerState = plugged < 0 ? Loc.T("EMPTY") : network.IsJammed(plugged) ? Loc.F("CH{0} JAMMED", plugged + 1) : Loc.F("CH{0} FREE", plugged + 1);
+            Print(new Rect(tuner.x - w * 0.3f, tuner.y + line * 0.7f, w * 0.6f, line), Loc.F("{0} TUNER  {1}", tunerTag, tunerState), tunerColor, 30, center);
             Jack(tuner, line, plugged >= 0, held >= 0 && Vector2.Distance(mouse, tuner) < reach * 1.5f, phosphor);
             if (plugged >= 0) Cable(outputs[plugged], tuner, line, phosphor * 0.75f);
             if (held >= 0) Cable(outputs[held], mouse, line, Mathf.Repeat(Time.time * 4, 1) < 0.5f ? phosphor : phosphor * 0.7f);
@@ -195,13 +198,13 @@ namespace MoonThemedGame.Scavenger
             if (ready || lockHover) Fill(lockButton, ready ? phosphor * (lockHover ? 0.85f : 0.6f) : phosphor * 0.15f);
             Frame(lockButton, ready ? phosphor : dim, 1);
             center.normal.textColor = ready ? new Color(0.01f, 0.03f, 0.02f) : dim;
-            GUI.Label(lockButton, "[ LOCK CARRIER ]", center);
+            GUI.Label(lockButton, Loc.T("[ LOCK CARRIER ]"), center);
 
             var messageRect = new Rect(panel.x + pad, lockButton.y, w * 0.6f, lockButton.height);
             if (message != null && Time.time < messageUntil)
                 Print(messageRect, message, messageAlarm ? warning : phosphor, 50, text);
             else
-                Print(messageRect, "> CLICK A CHANNEL, THEN THE TUNER", dim, 51, text);
+                Print(messageRect, Loc.T("> CLICK A CHANNEL, THEN THE TUNER"), dim, 51, text);
 
             for (float y = panel.y; y < panel.yMax; y += 3) Fill(new Rect(panel.x, y, panel.width, 1), new Color(0, 0, 0, 0.28f));
             float roll = Mathf.Repeat(Time.time * 0.2f, 1.3f) - 0.15f;
@@ -212,7 +215,7 @@ namespace MoonThemedGame.Scavenger
         {
             var e = Event.current;
             if (e.type != EventType.MouseDown) return;
-            var mouse = e.mousePosition;
+            var mouse = Pointer;
             if (e.button == 1) { held = -1; e.Use(); return; }
             if (e.button != 0) return;
             e.Use();

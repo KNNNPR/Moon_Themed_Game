@@ -64,7 +64,9 @@ namespace MoonThemedGame.Interactions
 
         void LateUpdate()
         {
-            opacity = Mathf.Lerp(opacity, highlighted ? 1f : 0f, 1f - Mathf.Exp(-fadeSpeed * Time.deltaTime));
+            // Unscaled: the settings menu pauses time, and the outline must still disappear under it.
+            opacity = Mathf.Lerp(opacity, highlighted ? 1f : 0f, 1f - Mathf.Exp(-fadeSpeed * Time.unscaledDeltaTime));
+            if (!highlighted && GameSettingsMenu.IsOpen) opacity = 0f;
             if (!highlighted && opacity < 0.002f)
             {
                 opacity = 0f;

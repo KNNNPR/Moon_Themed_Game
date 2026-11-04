@@ -65,6 +65,10 @@ namespace MoonThemedGame.Scavenger
         RfPatchPanel patch;
         float baseCapacity, baseDrain, baseSpeed, baseAcceleration;
         Light lampBeam;
+        Transform arm;
+        RobotArm robotArm;
+
+        public RobotLever NearLever { get; private set; }
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -191,6 +195,7 @@ namespace MoonThemedGame.Scavenger
             baseAcceleration = Drive.acceleration;
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
+            if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -204,6 +209,56 @@ namespace MoonThemedGame.Scavenger
             Drive.acceleration = baseAcceleration * RobotUpgrades.SpeedScale;
             if (RobotUpgrades.Lamps && !lampBeam) lampBeam = CreateLampBeam();
             if (lampBeam) lampBeam.enabled = RobotUpgrades.Lamps;
+            if (RobotUpgrades.HasArm && !arm) arm = CreateArm();
+            if (arm) arm.gameObject.SetActive(RobotUpgrades.HasArm);
+        }
+
+        // The SHOP's small_cran model, scaled to the robot and mounted on its front top.
+        Transform CreateArm()
+        {
+            var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
+            if (!catalog || !catalog.arm) return null;
+            var bounds = RobotBounds(robot);
+            var instance = Instantiate(catalog.arm);
+            instance.name = "Manipulator Arm";
+            foreach (var collider in instance.GetComponentsInChildren<Collider>(true)) Destroy(collider);
+            var renderers = instance.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                var size = renderers[0].bounds;
+                foreach (var r in renderers) size.Encapsulate(r.bounds);
+                float largest = Mathf.Max(size.size.x, size.size.y, size.size.z);
+                if (largest > 1e-4f) instance.transform.localScale *= Drive.Length * 0.45f / largest;
+            }
+            instance.transform.SetPositionAndRotation(
+                bounds.center + Drive.Forward * (bounds.extents.magnitude * 0.25f) + Vector3.up * bounds.extents.y,
+                Quaternion.LookRotation(Drive.Forward, Vector3.up));
+            instance.transform.SetParent(robot, true);
+            robotArm = instance.AddComponent<RobotArm>();
+            return instance.transform;
+        }
+
+        void PlaceTestLever(Vector3 ground)
+        {
+            var forward = Drive.Forward;
+            forward.y = 0;
+            forward.Normalize();
+            var right = Vector3.Cross(Vector3.up, forward);
+            var position = ground + right * (Drive.Length * 1.8f) + forward * (Drive.Length * 1.2f);
+            RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
+        }
+
+        public bool ArmBusy => robotArm && robotArm.Busy;
+        public bool ArmCanReach(RobotLever lever) => robotArm && robotArm.CanReach(lever);
+
+        void PullLever()
+        {
+            var lever = NearLever;
+            if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify(Loc.T("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP")); return; }
+            if (robotArm.Busy) return;
+            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
+            robotArm.Pull(lever);
+            hud.Notify(Loc.T(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER"));
         }
 
         Light CreateLampBeam()
@@ -306,7 +361,7 @@ namespace MoonThemedGame.Scavenger
             if (evacuated && Drive) Drive.PlaceAt(homePosition, homeRotation);
         }
 
-        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen;
+        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen && !ArmBusy;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
         public static Vector3 DetectForward(Transform robot, Vector3 center)
@@ -380,6 +435,7 @@ namespace MoonThemedGame.Scavenger
             }
             if (Network) Network.TickRival(Connected && Powered);
             if (Connected) RefreshUplink();
+            NearLever = Connected && robot && Drive ? RobotLever.Nearest(robot.position, Drive.Length * 0.5f) : null;
             switch (Phase)
             {
                 case LinkPhase.Off:
@@ -394,6 +450,7 @@ namespace MoonThemedGame.Scavenger
                     else if (escape) Terminate();
                     else if (panelKey) patch.Toggle();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
+                    else if (interact && NearLever && Powered && state && state.Status == RobotStatus.Online) PullLever();
                     else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
                     break;
                 case LinkPhase.Terminating:
@@ -432,13 +489,13 @@ namespace MoonThemedGame.Scavenger
             if (phase != RivalPhase.Hijacked || !terminal) return;
             int stolen = Mathf.Min(Network.hijackCreditLoss, terminal.Credits);
             if (stolen > 0) terminal.SetCredits(terminal.Credits - stolen);
-            if (Connected && hud) hud.Notify($"SIGNAL HIJACKED BY {Network.rivalName}  DATA STOLEN -{stolen} CR");
+            if (Connected && hud) hud.Notify(Loc.F("SIGNAL HIJACKED BY {0}  DATA STOLEN -{1} CR", Network.rivalName, stolen));
         }
 
         void TryEvacuate()
         {
-            if (state.OrderEvacuation(terminal)) hud.Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
-            else hud.Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
+            if (state.OrderEvacuation(terminal)) hud.Notify(Loc.F("EVACUATION ORDERED  -{0} CR", state.evacuationCost));
+            else hud.Notify(Loc.F("NOT ENOUGH CREDITS  ({0}/{1} CR)", terminal.Credits, state.evacuationCost));
         }
 
         public void RefreshUplink()

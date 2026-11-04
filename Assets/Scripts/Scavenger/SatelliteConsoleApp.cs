@@ -34,6 +34,18 @@ namespace MoonThemedGame.Scavenger
         float nextRefresh;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
+        VisualElement staticTexts;
+
+        void OnEnable() => Loc.Changed += Relocalize;
+
+        void OnDisable() => Loc.Changed -= Relocalize;
+
+        void Relocalize()
+        {
+            Loc.Apply(staticTexts);
+            Loc.Apply(window);
+            if (IsOpen) Refresh();
+        }
 
         void Awake()
         {
@@ -115,6 +127,7 @@ namespace MoonThemedGame.Scavenger
             art.generateVisualContent += DrawIcon;
             icon.Add(art);
             var iconLabel = new Label("SATELLITES") { pickingMode = PickingMode.Ignore };
+            staticTexts = iconLabel;
             iconLabel.AddToClassList("icon-label");
             icon.Add(iconLabel);
             desktop.Insert(index++, icon);
@@ -162,6 +175,10 @@ namespace MoonThemedGame.Scavenger
             robotStatus.style.whiteSpace = WhiteSpace.Normal;
             window.Add(robotStatus);
             desktop.Insert(index, window);
+            Loc.Stamp(staticTexts);
+            Loc.Stamp(window);
+            Loc.Apply(staticTexts);
+            Loc.Apply(window);
         }
 
         const float MapSize = 240;
@@ -395,12 +412,12 @@ namespace MoonThemedGame.Scavenger
                 for (int b = 0; b < 4; b++)
                     card.bars[b].style.backgroundColor = b < bars ? (bars == 1 ? Alarm : Text) : new Color(1, 1, 1, 0.12f);
 
-                card.status.text = inRange ? (leaving ? "LEAVING RANGE" : "IN RANGE") : "OUT OF RANGE";
+                card.status.text = Loc.T(inRange ? (leaving ? "LEAVING RANGE" : "IN RANGE") : "OUT OF RANGE");
                 card.status.style.color = !inRange ? Muted : leaving ? Alarm : Good;
-                card.timer.text = inRange ? $"{Clock(sat.TimeLeft(clock))} left" : $"back in {Clock(sat.TimeToReturn(clock))}";
+                card.timer.text = inRange ? Loc.F("{0} left", Clock(sat.TimeLeft(clock))) : Loc.F("back in {0}", Clock(sat.TimeToReturn(clock)));
                 card.fill.style.width = Length.Percent(inRange ? (1 - sat.WindowProgress(clock)) * 100 : 0);
                 card.fill.style.backgroundColor = leaving ? Alarm : Good;
-                card.action.text = active ? "[ACTIVE]" : "[USE]";
+                card.action.text = Loc.T(active ? "[ACTIVE]" : "[USE]");
                 card.action.style.color = active ? Color.white : Muted;
                 card.name.style.color = inRange ? Text : Muted;
                 card.root.style.backgroundColor = active ? new Color(1, 1, 1, 0.07f) : Color.clear;
@@ -420,11 +437,11 @@ namespace MoonThemedGame.Scavenger
                 bool ok = link.Uplink == UplinkStatus.Ok;
                 var inv = System.Globalization.CultureInfo.InvariantCulture;
                 robotStatus.text = ok
-                    ? $"ROBOT SIGNAL: OK via {(link.ViaRelay ? "BASE RELAY" : network.Active.name)}   Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%   LOSS {link.ExpectedLoss.ToString("0.0", inv)}%"
-                    : $"ROBOT SIGNAL: NONE - {ScavengerFeedHud.Reason(link.Uplink)}";
+                    ? Loc.F("ROBOT SIGNAL: OK via {0}   Q {1}%   LOSS {2}%", link.ViaRelay ? Loc.T("BASE RELAY") : network.Active.name, Mathf.RoundToInt(link.UplinkQuality * 100), link.ExpectedLoss.ToString("0.0", inv))
+                    : Loc.F("ROBOT SIGNAL: NONE - {0}", ScavengerFeedHud.Reason(link.Uplink));
                 robotStatus.style.color = ok && link.UplinkQuality >= 0.4f ? Good : Alarm;
             }
-            else robotStatus.text = "ROBOT SIGNAL: --";
+            else robotStatus.text = Loc.T("ROBOT SIGNAL: --");
         }
 
         void RefreshThreat()
@@ -434,17 +451,17 @@ namespace MoonThemedGame.Scavenger
             {
                 case RivalPhase.Incoming:
                     var target = network.satellites[network.RivalTarget].name;
-                    threatText.text = $"WARNING: rival {rival} is jamming CH{network.CarrierChannel + 1} via {target}  {Mathf.RoundToInt(network.RivalProgress * 100)}%\nIn the robot feed: [H] tuner, plug a free channel, LOCK.";
+                    threatText.text = Loc.F("WARNING: rival {0} is jamming CH{1} via {2}  {3}%\nIn the robot feed: [H] tuner, plug a free channel, LOCK.", rival, network.CarrierChannel + 1, target, Mathf.RoundToInt(network.RivalProgress * 100));
                     threatText.style.color = Alarm;
                     break;
                 case RivalPhase.Hijacked:
-                    threatText.text = $"HIJACKED: {rival} took over {network.satellites[network.RivalTarget].name}.\nNo picture until the carrier is re-locked ([H] in the robot feed).";
+                    threatText.text = Loc.F("HIJACKED: {0} took over {1}.\nNo picture until the carrier is re-locked ([H] in the robot feed).", rival, network.satellites[network.RivalTarget].name);
                     threatText.style.color = Alarm;
                     break;
                 default:
                     threatText.text = network.Hopping
-                        ? $"RETUNING... {Mathf.CeilToInt(network.HopTimeLeft)}s"
-                        : $"THREATS: none. {rival} (rival) on outer orbit.";
+                        ? Loc.F("RETUNING... {0}s", Mathf.CeilToInt(network.HopTimeLeft))
+                        : Loc.F("THREATS: none. {0} (rival) on outer orbit.", rival);
                     threatText.style.color = network.Hopping ? Text : Muted;
                     break;
             }
