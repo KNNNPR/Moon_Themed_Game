@@ -29,15 +29,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Bleed: 1
+    - _Vignette: 0.45
+    - _Mask: 0.25
     - _Brightness: 1.3
-    - _Curvature: 0.055
-    - _Flicker: 0.004
-    - _Glow: 0.2
+    - _Curvature: 0.11
+    - _Flicker: 0.01
+    - _Glow: 0.35
     - _PreviewTime: -1
-    - _Scanlines: 0.09
+    - _Scanlines: 0.2
     - _VerticalDrift: 0.00045
     - _WaveSpeed: 1.6
-    - _WaveStrength: 0.0016
+    - _WaveStrength: 0.0012
     m_Colors:
     - _GlassTint: {r: 0.012, g: 0.021, b: 0.028, a: 1}
   m_BuildTextureStacks: []
