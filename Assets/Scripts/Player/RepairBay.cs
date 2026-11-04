@@ -5,14 +5,13 @@ using UnityEngine.SceneManagement;
 
 namespace MoonThemedGame.Repair
 {
-    // Next to the repair landing point: salvage unloaded by SCAVENGER appears here, next to the tool case.
+    // Next to the repair landing point: salvage unloaded by SCAVENGER appears here.
     [DisallowMultipleComponent, RequireComponent(typeof(RepairRobotDropper))]
     public sealed class RepairBay : MonoBehaviour
     {
         [Tooltip("Where delivered parts appear, relative to the landing point (x right, z forward).")]
         public Vector3 deliveryOffset = new Vector3(2.4f, 0.5f, 0);
         public Vector3 wrenchOffset = new Vector3(2.4f, 0.5f, 1.3f);
-        public Vector3 toolboxOffset = new Vector3(2.6f, 0, -1.6f);
 
         public static RepairBay Active { get; private set; }
         RepairRobotDropper dropper;
@@ -42,8 +41,6 @@ namespace MoonThemedGame.Repair
 
         void Start()
         {
-            if (!FindAnyObjectByType<RepairToolbox>())
-                RepairToolbox.Place(Point(toolboxOffset), Anchor.eulerAngles.y - 90, Anchor.position.y);
             if (FindAnyObjectByType<RepairWrench>() || FindAnyObjectByType<PlayerBody>()) return;
             var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
             if (!catalog || !catalog.wrench) return;

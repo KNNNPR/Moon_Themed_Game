@@ -7,9 +7,9 @@ using static MoonThemedGame.Repair.SuitMesh;
 
 namespace MoonThemedGame.Repair
 {
-    // A faceted, cel-shaded suit under the first-person camera with a tool belt. The arms reach for
-    // whatever is carried. Holding the mouse wheel freezes the view and the hands fan the belt tools
-    // out in front; moving the mouse picks one, releasing the wheel takes it or puts it back.
+    // A faceted, cel-shaded suit under the first-person camera. The arms reach for whatever is carried.
+    // Holding the mouse wheel freezes the view, the player brings the toolbox up and opens it; moving
+    // the mouse picks a tool, releasing the wheel takes it (or puts back the one that was in hand).
     [DisallowMultipleComponent, RequireComponent(typeof(FirstPersonController))]
     public sealed class PlayerBody : MonoBehaviour
     {
@@ -18,9 +18,9 @@ namespace MoonThemedGame.Repair
             public Transform anchor;
             public RepairCarryable tool;
             public string name;
-            public Quaternion hang, restRotation;
-            public Vector3 offset, restPosition;
-            public float show;
+            public Quaternion hang, restRotation, fromRotation;
+            public Vector3 offset, restPosition, fromPosition;
+            public float lift, blend = 1;
             public bool Stowed => tool && tool.Holder == anchor;
         }
 
@@ -35,7 +35,8 @@ namespace MoonThemedGame.Repair
         const float Eye = 1.65f;
         const float ToolLength = 0.3f;
         const float UpperArm = 0.31f, Forearm = 0.35f;
-        const float SelectStep = 140;
+        const float SelectStep = 110;
+        const float CaseWidth = 0.46f, ModelWidth = 0.568f, Tilt = 48, LidOpen = 138;
         static readonly Color Suit = new Color(0.86f, 0.84f, 0.78f);
         static readonly Color Dark = new Color(0.22f, 0.21f, 0.2f);
         static readonly Color Strap = new Color(0.36f, 0.27f, 0.17f);
@@ -50,6 +51,12 @@ namespace MoonThemedGame.Repair
         Transform root, leftLeg, rightLeg;
         Arm left, right;
         Slot[] slots = new Slot[0];
+        Slot returned;
+        Transform kit, lid;
+        Quaternion lidShut;
+        Vector3 lidAxis;
+        float unit, kitShow, lidSign = 1;
+        bool kitVisible = true;
         Material baseMaterial;
         bool open;
         int selected = 1, startIndex = 1;
@@ -113,7 +120,7 @@ namespace MoonThemedGame.Repair
 
         void Build(ShopCatalog catalog)
         {
-            const float hip = 0.86f, waist = 0.92f;
+            const float hip = 0.86f;
             Piece("Torso", root, Suit, 8,
                 new Ring(0.8f, 0.15f, 0.11f, 0, -0.08f), new Ring(0.92f, 0.165f, 0.12f, 0, -0.08f),
                 new Ring(1.06f, 0.18f, 0.13f, 0, -0.085f), new Ring(1.22f, 0.205f, 0.14f, 0, -0.09f),
@@ -141,12 +148,14 @@ namespace MoonThemedGame.Repair
             left = MakeArm(-1);
             right = MakeArm(1);
 
+            BuildKit(catalog);
             slots = new[]
             {
-                MakeSlot("WRENCH", catalog ? catalog.wrench : null, -48, waist, Fastener.Bolt),
-                MakeSlot("SCREWDRIVER", catalog ? catalog.screwdriver : null, 0, waist, Fastener.Screw),
-                MakeSlot("HAMMER", catalog ? catalog.hammer : null, 48, waist, null)
+                MakeSlot("WRENCH", catalog ? catalog.wrench : null, -1, Fastener.Bolt),
+                MakeSlot("SCREWDRIVER", catalog ? catalog.screwdriver : null, 0, Fastener.Screw),
+                MakeSlot("HAMMER", catalog ? catalog.hammer : null, 1, null)
             };
+            ShowKit(false);
         }
 
         Arm MakeArm(float side)
@@ -199,13 +208,60 @@ namespace MoonThemedGame.Repair
             return material;
         }
 
-        Slot MakeSlot(string name, GameObject prefab, float angle, float waist, Fastener? drives)
+        // The case is posed through a pivot whose axes are x across, y up, z away from the viewer,
+        // with its origin at the middle of the bottom.
+        void BuildKit(ShopCatalog catalog)
         {
-            var direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
-            var anchor = Joint(name + " holster", root, new Vector3(0, waist - 0.03f, -0.08f) + new Vector3(direction.x * 0.2f, 0, direction.z * 0.155f));
-            anchor.localRotation = Quaternion.Euler(0, angle, 0);
-            Piece("Loop", anchor, Strap, 6,
-                new Ring(0.025f, 0.022f, 0.012f, 0, 0.012f), new Ring(-0.035f, 0.022f, 0.012f, 0, 0.012f));
+            unit = CaseWidth * Scale / ModelWidth;
+            kit = new GameObject("Toolbox").transform;
+            if (catalog && catalog.toolbox)
+            {
+                var model = Instantiate(catalog.toolbox);
+                model.name = "Toolbox model";
+                foreach (var t in model.GetComponentsInChildren<Transform>()) if (t.name == "Lid") lid = t;
+                var back = lid ? lid.position - model.transform.position : Vector3.forward;
+                back.y = 0;
+                back = back.sqrMagnitude > 1e-8f ? back.normalized : Vector3.forward;
+                var bounds = Bounds(model);
+                float width = Mathf.Abs(Vector3.Dot(bounds.size, Abs(Vector3.Cross(Vector3.up, back))));
+                if (width > 1e-5f) model.transform.localScale *= CaseWidth * Scale / width;
+                bounds = Bounds(model);
+                kit.SetPositionAndRotation(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z), Quaternion.LookRotation(back, Vector3.up));
+                model.transform.SetParent(kit, true);
+                foreach (var renderer in model.GetComponentsInChildren<Renderer>())
+                {
+                    var materials = renderer.sharedMaterials;
+                    for (int i = 0; i < materials.Length; i++) materials[i] = Paint(materials[i] ? materials[i].color : Color.gray);
+                    renderer.sharedMaterials = materials;
+                }
+                if (lid)
+                {
+                    lidShut = lid.localRotation;
+                    lidAxis = lid.parent.InverseTransformDirection(kit.right).normalized;
+                    float before = Bounds(lid.gameObject).center.y;
+                    lid.localRotation = Quaternion.AngleAxis(30, lidAxis) * lidShut;
+                    if (Bounds(lid.gameObject).center.y < before) lidSign = -1;
+                    lid.localRotation = lidShut;
+                }
+            }
+            kit.SetParent(root, true);
+        }
+
+        static Bounds Bounds(GameObject target)
+        {
+            var renderers = target.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0) return new Bounds(target.transform.position, Vector3.zero);
+            var bounds = renderers[0].bounds;
+            foreach (var r in renderers) bounds.Encapsulate(r.bounds);
+            return bounds;
+        }
+
+        // Row -1 is the cradle nearest the viewer, 1 the farthest.
+        Slot MakeSlot(string name, GameObject prefab, int row, Fastener? drives)
+        {
+            var anchor = new GameObject(name + " cradle").transform;
+            anchor.SetParent(kit, false);
+            anchor.localPosition = new Vector3(0, 0.115f, row * 0.075f) * unit;
             var slot = new Slot { anchor = anchor, name = name };
             if (!prefab) return slot;
 
@@ -229,17 +285,41 @@ namespace MoonThemedGame.Repair
             }
             else tool = instance.AddComponent<RepairTool>();
             slot.tool = tool;
-            slot.hang = Quaternion.FromToRotation(tool.LongAxis(), Vector3.down);
-            slot.offset = new Vector3(0, -0.1f, 0.04f);
+            slot.hang = LieFlat(tool);
             Stow(slot);
             return slot;
         }
 
-        static void Stow(Slot slot)
+        // Long side across the case, thinnest side up.
+        static Quaternion LieFlat(RepairCarryable tool)
         {
+            var length = tool.LongAxis();
+            var filter = tool.GetComponent<MeshFilter>();
+            var size = filter && filter.sharedMesh ? filter.sharedMesh.bounds.size : Vector3.one;
+            Vector3 thin = Vector3.zero;
+            float smallest = float.MaxValue;
+            foreach (var axis in new[] { Vector3.right, Vector3.up, Vector3.forward })
+            {
+                float extent = Vector3.Dot(size, axis);
+                if (axis != length && extent < smallest) { smallest = extent; thin = axis; }
+            }
+            return Quaternion.Inverse(Quaternion.LookRotation(Vector3.Cross(length, thin), thin));
+        }
+
+        void Stow(Slot slot)
+        {
+            slot.fromPosition = slot.tool.transform.position;
+            slot.fromRotation = slot.tool.transform.rotation;
             slot.tool.Holster(slot.anchor, slot.offset, slot.hang);
             slot.restPosition = slot.tool.transform.localPosition;
             slot.restRotation = slot.tool.transform.localRotation;
+        }
+
+        void ShowKit(bool visible)
+        {
+            if (!kit || kitVisible == visible) return;
+            kitVisible = visible;
+            foreach (var renderer in kit.GetComponentsInChildren<Renderer>(true)) renderer.enabled = visible;
         }
 
         bool CanOpen()
@@ -248,7 +328,13 @@ namespace MoonThemedGame.Repair
             return controller && controller.enabled;
         }
 
-        bool Available(Slot slot) => slot.tool && (slot.Stowed || slot.tool == RepairCarryable.Current);
+        bool Available(Slot slot) => slot.tool && slot.Stowed;
+
+        Slot SlotOf(RepairCarryable tool)
+        {
+            foreach (var slot in slots) if (tool && slot.tool == tool) return slot;
+            return null;
+        }
 
         void Update()
         {
@@ -261,7 +347,7 @@ namespace MoonThemedGame.Repair
                 if (!CanOpen() || mouse == null) Close(false);
                 else
                 {
-                    selectX += mouse.delta.ReadValue().x;
+                    selectX += mouse.delta.ReadValue().y;
                     int count = 0;
                     foreach (var slot in slots) if (Available(slot)) count++;
                     int position = Mathf.Clamp(startIndex + Mathf.RoundToInt(selectX / SelectStep), 0, Mathf.Max(0, count - 1));
@@ -289,46 +375,45 @@ namespace MoonThemedGame.Repair
             return 0;
         }
 
-        // Where a tool hangs in the fan held out in front of the camera.
-        void DisplayPose(int index, out Vector3 position, out Quaternion rotation)
+        static float Ease(float t) => t * t * (3 - 2 * t);
+
+        // The case rises from the hip into the hands, then the lid swings open; in reverse when put away.
+        void PoseKit()
         {
-            int count = 0;
-            foreach (var slot in slots) if (Available(slot)) count++;
-            float spread = PositionOf(index) - (count - 1) * 0.5f;
-            bool chosen = index == selected;
-            float unit = Scale;
+            if (!kit) return;
+            kitShow = Mathf.MoveTowards(kitShow, open ? 1 : 0, Time.deltaTime / (open ? 0.42f : 0.34f));
+            ShowKit(kitShow > 0.001f);
+            if (!kitVisible) return;
             var camera = view.transform;
-            var local = new Vector3(spread * 0.17f, chosen ? -0.06f : -0.11f, chosen ? 0.46f : 0.53f);
-            local.y += Mathf.Sin(Time.time * 2.2f + index) * 0.004f;
-            position = camera.position + camera.rotation * (local * unit);
-            var tool = slots[index].tool;
-            var upright = Quaternion.FromToRotation(tool.LongAxis(), Vector3.up);
-            rotation = camera.rotation * Quaternion.Euler(-12, spread * -8, -spread * 14) * upright;
-            position -= rotation * Vector3.Scale(CenterOffset(tool), tool.transform.lossyScale);
+            float tilt = Tilt * Mathf.Deg2Rad;
+            var up = camera.up * Mathf.Cos(tilt) - camera.forward * Mathf.Sin(tilt);
+            var back = camera.forward * Mathf.Cos(tilt) + camera.up * Mathf.Sin(tilt);
+            var heldRotation = Quaternion.LookRotation(back, up);
+            var heldPosition = camera.position + camera.rotation * (new Vector3(0, -0.2f, 0.48f) * Scale) - up * (0.09f * unit);
+            var hipRotation = root.rotation * Quaternion.Euler(0, 90, 0);
+            var hipPosition = root.TransformPoint(new Vector3(-0.3f, 0.55f, 0.1f));
+            float move = Ease(Mathf.Clamp01(kitShow / 0.6f));
+            kit.SetPositionAndRotation(Vector3.Lerp(hipPosition, heldPosition, move), Quaternion.Slerp(hipRotation, heldRotation, move));
+            if (lid) lid.localRotation = Quaternion.AngleAxis(lidSign * LidOpen * Ease(Mathf.Clamp01((kitShow - 0.45f) / 0.55f)), lidAxis) * lidShut;
         }
 
-        static Vector3 CenterOffset(RepairCarryable tool)
-        {
-            var filter = tool.GetComponent<MeshFilter>();
-            return filter && filter.sharedMesh ? filter.sharedMesh.bounds.center : Vector3.zero;
-        }
-
-        // Tools glide between belt or hand and the fan; runs after every LateUpdate.
+        // Tools rest in their cradles; the chosen one lifts out a little, a tool just put back glides in.
         void PoseTools()
         {
-            var carried = RepairCarryable.Current;
+            var chosen = open && selected >= 0 && selected < slots.Length ? slots[selected] : null;
             foreach (var slot in slots)
             {
-                if (!slot.tool) continue;
-                bool shown = open && Available(slot);
-                slot.show = Mathf.MoveTowards(slot.show, shown ? 1 : 0, Time.deltaTime / 0.22f);
-                if (slot.Stowed) slot.tool.transform.SetLocalPositionAndRotation(slot.restPosition, slot.restRotation);
-                if (slot.show <= 0 || !(slot.Stowed || slot.tool == carried)) continue;
-                int index = System.Array.IndexOf(slots, slot);
-                DisplayPose(index, out var position, out var rotation);
-                float t = slot.show * slot.show * (3 - 2 * slot.show);
-                var from = slot.tool.transform;
-                from.SetPositionAndRotation(Vector3.Lerp(from.position, position, t), Quaternion.Slerp(from.rotation, rotation, t));
+                if (!slot.tool || !slot.Stowed) continue;
+                slot.lift = Mathf.MoveTowards(slot.lift, slot == chosen ? 1 : 0, Time.deltaTime / 0.14f);
+                var raised = slot.restPosition + new Vector3(0, 0.06f, -0.05f) * (Ease(slot.lift) * Scale);
+                var tool = slot.tool.transform;
+                tool.SetLocalPositionAndRotation(raised, slot.restRotation);
+                if (slot.blend < 1)
+                {
+                    slot.blend = Mathf.MoveTowards(slot.blend, 1, Time.deltaTime / 0.25f);
+                    float t = Ease(slot.blend);
+                    tool.SetPositionAndRotation(Vector3.Lerp(slot.fromPosition, tool.position, t), Quaternion.Slerp(slot.fromRotation, tool.rotation, t));
+                }
             }
         }
 
@@ -336,10 +421,10 @@ namespace MoonThemedGame.Repair
         void PoseArms()
         {
             if (!root || left == null || !left.shoulder) return;
-            if (view) PoseTools();
+            if (view) { PoseKit(); PoseTools(); }
             var carried = RepairCarryable.Current;
             Vector3? leftTarget = null, rightTarget = null;
-            if (open && selected >= 0 && selected < slots.Length && slots[selected].tool)
+            if (open && selected >= 0 && selected < slots.Length && slots[selected].tool && slots[selected].Stowed)
                 rightTarget = Grip(slots[selected].tool, slots[selected].tool.RendererBounds());
             else if (carried && view)
             {
@@ -353,12 +438,8 @@ namespace MoonThemedGame.Repair
                 }
                 else rightTarget = Grip(carried, bounds);
             }
-            if (open && view)
-            {
-                // The off hand cradles the rest of the fan from below.
-                var camera = view.transform;
-                leftTarget = camera.position + camera.rotation * (new Vector3(-0.05f, -0.24f, 0.5f) * Scale);
-            }
+            // The off hand holds the case by its near left corner.
+            if (kitVisible && kit) leftTarget = kit.TransformPoint(new Vector3(-0.24f, 0.06f, -0.1f) * unit);
             Solve(left, leftTarget);
             Solve(right, rightTarget);
         }
@@ -404,16 +485,16 @@ namespace MoonThemedGame.Repair
         void Open()
         {
             var carried = RepairCarryable.Current;
-            bool beltTool = false;
-            foreach (var slot in slots) if (carried && slot.tool == carried) beltTool = true;
-            if ((carried && !beltTool) || HeldProp.Holding) { Message(Loc.T("Hands full")); return; }
+            var carriedSlot = SlotOf(carried);
+            if ((carried && carriedSlot == null) || HeldProp.Holding) { Message(Loc.T("Hands full")); return; }
+            if (carriedSlot != null) { Stow(carriedSlot); carriedSlot.blend = 0; }
             if (SlotAt(0) < 0) return;
             open = true;
+            returned = carriedSlot;
             selectX = 0;
-            int middle = 0;
-            foreach (var slot in slots) if (Available(slot)) middle++;
-            startIndex = (middle - 1) / 2;
-            for (int i = 0; i < slots.Length; i++) if (carried && slots[i].tool == carried) startIndex = PositionOf(i);
+            int count = 0;
+            foreach (var slot in slots) if (Available(slot)) count++;
+            startIndex = returned != null ? PositionOf(System.Array.IndexOf(slots, returned)) : (count - 1) / 2;
             selected = SlotAt(startIndex);
             Highlight(selected, true);
         }
@@ -424,13 +505,17 @@ namespace MoonThemedGame.Repair
             BeltOpen = false;
             FirstPersonController.LookFrozen = false;
             Highlight(selected, false);
-            if (!confirm || selected < 0 || selected >= slots.Length) return;
-            var slot = slots[selected];
-            var carried = RepairCarryable.Current;
-            Slot carriedSlot = null;
-            foreach (var s in slots) if (carried && s.tool == carried) carriedSlot = s;
-            if (carriedSlot != null) Stow(carriedSlot);
-            if (slot.Stowed && slot != carriedSlot) slot.tool.Unholster();
+            var back = returned;
+            returned = null;
+            if (!confirm) { if (back != null) Take(back); return; }
+            if (selected >= 0 && selected < slots.Length && slots[selected] != back) Take(slots[selected]);
+        }
+
+        void Take(Slot slot)
+        {
+            if (!slot.tool || !slot.Stowed) return;
+            slot.tool.Unholster();
+            foreach (var renderer in slot.tool.GetComponentsInChildren<Renderer>(true)) renderer.enabled = true;
         }
 
         void Highlight(int index, bool on)
@@ -463,7 +548,7 @@ namespace MoonThemedGame.Repair
             if (message != null && Time.time < messageUntil)
                 RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 60, message);
             if (CanOpen() && RepairCarryable.Current && !(RepairCarryable.Current is RepairPartProp))
-                RepairHud.Corner(Loc.T("Hold mouse wheel — tool belt"));
+                RepairHud.Corner(Loc.T("Hold mouse wheel — toolbox"));
         }
 
         void OnEnable()
