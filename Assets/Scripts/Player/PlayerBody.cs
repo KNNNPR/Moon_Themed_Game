@@ -214,9 +214,11 @@ namespace MoonThemedGame.Repair
         {
             unit = CaseWidth * Scale / ModelWidth;
             kit = new GameObject("Toolbox").transform;
-            if (catalog && catalog.toolbox)
+            var prefab = catalog && catalog.toolbox ? catalog.toolbox : Resources.Load<GameObject>("Models/Toolbox");
+            if (!prefab) Debug.LogWarning("PlayerBody: toolbox model not found (Resources/Models/Toolbox)");
+            else
             {
-                var model = Instantiate(catalog.toolbox);
+                var model = Instantiate(prefab);
                 model.name = "Toolbox model";
                 foreach (var t in model.GetComponentsInChildren<Transform>()) if (t.name == "Lid") lid = t;
                 var back = lid ? lid.position - model.transform.position : Vector3.forward;

@@ -273,7 +273,7 @@ Toolkit — `Loc.Stamp(root)` после постройки (запоминае�
 Подсказки ремонта — мелкий приглушённый текст PT Mono с тенью, без плашек (`RepairHud`).
 
 Инструменты — гаечный ключ, отвёртка и молоток (`Prefabs/Wrench`, `ScrewDriver`, `Hammer`, поля в
-`Resources/ShopCatalog`) — лежат в лоу-поли чемоданчике (`Models/Toolbox.fbx`, ~1370 треугольников, крышка —
+`Resources/ShopCatalog`) — лежат в лоу-поли чемоданчике (`Resources/Models/Toolbox.fbx`, ~1370 треугольников, крышка —
 отдельный объект `Lid`; исходник для Blender — `Models/Source/toolbox_blender.py`, запуск:
 `blender -b -P toolbox_blender.py -- <путь>/Toolbox.fbx`). **Зажать колёсико мыши** — обзор замирает
 (`FirstPersonController.LookFrozen`), игрок достаёт чемоданчик от бедра перед собой, левой рукой держит его,
