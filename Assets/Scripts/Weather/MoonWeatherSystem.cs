@@ -31,7 +31,9 @@ namespace MoonThemedGame.Weather
         [Min(0)] public float toxicDensity = 0.009f;
         [Range(0, 1)] public float toxicOpacity = 0.28f;
         [Min(0.1f)] public float atmosphereTransition = 3;
-        [Min(1)] public float toxicEnergyMultiplier = 2;
+        [Tooltip("Seconds the dust / haze takes to build up after the weather starts and to thin out before it ends.")]
+        [Min(0)] public float atmosphereFadeIn = 12, atmosphereFadeOut = 18;
+        [Min(1)] public float toxicEnergyMultiplier = 4;
         [Header("Meteorites")]
         [Min(5)] public float warningSeconds = 5;
         [Min(0.2f)] public float fallSeconds = 1.6f;
@@ -114,6 +116,18 @@ namespace MoonThemedGame.Weather
             }
             return false;
         }
+        // 0..1: how far the current dust or haze has built up; it thins out towards the end of its period.
+        public float AtmosphereEnvelope
+        {
+            get
+            {
+                float elapsed = CurrentDuration - Remaining;
+                float rise = atmosphereFadeIn > 0 ? Mathf.Clamp01(elapsed / atmosphereFadeIn) : 1;
+                float fall = atmosphereFadeOut > 0 ? Mathf.Clamp01(Remaining / atmosphereFadeOut) : 1;
+                return Mathf.SmoothStep(0, 1, rise) * Mathf.SmoothStep(0, 1, fall);
+            }
+        }
+
         public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? toxicEnergyMultiplier : 1;
 
         public void SetWeather(WeatherKind kind, float duration = -1)
@@ -129,7 +143,7 @@ namespace MoonThemedGame.Weather
 
         public void SnapAtmosphere()
         {
-            Density = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
+            Density = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * AtmosphereEnvelope;
             AtmosphereTint = Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
             OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
         }
@@ -157,7 +171,7 @@ namespace MoonThemedGame.Weather
         void Update()
         {
             AdvanceSchedule(Time.deltaTime);
-            float target = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
+            float target = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * AtmosphereEnvelope;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
             AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f), blend);
@@ -199,7 +213,7 @@ namespace MoonThemedGame.Weather
             particles.SetParticles(liveParticles, count);
             bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation;
             if (!dust && !toxic) return;
-            emissionRemainder += Time.deltaTime * (dust ? 45 : 12);
+            emissionRemainder += Time.deltaTime * (dust ? 45 : 12) * AtmosphereEnvelope;
             var camera = Camera.main;
             var center = camera && !IsSheltered(camera.transform.position) ? camera.transform.position : shelterCenter;
             while (emissionRemainder >= 1)

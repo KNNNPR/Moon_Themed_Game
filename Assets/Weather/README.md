@@ -45,3 +45,16 @@ PC_Renderer и Mobile_Renderer используют один проход Exteri
 
 Проверка в изолированной копии Unity: `MoonThemedGame.Editor.MoonWeatherSetup.ApplyAndValidate`.
 Результаты и снимки — `Logs/WeatherCaptures`.
+
+## Плавный туман и радиация для робота
+
+Пыль и радиационная дымка не включаются и не пропадают разом: плотность и частицы набираются
+за **Atmosphere Fade In** (12 с) от начала периода и редеют за **Atmosphere Fade Out** (18 с)
+до его конца (`MoonWeatherSystem.AtmosphereEnvelope`), сверху ещё сглаживает Atmosphere Transition.
+
+Радиация вне укрытий базы резко сажает батарею робота SCAVENGER: расход ×4
+(**Toxic Energy Multiplier**, в сцене 4). Пока оператор управляет роботом — ×4 от обычного
+расхода; когда робот просто стоит снаружи — батарея всё равно тает (лишние ×3). В камере
+робота мигает «RADIATION - CELL DRAIN x4 - RETURN TO BASE», в журнале — запись о начале и
+конце облучения. Метеориты без изменений: метка за Warning Seconds до удара.
+

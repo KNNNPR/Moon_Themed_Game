@@ -37,7 +37,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, weakSignal, leavingSoon, covered, charging;
+        bool subscribed, weakSignal, leavingSoon, covered, charging, irradiated;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -152,6 +152,10 @@ namespace MoonThemedGame.Scavenger
             if (nowCharging && !charging) AddLog(Loc.T("DOCKED AT CHARGE STATION - CHARGING"));
             else if (!nowCharging && charging) AddLog(Loc.T(state && state.Normalized >= 0.999f ? "CHARGE FULL" : "UNDOCKED FROM CHARGER"));
             charging = nowCharging;
+            bool radiation = state && state.Irradiated;
+            if (radiation && !irradiated) AddLog(Loc.F("WARN RADIATION - cell drain x{0}", state.RadiationMultiplier.ToString("0", CultureInfo.InvariantCulture)));
+            else if (!radiation && irradiated) AddLog(Loc.T("RADIATION LEVEL NORMAL"));
+            irradiated = radiation;
             bool cover = link.Cover > 0.3f;
             if (cover && !covered) AddLog(Loc.F("WARN overhead cover {0}% - signal degraded", Mathf.RoundToInt(link.Cover * 100)));
             else if (!cover && covered) AddLog(Loc.T("SKY CLEAR - signal restored"));
@@ -315,6 +319,8 @@ namespace MoonThemedGame.Scavenger
                 }
             }
             if (link.Powered) DrawSatellites(unit, line);
+            if (state && state.Irradiated && signal && Mathf.Repeat(Time.time * 1.5f, 1) < 0.75f)
+                Draw(new Rect(0, unit * 8.4f, Screen.width, line), Loc.F("RADIATION - CELL DRAIN x{0} - RETURN TO BASE", state.RadiationMultiplier.ToString("0", CultureInfo.InvariantCulture)), warning, 97, Centered(text));
             var lever = link.NearLever;
             if (lever && signal && state && state.Status == RobotStatus.Online)
             {
