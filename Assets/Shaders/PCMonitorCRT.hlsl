@@ -69,6 +69,10 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
     float rounded = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - 0.12;
     half mask = 1.0 - smoothstep(-0.012, 0.005, rounded);
     mask *= step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+    #if defined(MOON_CRT_TUBE)
+        // A powered tube is never pitch black: the phosphor glows faintly behind the image.
+        color += _BlackLevel.rgb * scanline * flicker;
+    #endif
     float3 view = GetWorldSpaceNormalizeViewDir(positionWS);
     half fresnel = pow(1.0 - saturate(dot(normalWS, view)), 3.0);
     half sheen = pow(saturate(1.0 - length((meshUV - float2(0.19, 0.93)) * float2(1.0, 1.8))), 6.0);

@@ -15,6 +15,7 @@ Shader "Moon Game/PC Monitor CRT"
         _Mask("Phosphor Mask", Range(0, 0.6)) = 0.25
         _Vignette("Tube Vignette", Range(0, 1)) = 0.45
         _Bleed("Color Bleed (Texels)", Range(0, 3)) = 1
+        _BlackLevel("Lit Phosphor Black", Color) = (0.06, 0.11, 0.09, 1)
         [HideInInspector] _HoverHighlight("Interaction Highlight", Range(0, 2)) = 0
         [HideInInspector] _PreviewTime("Preview Time (-1 = Live)", Float) = -1
     }
@@ -37,7 +38,7 @@ Shader "Moon Game/PC Monitor CRT"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_TexelSize;
-                half4 _GlassTint;
+                half4 _GlassTint, _BlackLevel;
                 float _Curvature, _WaveStrength, _VerticalDrift, _WaveSpeed;
                 float _Brightness, _Glow, _Scanlines, _Flicker, _PreviewTime, _HoverHighlight;
                 float _Mask, _Vignette, _Bleed;
