@@ -29,6 +29,9 @@ namespace MoonThemedGame.Repair
             foreach (var r in renderers) bounds.Encapsulate(r.bounds);
             Physics.SyncTransforms();
 
+            if (part.name.ToLowerInvariant().Contains("wheel") && WheelAxis(part, robot, bounds, out var axle))
+                return SpawnHub(robot, part, bounds, axle, bolts);
+
             var toViewer = (viewer - bounds.center).normalized;
             var normal = Vector3.up;
             float best = -2;
@@ -55,6 +58,45 @@ namespace MoonThemedGame.Repair
                     if (hit.collider.transform.IsChildOf(part.transform) && Vector3.Distance(hit.point, point + normal * 0.3f) < Vector3.Distance(surface, point + normal * 0.3f) + 1e-3f)
                     { surface = hit.point; surfaceNormal = hit.normal; }
                 bolts.Add(Create(robot, part, surface, surfaceNormal, size));
+            }
+            return bolts;
+        }
+
+        // The axle runs along the wheel's thinnest side, pointing away from the robot.
+        static bool WheelAxis(GameObject part, RepairRobotTarget robot, Bounds bounds, out Vector3 axle)
+        {
+            axle = Vector3.zero;
+            var filter = part.GetComponentInChildren<MeshFilter>();
+            if (!filter || !filter.sharedMesh) return false;
+            var size = filter.sharedMesh.bounds.size;
+            var local = size.x <= size.y && size.x <= size.z ? Vector3.right : size.y <= size.z ? Vector3.up : Vector3.forward;
+            axle = filter.transform.TransformDirection(local).normalized;
+            var robotCenter = robot ? robot.transform.position : bounds.center;
+            var outward = bounds.center - robotCenter;
+            outward.y = 0;
+            if (Vector3.Dot(axle, outward) < 0) axle = -axle;
+            return true;
+        }
+
+        static List<RepairBolt> SpawnHub(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 axle, List<RepairBolt> bolts)
+        {
+            var t1 = Vector3.Cross(axle, Mathf.Abs(axle.y) > 0.9f ? Vector3.forward : Vector3.up).normalized;
+            var t2 = Vector3.Cross(axle, t1).normalized;
+            float depth = Vector3.Dot(bounds.extents, Abs(axle));
+            float wheelRadius = Mathf.Min(Vector3.Dot(bounds.extents, Abs(t1)), Vector3.Dot(bounds.extents, Abs(t2)));
+            float size = Mathf.Clamp(wheelRadius * 0.09f, 0.015f, 0.05f);
+            for (int i = 0; i < 4; i++)
+            {
+                float angle = i * Mathf.PI * 0.5f + Mathf.PI * 0.25f;
+                var ring = (t1 * Mathf.Cos(angle) + t2 * Mathf.Sin(angle)) * wheelRadius * 0.22f;
+                var start = bounds.center + ring + axle * (depth + 0.3f);
+                var surface = bounds.center + ring + axle * depth;
+                var normal = axle;
+                float nearest = float.MaxValue;
+                foreach (var hit in Physics.RaycastAll(start, -axle, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+                    if (hit.collider.transform.IsChildOf(part.transform) && hit.distance < nearest)
+                    { nearest = hit.distance; surface = hit.point; normal = Vector3.Dot(hit.normal, axle) > 0.5f ? hit.normal : axle; }
+                bolts.Add(Create(robot, part, surface, normal, size));
             }
             return bolts;
         }
