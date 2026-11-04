@@ -5,7 +5,7 @@ namespace MoonThemedGame.Repair
     // Aim at a bolt and scroll up to screw it in, down to back it out; a click also gives one turn.
     public sealed class RepairWrench : RepairCarryable
     {
-        const float Reach = 2.2f;
+        static float Reach => 2.2f * PlayerBody.Scale;
         RepairBolt target;
         float swing;
 

@@ -23,8 +23,11 @@ namespace MoonThemedGame.Repair
         public bool IsCarried => Current == this;
         protected abstract Vector3 HoldOffset { get; }
 
-        protected virtual void Awake()
+        protected virtual void Awake() => Init();
+
+        protected void Init()
         {
+            if (body) return;
             body = GetComponent<Rigidbody>();
             body.mass = 2;
             body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -41,7 +44,7 @@ namespace MoonThemedGame.Repair
             colliders = GetComponentsInChildren<Collider>(true);
             localCenter = transform.InverseTransformPoint(bounds.center);
             radius = bounds.extents.magnitude;
-            interactionDistance = 3.2f;
+            interactionDistance = 4.5f;
             homePosition = transform.position;
         }
 
@@ -57,6 +60,7 @@ namespace MoonThemedGame.Repair
         // Rest on the floor if there is one, otherwise stay put where it was placed.
         public void Settle(Vector3 position, float floor)
         {
+            Init();
             transform.position = position;
             bool solid = Physics.Raycast(position + Vector3.up * 0.2f, Vector3.down, 4, ~0, QueryTriggerInteraction.Ignore);
             if (!solid) transform.position += Vector3.up * (floor - RendererBounds().min.y);
@@ -76,6 +80,7 @@ namespace MoonThemedGame.Repair
                 ? Quaternion.FromToRotation(LongAxis(), new Vector3(0.2f, 0.3f, 1).normalized)
                 : Quaternion.Inverse(hand.transform.rotation) * transform.rotation;
             body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.None;
             var player = hand.GetComponentInParent<FirstPersonController>();
             playerColliders = player ? player.GetComponentsInChildren<Collider>() : new Collider[0];
             foreach (var a in colliders) foreach (var b in playerColliders) if (a && b) Physics.IgnoreCollision(a, b, true);
@@ -96,17 +101,21 @@ namespace MoonThemedGame.Repair
             return size.x >= size.y && size.x >= size.z ? Vector3.right : size.y >= size.z ? Vector3.up : Vector3.forward;
         }
 
-        // Stowed on the player's belt: no physics, follows the holder.
-        public void Holster(Transform holder, Vector3 localPosition, Quaternion localRotation)
+        // Stowed on the player's belt: no physics, follows the holder; localCenter is where the tool's middle goes.
+        public void Holster(Transform holder, Vector3 localCenter, Quaternion localRotation)
         {
+            Init();
             if (IsCarried) Current = null;
             hand = null;
             CancelInvoke();
             Holder = holder;
             body.isKinematic = true;
+            // An interpolated body would keep drawing itself where the player used to be.
+            body.interpolation = RigidbodyInterpolation.None;
             foreach (var c in colliders) if (c) c.enabled = false;
-            transform.SetParent(holder, false);
-            transform.SetLocalPositionAndRotation(localPosition, localRotation);
+            transform.SetParent(holder, true);
+            transform.localRotation = localRotation;
+            transform.position += holder.TransformPoint(localCenter) - RendererBounds().center;
             SetHighlighted(false);
         }
 
@@ -161,7 +170,7 @@ namespace MoonThemedGame.Repair
             if (!hand.enabled || (player && !player.enabled)) { Drop(false); return; }
             if (GameSettingsMenu.BlockGameplayInput) return;
             if (GameControls.Pressed(GameCommand.Throw)) { Drop(true); return; }
-            var offset = HoldOffset;
+            var offset = HoldOffset * PlayerBody.Scale;
             var desired = hand.transform.position + hand.transform.rotation * new Vector3(offset.x, offset.y, offset.z + radius * 0.6f);
             transform.rotation = hand.transform.rotation * heldRotation;
             transform.position = desired - transform.TransformVector(localCenter);
@@ -176,6 +185,7 @@ namespace MoonThemedGame.Repair
             hand = null;
             foreach (var c in colliders) if (c) c.enabled = true;
             body.isKinematic = false;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
             body.linearVelocity = toss ? direction * 3.5f : Vector3.zero;
             Invoke(nameof(RestorePlayerCollisions), 0.6f);
         }

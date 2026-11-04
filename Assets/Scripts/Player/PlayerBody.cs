@@ -21,6 +21,8 @@ namespace MoonThemedGame.Repair
         }
 
         const float ToolLength = 0.3f;
+        // The scene is built larger than life; 1 = a 1.65 m eye height in world units.
+        public static float Scale { get; private set; } = 1;
         const float FocusAngle = 13;
         static readonly Color Suit = new Color(0.8f, 0.79f, 0.74f);
         static readonly Color Dark = new Color(0.2f, 0.2f, 0.21f);
@@ -52,23 +54,24 @@ namespace MoonThemedGame.Repair
 
         void Start()
         {
-            view = GetComponentInChildren<Camera>();
+            view = Camera.main && Camera.main.transform.IsChildOf(transform) ? Camera.main : GetComponentInChildren<Camera>();
             var controller = GetComponent<CharacterController>();
             float scale = transform.lossyScale.y;
             var feet = controller
                 ? transform.TransformPoint(controller.center) - Vector3.up * (controller.height * 0.5f * scale)
                 : transform.position;
             float eye = view ? view.transform.position.y - feet.y : 1.7f;
-            if (eye < 1.1f || eye > 2.3f) { eye = 1.7f; if (view) feet = view.transform.position - Vector3.up * eye; }
+            if (eye < 0.5f || eye > 12) { eye = 1.65f; if (view) feet = view.transform.position - Vector3.up * eye; }
+            Scale = eye / 1.65f;
 
             root = new GameObject("Player Body").transform;
             root.SetPositionAndRotation(feet, Quaternion.LookRotation(Flat(transform.forward), Vector3.up));
             root.SetParent(transform, true);
-            root.localScale = Vector3.one / Mathf.Max(1e-5f, scale);
+            root.localScale = Vector3.one * Scale / Mathf.Max(1e-5f, scale);
             // Keeps HeldProp from giving the body pieces colliders, which would trip the controller.
             root.gameObject.AddComponent<Rigidbody>().isKinematic = true;
 
-            Build(eye);
+            Build(1.65f);
             lastPosition = transform.position;
         }
 
@@ -118,11 +121,14 @@ namespace MoonThemedGame.Repair
         static void Part(PrimitiveType type, Transform parent, Vector3 local, Vector3 scale, Color color)
         {
             var piece = GameObject.CreatePrimitive(type);
-            Destroy(piece.GetComponent<Collider>());
+            if (Application.isPlaying) Destroy(piece.GetComponent<Collider>());
+            else DestroyImmediate(piece.GetComponent<Collider>());
             piece.transform.SetParent(parent, false);
             piece.transform.localPosition = local;
             piece.transform.localScale = scale;
-            piece.GetComponent<Renderer>().material.color = color;
+            var renderer = piece.GetComponent<Renderer>();
+            var material = new Material(renderer.sharedMaterial) { color = color };
+            renderer.sharedMaterial = material;
         }
 
         Slot MakeSlot(string name, GameObject prefab, float angle, float waist, bool wrench)
@@ -142,20 +148,22 @@ namespace MoonThemedGame.Repair
                 var bounds = renderers[0].bounds;
                 foreach (var r in renderers) bounds.Encapsulate(r.bounds);
                 float largest = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
-                if (largest > 1e-4f) instance.transform.localScale *= ToolLength / largest;
+                if (largest > 1e-4f) instance.transform.localScale *= ToolLength * Scale / largest;
             }
             RepairCarryable tool = wrench ? instance.AddComponent<RepairWrench>() : instance.AddComponent<RepairTool>();
             if (tool is RepairTool generic) generic.displayName = name;
             slot.tool = tool;
             // Hang head-up with the long side pointing down the leg.
             slot.hang = Quaternion.FromToRotation(tool.LongAxis(), Vector3.down);
-            var center = instance.transform.InverseTransformPoint(tool.RendererBounds().center);
-            slot.offset = new Vector3(0, -0.06f, 0.035f) - slot.hang * Vector3.Scale(center, instance.transform.localScale);
+            slot.offset = new Vector3(0, -0.1f, 0.045f);
             Stow(slot);
             return slot;
         }
 
         static void Stow(Slot slot) => slot.tool.Holster(slot.anchor, slot.offset, slot.hang);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetState() => Scale = 1;
 
         void Update()
         {

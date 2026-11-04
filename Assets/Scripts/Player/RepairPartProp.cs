@@ -7,7 +7,7 @@ namespace MoonThemedGame.Repair
     // A salvaged part in the repair bay: carry it to the robot, line it up with its empty slot and click to fit it.
     public sealed class RepairPartProp : RepairCarryable
     {
-        const float FitDistance = 3.5f;
+        static float FitDistance => 3.5f * PlayerBody.Scale;
         static Material ghostMaterial;
 
         public GameObject prefab;
