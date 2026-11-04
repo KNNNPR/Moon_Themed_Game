@@ -17,3 +17,4 @@ MonoBehaviour:
   headlights: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
   cargoBay: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
   arm: {fileID: 4569563512398989325, guid: 891ed9941e96aaf4a83dae0030a74227, type: 3}
+  wrench: {fileID: 6858108260079773056, guid: c9bf670db3a2cd94db3fa6df359ceb90, type: 3}

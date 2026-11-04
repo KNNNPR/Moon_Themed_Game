@@ -69,6 +69,7 @@ namespace MoonThemedGame.Scavenger
         RobotArm robotArm;
 
         public RobotLever NearLever { get; private set; }
+        public SalvageField Salvage { get; private set; }
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -196,6 +197,9 @@ namespace MoonThemedGame.Scavenger
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
             if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
+            if (!TryGetComponent(out SalvageField salvage)) salvage = gameObject.AddComponent<SalvageField>();
+            Salvage = salvage;
+            Salvage.Setup(this, homePosition);
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -451,6 +455,7 @@ namespace MoonThemedGame.Scavenger
                     else if (panelKey) patch.Toggle();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
                     else if (interact && NearLever && Powered && state && state.Status == RobotStatus.Online) PullLever();
+                    else if (interact && Salvage && Salvage.Near && Powered && state && state.Status == RobotStatus.Online && !ArmBusy) Salvage.PickUp(hud);
                     else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
                     break;
                 case LinkPhase.Terminating:

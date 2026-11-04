@@ -56,8 +56,8 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        public bool Irradiated => RadiationMultiplier > 1;
-        float Drain => (Active ? drainPerSecond * RadiationMultiplier : 0) + (!Active && Irradiated ? drainPerSecond * (RadiationMultiplier - 1) : 0);
+        public bool Irradiated => RadiationMultiplier > 1.05f;
+        float Drain => Active ? drainPerSecond * RadiationMultiplier : drainPerSecond * (RadiationMultiplier - 1);
 
         void Update()
         {

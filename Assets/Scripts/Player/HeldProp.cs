@@ -23,6 +23,7 @@ namespace MoonThemedGame.Interactions
             ? Loc.F("E — Take radio\n{0} / {1} — radio11   {2} — Play   {3} — Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
             : "E — Take apple";
         public bool IsHeld => hand;
+        public static bool Holding => held;
         void Awake()
         {
             body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -55,7 +56,7 @@ namespace MoonThemedGame.Interactions
                 audioSource.volume = 0.65f;
             }
         }
-        public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !held;
+        public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !held && !MoonThemedGame.Repair.RepairCarryable.Current;
         void Start() => body.Sleep();
         public override void Interact()
         {

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 using MoonThemedGame.Interactions;
+using MoonThemedGame.Weather;
 using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
@@ -37,7 +38,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, weakSignal, leavingSoon, covered, charging, irradiated;
+        bool subscribed, weakSignal, leavingSoon, covered, charging, irradiated, frontWarned;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -153,9 +154,17 @@ namespace MoonThemedGame.Scavenger
             else if (!nowCharging && charging) AddLog(Loc.T(state && state.Normalized >= 0.999f ? "CHARGE FULL" : "UNDOCKED FROM CHARGER"));
             charging = nowCharging;
             bool radiation = state && state.Irradiated;
-            if (radiation && !irradiated) AddLog(Loc.F("WARN RADIATION - cell drain x{0}", state.RadiationMultiplier.ToString("0", CultureInfo.InvariantCulture)));
+            if (radiation && !irradiated) AddLog(Loc.T("WARN RADIATION RISING - cell drain growing"));
             else if (!radiation && irradiated) AddLog(Loc.T("RADIATION LEVEL NORMAL"));
             irradiated = radiation;
+            var weather = MoonWeatherSystem.Active;
+            if (weather)
+            {
+                var next = weather.Forecast(0);
+                bool front = next.kind != WeatherKind.Sunny && next.kind != weather.Current && weather.Remaining < 20;
+                if (front && !frontWarned) AddLog(Loc.F("WARN WEATHER FRONT - {0} IN {1}s", Loc.T(MoonWeatherSystem.Name(next.kind)), Mathf.CeilToInt(weather.Remaining)));
+                frontWarned = front;
+            }
             bool cover = link.Cover > 0.3f;
             if (cover && !covered) AddLog(Loc.F("WARN overhead cover {0}% - signal degraded", Mathf.RoundToInt(link.Cover * 100)));
             else if (!cover && covered) AddLog(Loc.T("SKY CLEAR - signal restored"));
@@ -267,7 +276,8 @@ namespace MoonThemedGame.Scavenger
                     Loc.F("POS {0} {1} {2}  HDG {3:000}", position.x.ToString("0.00", inv), position.y.ToString("0.00", inv), position.z.ToString("0.00", inv), Mathf.RoundToInt(heading)),
                     SatLine(),
                     Loc.F("CELL {0}V  T {1}C  CARGO {2}/{3}{4}", volts.ToString("0.0", inv), cellTemp.ToString("0.0", inv), state ? state.Cargo : 0, state ? state.cargoCapacity : 0, RobotUpgrades.Lamps ? Loc.T("  LAMP HI") : ""),
-                    Loc.F("UPTIME {0:00}:{1:00}:{2:00}", up / 3600, up / 60 % 60, up % 60)
+                    Loc.F("UPTIME {0:00}:{1:00}:{2:00}", up / 3600, up / 60 % 60, up % 60),
+                    SalvageLine()
                 };
                 for (int i = 0; i < left.Length; i++)
                     Draw(new Rect(pad, pad + line * i, Screen.width, line), left[i], i == 0 ? phosphor : Dim(phosphor), i, text);
@@ -320,7 +330,7 @@ namespace MoonThemedGame.Scavenger
             }
             if (link.Powered) DrawSatellites(unit, line);
             if (state && state.Irradiated && signal && Mathf.Repeat(Time.time * 1.5f, 1) < 0.75f)
-                Draw(new Rect(0, unit * 8.4f, Screen.width, line), Loc.F("RADIATION - CELL DRAIN x{0} - RETURN TO BASE", state.RadiationMultiplier.ToString("0", CultureInfo.InvariantCulture)), warning, 97, Centered(text));
+                Draw(new Rect(0, unit * 8.4f, Screen.width, line), Loc.F("RADIATION - CELL DRAIN x{0} - RETURN TO BASE", state.RadiationMultiplier.ToString("0.0", CultureInfo.InvariantCulture)), warning, 97, Centered(text));
             var lever = link.NearLever;
             if (lever && signal && state && state.Status == RobotStatus.Online)
             {
@@ -331,9 +341,29 @@ namespace MoonThemedGame.Scavenger
                     : Loc.T("LEVER - DRIVE CLOSER, ARM CAN'T REACH");
                 Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, reach || link.ArmBusy ? phosphor : warning, 41, Centered(text));
             }
+            var salvage = link.Salvage;
+            if (!lever && salvage && salvage.Near && signal && state && state.Status == RobotStatus.Online)
+            {
+                bool full = salvage.Full;
+                string prompt = full ? Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION") : Loc.F("[E] PICK UP {0}", SalvageField.PartName(salvage.Near.prefab));
+                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, full ? warning : phosphor, 42, Centered(text));
+            }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
             Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), Loc.F("{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", DriveKeys, SatelliteKeys, GameControls.Label(GameCommand.RobotPanel)), phosphor, 60, text);
+        }
+
+        string SalvageLine()
+        {
+            var salvage = link.Salvage;
+            if (!salvage || !salvage.Closest || !link.robot) return Loc.T("SALVAGE NO SIGNAL");
+            var offset = salvage.Closest.transform.position - link.robot.position;
+            offset.y = 0;
+            var forward = link.Drive ? link.Drive.Forward : link.robot.forward;
+            forward.y = 0;
+            int angle = Mathf.RoundToInt(Vector3.SignedAngle(forward, offset, Vector3.up));
+            string bearing = Mathf.Abs(angle) <= 10 ? "^^" : angle < 0 ? "<< " + -angle : angle + " >>";
+            return Loc.F("SALVAGE {0}M  {1}", Mathf.RoundToInt(salvage.ClosestDistance), bearing);
         }
 
         string SatLine()
