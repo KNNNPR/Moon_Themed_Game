@@ -697,7 +697,7 @@ MonoBehaviour:
   toxicDensity: 0.009
   toxicOpacity: 0.28
   atmosphereTransition: 3
-  toxicEnergyMultiplier: 2
+  toxicEnergyMultiplier: 4
   warningSeconds: 5
   fallSeconds: 1.6
   meteorDiameterRange: {x: 1.4, y: 2.8}

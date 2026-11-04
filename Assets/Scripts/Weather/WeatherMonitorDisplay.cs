@@ -134,7 +134,7 @@ namespace MoonThemedGame.Weather
                 root.Q<Label>("next-time-" + i).text = Loc.F("IN {0}", Clock(next.startsIn));
                 root.Q<Label>("next-effect-" + i).text = Loc.T(MoonWeatherSystem.Effect(next.kind));
             }
-            float multiplier = weather.Current == WeatherKind.Radiation ? weather.toxicEnergyMultiplier : 1;
+            float multiplier = weather.Current == WeatherKind.Radiation ? 1 + (weather.toxicEnergyMultiplier - 1) * weather.Intensity : 1;
             root.Q<Label>("weather-energy").text = Loc.F("ENERGY DRAIN x{0}", multiplier.ToString("0.0", CultureInfo.InvariantCulture));
             root.Q<Label>("weather-notice").text = weather.Current == WeatherKind.MeteoriteRain
                 ? Loc.F("IMPACT ZONES MARKED {0}s BEFORE", Mathf.Max(5,weather.warningSeconds).ToString("0",CultureInfo.InvariantCulture))
