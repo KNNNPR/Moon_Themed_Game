@@ -43,12 +43,12 @@ namespace MoonThemedGame.Repair
         {
             get
             {
-                if (!initialized) return "Диагностика робота…";
-                if (IsRepaired) return IsSettled ? "Робот исправен. Можно вызвать кран." : "Робот исправен. Ожидает приземления.";
+                if (!initialized) return Loc.T("Robot diagnostics…");
+                if (IsRepaired) return Loc.T(IsSettled ? "Robot repaired. You can call the crane." : "Robot repaired. Waiting for landing.");
                 var counts = new int[definitions.Length];
                 foreach (var slot in slots)
                     if (!slot.visual || !slot.visual.activeSelf) counts[slot.part]++;
-                var text = new StringBuilder("Не хватает деталей:");
+                var text = new StringBuilder(Loc.T("Missing parts:"));
                 for (int i = 0; i < counts.Length; i++)
                     if (counts[i] > 0)
                         text.Append('\n').Append(string.IsNullOrWhiteSpace(definitions[i].displayName)

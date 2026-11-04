@@ -254,11 +254,11 @@ namespace MoonThemedGame.Scavenger
         void PullLever()
         {
             var lever = NearLever;
-            if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP"); return; }
+            if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify(Loc.T("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP")); return; }
             if (robotArm.Busy) return;
-            if (!robotArm.CanReach(lever)) { hud.Notify("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER"); return; }
+            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
             robotArm.Pull(lever);
-            hud.Notify(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER");
+            hud.Notify(Loc.T(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER"));
         }
 
         Light CreateLampBeam()
@@ -489,13 +489,13 @@ namespace MoonThemedGame.Scavenger
             if (phase != RivalPhase.Hijacked || !terminal) return;
             int stolen = Mathf.Min(Network.hijackCreditLoss, terminal.Credits);
             if (stolen > 0) terminal.SetCredits(terminal.Credits - stolen);
-            if (Connected && hud) hud.Notify($"SIGNAL HIJACKED BY {Network.rivalName}  DATA STOLEN -{stolen} CR");
+            if (Connected && hud) hud.Notify(Loc.F("SIGNAL HIJACKED BY {0}  DATA STOLEN -{1} CR", Network.rivalName, stolen));
         }
 
         void TryEvacuate()
         {
-            if (state.OrderEvacuation(terminal)) hud.Notify($"EVACUATION ORDERED  -{state.evacuationCost} CR");
-            else hud.Notify($"NOT ENOUGH CREDITS  ({terminal.Credits}/{state.evacuationCost} CR)");
+            if (state.OrderEvacuation(terminal)) hud.Notify(Loc.F("EVACUATION ORDERED  -{0} CR", state.evacuationCost));
+            else hud.Notify(Loc.F("NOT ENOUGH CREDITS  ({0}/{1} CR)", terminal.Credits, state.evacuationCost));
         }
 
         public void RefreshUplink()

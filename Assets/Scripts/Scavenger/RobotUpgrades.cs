@@ -52,7 +52,7 @@ namespace MoonThemedGame.Scavenger
             return true;
         }
 
-        public static string Title(Upgrade upgrade) => upgrade switch
+        public static string Title(Upgrade upgrade) => Loc.T(upgrade switch
         {
             Upgrade.Capacity => "BATTERY CELLS",
             Upgrade.Drain => "POWER REGULATOR",
@@ -60,9 +60,9 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Headlights => "FOG LAMPS",
             Upgrade.Arm => "MANIPULATOR ARM",
             _ => "CARGO BAY"
-        };
+        });
 
-        public static string Description(Upgrade upgrade) => upgrade switch
+        public static string Description(Upgrade upgrade) => Loc.T(upgrade switch
         {
             Upgrade.Capacity => "Bigger battery, longer runs.",
             Upgrade.Drain => "Battery drains slower.",
@@ -70,16 +70,16 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Headlights => "High beams that cut through moon dust.",
             Upgrade.Arm => "Lets the robot pull levers.",
             _ => "More room for salvage."
-        };
+        });
 
         public static string Value(Upgrade upgrade, int level) => upgrade switch
         {
-            Upgrade.Capacity => $"{Mathf.RoundToInt(100 * CapacityScales[level])} CELL",
-            Upgrade.Drain => level == 0 ? "STOCK DRAIN" : $"-{Mathf.RoundToInt((1 - DrainScales[level]) * 100)}% DRAIN",
-            Upgrade.Speed => level == 0 ? "STOCK SPEED" : $"+{Mathf.RoundToInt((SpeedScales[level] - 1) * 100)}% SPEED",
-            Upgrade.Headlights => level == 0 ? "STOCK LAMPS" : $"FOG -{Mathf.RoundToInt((1 - LampFogScale) * 100)}%",
-            Upgrade.Arm => level == 0 ? "NO ARM" : "PULLS LEVERS",
-            _ => $"{CargoSlotsByLevel[level]} SLOTS"
+            Upgrade.Capacity => Loc.F("{0} CELL", Mathf.RoundToInt(100 * CapacityScales[level])),
+            Upgrade.Drain => level == 0 ? Loc.T("STOCK DRAIN") : Loc.F("-{0}% DRAIN", Mathf.RoundToInt((1 - DrainScales[level]) * 100)),
+            Upgrade.Speed => level == 0 ? Loc.T("STOCK SPEED") : Loc.F("+{0}% SPEED", Mathf.RoundToInt((SpeedScales[level] - 1) * 100)),
+            Upgrade.Headlights => level == 0 ? Loc.T("STOCK LAMPS") : Loc.F("FOG -{0}%", Mathf.RoundToInt((1 - LampFogScale) * 100)),
+            Upgrade.Arm => Loc.T(level == 0 ? "NO ARM" : "PULLS LEVERS"),
+            _ => Loc.F("{0} SLOTS", CargoSlotsByLevel[level])
         };
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
