@@ -18,7 +18,6 @@ namespace MoonThemedGame.Repair
         Quaternion heldRotation;
         Vector3 localCenter, homePosition;
         float radius, homeFloor;
-        GUIStyle hintStyle;
 
         public bool IsCarried => Current == this;
         protected abstract Vector3 HoldOffset { get; }
@@ -205,12 +204,9 @@ namespace MoonThemedGame.Repair
 
         protected virtual void OnGUI()
         {
-            if (!IsCarried || GameSettingsMenu.IsOpen) return;
-            if (hintStyle == null) hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15, wordWrap = true };
-            string hint = CarryHint;
-            if (!string.IsNullOrEmpty(hint))
-                GUI.Label(new Rect(Screen.width / 2f - 260, Screen.height / 2f + 22, 520, 60), hint, hintStyle);
-            GUI.Label(new Rect(Screen.width / 2f - 230, Screen.height - 70, 460, 50), Loc.F("{0} — Drop", GameControls.Label(GameCommand.Throw)), hintStyle);
+            if (!IsCarried || GameSettingsMenu.IsOpen || PlayerBody.BeltOpen) return;
+            RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 24, CarryHint);
+            RepairHud.Hint(Screen.width / 2f, Screen.height - 64, Loc.F("{0} — Drop", GameControls.Label(GameCommand.Throw)), 14);
         }
 
         protected override void OnDisable()
