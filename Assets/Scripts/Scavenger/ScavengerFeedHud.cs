@@ -316,9 +316,14 @@ namespace MoonThemedGame.Scavenger
             if (link.Powered) DrawSatellites(unit, line);
             var lever = link.NearLever;
             if (lever && signal && state && state.Status == RobotStatus.Online)
-                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), RobotUpgrades.HasArm
-                    ? $"[E] PULL LEVER  ({(lever.on ? "ON" : "OFF")})"
-                    : "LEVER - MANIPULATOR ARM REQUIRED (SHOP)", RobotUpgrades.HasArm ? phosphor : warning, 41, Centered(text));
+            {
+                bool reach = RobotUpgrades.HasArm && link.ArmCanReach(lever);
+                string prompt = !RobotUpgrades.HasArm ? "LEVER - MANIPULATOR ARM REQUIRED (SHOP)"
+                    : link.ArmBusy ? "ARM ENGAGED..."
+                    : reach ? $"[E] PULL LEVER  ({(lever.on ? "ON" : "OFF")})"
+                    : "LEVER - DRIVE CLOSER, ARM CAN'T REACH";
+                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, reach || link.ArmBusy ? phosphor : warning, 41, Centered(text));
+            }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
             Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - TUNER   ESC - BACK TO PC", phosphor, 60, text);

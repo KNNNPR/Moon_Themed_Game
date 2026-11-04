@@ -11,6 +11,8 @@ namespace MoonThemedGame.Scavenger
         static readonly List<RobotLever> all = new List<RobotLever>();
 
         public Transform handle;
+        [Tooltip("The point the robot's claw grabs; defaults to the end of the handle.")]
+        public Transform grip;
         public Renderer lamp;
         [Min(0.1f)] public float reach = 2.5f;
         public float offAngle = -35, onAngle = 35;
@@ -23,6 +25,7 @@ namespace MoonThemedGame.Scavenger
         Material lampMaterial;
 
         public static IReadOnlyList<RobotLever> All => all;
+        public Vector3 GripPosition => grip ? grip.position : handle ? handle.position + handle.up * 0.3f : transform.position;
 
         void OnEnable()
         {
@@ -83,10 +86,11 @@ namespace MoonThemedGame.Scavenger
             pivot.SetParent(root, false);
             pivot.localPosition = new Vector3(0, size * 0.7f, 0);
             Part(pivot, PrimitiveType.Cylinder, "Shaft", new Vector3(0, size * 0.22f, 0), new Vector3(size * 0.05f, size * 0.22f, size * 0.05f), new Color(0.75f, 0.75f, 0.78f), false);
-            Part(pivot, PrimitiveType.Sphere, "Grip", new Vector3(0, size * 0.46f, 0), Vector3.one * size * 0.12f, new Color(0.8f, 0.15f, 0.12f), false);
+            var grip = Part(pivot, PrimitiveType.Sphere, "Grip", new Vector3(0, size * 0.46f, 0), Vector3.one * size * 0.12f, new Color(0.8f, 0.15f, 0.12f), false);
             var lamp = Part(root, PrimitiveType.Sphere, "Lamp", new Vector3(size * 0.18f, size * 0.24f, 0), Vector3.one * size * 0.09f, Color.red, false);
             var lever = root.gameObject.AddComponent<RobotLever>();
             lever.handle = pivot;
+            lever.grip = grip.transform;
             lever.lamp = lamp.GetComponent<Renderer>();
             lever.reach = size * 1.6f;
             lever.Apply();

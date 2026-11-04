@@ -66,8 +66,7 @@ namespace MoonThemedGame.Scavenger
         float baseCapacity, baseDrain, baseSpeed, baseAcceleration;
         Light lampBeam;
         Transform arm;
-        Quaternion armRest;
-        float armSwing;
+        RobotArm robotArm;
 
         public RobotLever NearLever { get; private set; }
         Collider[] robotColliders;
@@ -235,7 +234,7 @@ namespace MoonThemedGame.Scavenger
                 bounds.center + Drive.Forward * (bounds.extents.magnitude * 0.25f) + Vector3.up * bounds.extents.y,
                 Quaternion.LookRotation(Drive.Forward, Vector3.up));
             instance.transform.SetParent(robot, true);
-            armRest = instance.transform.localRotation;
+            robotArm = instance.AddComponent<RobotArm>();
             return instance.transform;
         }
 
@@ -249,13 +248,17 @@ namespace MoonThemedGame.Scavenger
             RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
         }
 
+        public bool ArmBusy => robotArm && robotArm.Busy;
+        public bool ArmCanReach(RobotLever lever) => robotArm && robotArm.CanReach(lever);
+
         void PullLever()
         {
             var lever = NearLever;
-            if (!RobotUpgrades.HasArm) { hud.Notify("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP"); return; }
-            lever.Pull();
-            armSwing = 1;
-            hud.Notify($"LEVER {(lever.on ? "ON" : "OFF")}");
+            if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP"); return; }
+            if (robotArm.Busy) return;
+            if (!robotArm.CanReach(lever)) { hud.Notify("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER"); return; }
+            robotArm.Pull(lever);
+            hud.Notify(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER");
         }
 
         Light CreateLampBeam()
@@ -307,11 +310,6 @@ namespace MoonThemedGame.Scavenger
         // Chase view: follows the robot's heading with a little lag, ignores its tilt.
         void LateUpdate()
         {
-            if (arm)
-            {
-                armSwing = Mathf.MoveTowards(armSwing, 0, Time.deltaTime / 0.8f);
-                arm.localRotation = armRest * Quaternion.Euler(Mathf.Sin(armSwing * Mathf.PI) * 40, 0, 0);
-            }
             if (!Connected || !robot || !Drive) return;
             var target = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
             cameraYaw = Mathf.LerpAngle(cameraYaw, target, 1 - Mathf.Exp(-4 * Time.deltaTime));
@@ -363,7 +361,7 @@ namespace MoonThemedGame.Scavenger
             if (evacuated && Drive) Drive.PlaceAt(homePosition, homeRotation);
         }
 
-        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen;
+        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen && !ArmBusy;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
         public static Vector3 DetectForward(Transform robot, Vector3 center)
