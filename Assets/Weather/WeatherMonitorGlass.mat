@@ -29,6 +29,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _Monochrome: 0.85
     - _Bleed: 1
     - _Vignette: 0.22
     - _Mask: 0.16
@@ -43,7 +44,8 @@ Material:
     - _WaveSpeed: 1.6
     - _WaveStrength: 0.0008
     m_Colors:
-    - _BlackLevel: {r: 0.06, g: 0.11, b: 0.09, a: 1}
+    - _Phosphor: {r: 1, g: 0.69, b: 0.22, a: 1}
+    - _BlackLevel: {r: 0.11, g: 0.06, b: 0.02, a: 1}
     - _GlassTint: {r: 0.012, g: 0.021, b: 0.028, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

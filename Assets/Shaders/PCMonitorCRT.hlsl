@@ -57,6 +57,9 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
     half roll = 1.0 - 0.025 * pow(0.5 + 0.5 * sin(uv.y * 6.2831853 - time * 0.7), 12.0);
     half3 color = (source + glow * _Glow + wideGlow * _Glow * 0.35) * _Brightness * scanline * flicker * roll;
     #if defined(MOON_CRT_TUBE)
+        // Single-phosphor tube: the picture glows in one colour, a little of the original hue survives.
+        half luma = dot(color, half3(0.2126, 0.7152, 0.0722));
+        color = lerp(color, luma * _Phosphor.rgb * 1.35, _Monochrome);
         // Aperture grille: one RGB triad every three display pixels, and a darker rim of the tube.
         float triad = frac(uv.x * _BaseMap_TexelSize.z / 3.0);
         half3 grille = triad < 0.3333 ? half3(1.0, 0.55, 0.55) : triad < 0.6666 ? half3(0.55, 1.0, 0.55) : half3(0.55, 0.55, 1.0);
