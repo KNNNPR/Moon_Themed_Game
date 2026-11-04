@@ -9,6 +9,7 @@ namespace MoonThemedGame.Repair
         RepairBolt target;
         float swing;
 
+        protected override bool AlignInHand => true;
         protected override Vector3 HoldOffset => new Vector3(0.26f, -0.24f, 0.5f);
         public override string Prompt => "E — Take wrench";
 

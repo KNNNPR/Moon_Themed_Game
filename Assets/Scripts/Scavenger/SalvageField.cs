@@ -88,7 +88,7 @@ namespace MoonThemedGame.Scavenger
                 }
                 if (TooClose(candidate)) continue;
                 if (!Ground(candidate, out var point, out var normal)) continue;
-                SalvagePiece.Create(kinds[Random.Range(0, kinds.Length)], point, normal, link.robotScale);
+                SalvagePiece.Create(kinds[Random.Range(0, kinds.Length)], point, normal, link.robotScale * 0.5f);
                 return true;
             }
             return false;
@@ -130,7 +130,7 @@ namespace MoonThemedGame.Scavenger
                 nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
                 TrySpawn();
             }
-            float reach = link.Drive ? link.Drive.Length * 0.5f + 0.6f : 1.5f;
+            float reach = link.Drive ? link.Drive.Length * 1.1f + 1.5f : 3;
             Near = Closest = null;
             ClosestDistance = float.MaxValue;
             foreach (var piece in SalvagePiece.All)

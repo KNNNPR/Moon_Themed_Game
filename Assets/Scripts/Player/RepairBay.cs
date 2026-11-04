@@ -41,7 +41,7 @@ namespace MoonThemedGame.Repair
 
         void Start()
         {
-            if (FindAnyObjectByType<RepairWrench>()) return;
+            if (FindAnyObjectByType<RepairWrench>() || FindAnyObjectByType<PlayerBody>()) return;
             var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
             if (!catalog || !catalog.wrench) return;
             var wrench = Instantiate(catalog.wrench);

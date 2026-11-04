@@ -41,7 +41,7 @@ namespace MoonThemedGame.Repair
             colliders = GetComponentsInChildren<Collider>(true);
             localCenter = transform.InverseTransformPoint(bounds.center);
             radius = bounds.extents.magnitude;
-            interactionDistance = 2.6f;
+            interactionDistance = 3.2f;
             homePosition = transform.position;
         }
 
@@ -72,7 +72,9 @@ namespace MoonThemedGame.Repair
             if (Current || !Camera.main) return;
             Current = this;
             hand = Camera.main;
-            heldRotation = Quaternion.Inverse(hand.transform.rotation) * transform.rotation;
+            heldRotation = AlignInHand
+                ? Quaternion.FromToRotation(LongAxis(), new Vector3(0.2f, 0.3f, 1).normalized)
+                : Quaternion.Inverse(hand.transform.rotation) * transform.rotation;
             body.isKinematic = true;
             var player = hand.GetComponentInParent<FirstPersonController>();
             playerColliders = player ? player.GetComponentsInChildren<Collider>() : new Collider[0];
@@ -80,6 +82,40 @@ namespace MoonThemedGame.Repair
             foreach (var c in colliders) if (c) c.enabled = false;
             SetHighlighted(false);
             OnPickedUp();
+        }
+
+        public Transform Holder { get; private set; }
+        protected virtual bool AlignInHand => false;
+
+        // Local axis along the tool's longest side.
+        public Vector3 LongAxis()
+        {
+            var filter = GetComponent<MeshFilter>();
+            if (!filter || !filter.sharedMesh) return Vector3.forward;
+            var size = filter.sharedMesh.bounds.size;
+            return size.x >= size.y && size.x >= size.z ? Vector3.right : size.y >= size.z ? Vector3.up : Vector3.forward;
+        }
+
+        // Stowed on the player's belt: no physics, follows the holder.
+        public void Holster(Transform holder, Vector3 localPosition, Quaternion localRotation)
+        {
+            if (IsCarried) Current = null;
+            hand = null;
+            CancelInvoke();
+            Holder = holder;
+            body.isKinematic = true;
+            foreach (var c in colliders) if (c) c.enabled = false;
+            transform.SetParent(holder, false);
+            transform.SetLocalPositionAndRotation(localPosition, localRotation);
+            SetHighlighted(false);
+        }
+
+        public void Unholster()
+        {
+            if (!Holder || Current) return;
+            Holder = null;
+            transform.SetParent(null, true);
+            Interact();
         }
 
         protected virtual void OnPickedUp() { }
