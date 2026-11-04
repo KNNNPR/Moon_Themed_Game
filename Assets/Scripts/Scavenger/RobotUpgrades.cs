@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
 {
-    public enum Upgrade { Capacity, Drain, Speed, Headlights, Cargo }
+    public enum Upgrade { Capacity, Drain, Speed, Headlights, Cargo, Arm }
 
     // Upgrades bought in the SHOP for this session; ScavengerLink applies them to the robot.
     public static class RobotUpgrades
     {
-        public static readonly Upgrade[] All = { Upgrade.Capacity, Upgrade.Drain, Upgrade.Speed, Upgrade.Headlights, Upgrade.Cargo };
+        public static readonly Upgrade[] All = { Upgrade.Capacity, Upgrade.Drain, Upgrade.Speed, Upgrade.Headlights, Upgrade.Cargo, Upgrade.Arm };
 
         static readonly int[][] Prices =
         {
@@ -17,7 +17,8 @@ namespace MoonThemedGame.Scavenger
             new[] { 10, 18, 30 },
             new[] { 12, 20, 32 },
             new[] { 20 },
-            new[] { 8, 15, 25 }
+            new[] { 8, 15, 25 },
+            new[] { 25 }
         };
         static readonly float[] CapacityScales = { 1, 1.4f, 1.85f, 2.4f };
         static readonly float[] DrainScales = { 1, 0.8f, 0.62f, 0.45f };
@@ -40,6 +41,7 @@ namespace MoonThemedGame.Scavenger
         public static bool Lamps => Level(Upgrade.Headlights) > 0;
         public static float FogScale => Lamps ? LampFogScale : 1;
         public static int CargoSlots => CargoSlotsByLevel[Level(Upgrade.Cargo)];
+        public static bool HasArm => Level(Upgrade.Arm) > 0;
 
         public static bool TryBuy(Upgrade upgrade, PcMonitorTerminal terminal)
         {
@@ -56,6 +58,7 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Drain => "POWER REGULATOR",
             Upgrade.Speed => "DRIVE WHEELS",
             Upgrade.Headlights => "FOG LAMPS",
+            Upgrade.Arm => "MANIPULATOR ARM",
             _ => "CARGO BAY"
         };
 
@@ -65,6 +68,7 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Drain => "Battery drains slower.",
             Upgrade.Speed => "Higher top speed and acceleration.",
             Upgrade.Headlights => "High beams that cut through moon dust.",
+            Upgrade.Arm => "Lets the robot pull levers.",
             _ => "More room for salvage."
         };
 
@@ -74,6 +78,7 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Drain => level == 0 ? "STOCK DRAIN" : $"-{Mathf.RoundToInt((1 - DrainScales[level]) * 100)}% DRAIN",
             Upgrade.Speed => level == 0 ? "STOCK SPEED" : $"+{Mathf.RoundToInt((SpeedScales[level] - 1) * 100)}% SPEED",
             Upgrade.Headlights => level == 0 ? "STOCK LAMPS" : $"FOG -{Mathf.RoundToInt((1 - LampFogScale) * 100)}%",
+            Upgrade.Arm => level == 0 ? "NO ARM" : "PULLS LEVERS",
             _ => $"{CargoSlotsByLevel[level]} SLOTS"
         };
 

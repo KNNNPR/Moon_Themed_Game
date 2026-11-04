@@ -108,10 +108,12 @@ namespace MoonThemedGame.Scavenger
             else { style.normal.textColor = color; GUI.Label(rect, value, style); }
         }
 
-        void OnGUI()
+        Vector2 Pointer => hud ? hud.ToSource(Event.current.mousePosition) : Event.current.mousePosition;
+
+        // Drawn by ScavengerFeedHud inside the feed, so it goes through the same CRT.
+        internal void Gui()
         {
             if (!IsOpen || !Network) return;
-            GUI.depth = -10;
             if (hud) hud.EnsureStyles();
             var network = Network;
             int channels = network.channels.Length;
@@ -134,7 +136,7 @@ namespace MoonThemedGame.Scavenger
             var phosphor = Phosphor;
             var dim = phosphor * 0.6f;
             var warning = Warning;
-            var mouse = Event.current.mousePosition;
+            var mouse = Pointer;
 
             Fill(panel, new Color(0.004f, 0.012f, 0.008f, 0.96f));
             Frame(panel, dim, 1);
@@ -212,7 +214,7 @@ namespace MoonThemedGame.Scavenger
         {
             var e = Event.current;
             if (e.type != EventType.MouseDown) return;
-            var mouse = e.mousePosition;
+            var mouse = Pointer;
             if (e.button == 1) { held = -1; e.Use(); return; }
             if (e.button != 0) return;
             e.Use();

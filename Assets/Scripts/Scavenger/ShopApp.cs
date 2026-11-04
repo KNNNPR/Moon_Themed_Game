@@ -274,11 +274,13 @@ namespace MoonThemedGame.Scavenger
             var from = new List<Vector3>();
             var to = new List<Vector3>();
             var root = model.transform.worldToLocalMatrix;
-            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
+            var sources = new List<(Mesh mesh, Transform transform)>();
+            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true)) sources.Add((filter.sharedMesh, filter.transform));
+            foreach (var skinned in model.GetComponentsInChildren<SkinnedMeshRenderer>(true)) sources.Add((skinned.sharedMesh, skinned.transform));
+            foreach (var (mesh, transform) in sources)
             {
-                var mesh = filter.sharedMesh;
                 if (!mesh || !mesh.isReadable) continue;
-                var matrix = root * filter.transform.localToWorldMatrix;
+                var matrix = root * transform.localToWorldMatrix;
                 var vertices = mesh.vertices;
                 var triangles = mesh.triangles;
                 var bounds = mesh.bounds;

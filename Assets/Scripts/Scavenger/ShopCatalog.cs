@@ -10,12 +10,14 @@ namespace MoonThemedGame.Scavenger
         public GameObject wheel;
         public GameObject headlights;
         public GameObject cargoBay;
+        public GameObject arm;
 
         public GameObject Model(Upgrade upgrade) => upgrade switch
         {
             Upgrade.Capacity or Upgrade.Drain => battery,
             Upgrade.Speed => wheel,
             Upgrade.Headlights => headlights,
+            Upgrade.Arm => arm,
             _ => cargoBay
         };
     }

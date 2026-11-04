@@ -65,6 +65,13 @@ namespace MoonThemedGame.Scavenger
         RfPatchPanel patch;
         float baseCapacity, baseDrain, baseSpeed, baseAcceleration;
         Light lampBeam;
+        Transform arm;
+        Quaternion armRest;
+        float armSwing;
+        Camera backdrop;
+
+        public RobotLever NearLever { get; private set; }
+        public bool FeedOnCrt => robotCamera && robotCamera.targetTexture;
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -191,6 +198,8 @@ namespace MoonThemedGame.Scavenger
             baseAcceleration = Drive.acceleration;
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
+            if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
+            backdrop = CreateBackdrop();
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -204,6 +213,66 @@ namespace MoonThemedGame.Scavenger
             Drive.acceleration = baseAcceleration * RobotUpgrades.SpeedScale;
             if (RobotUpgrades.Lamps && !lampBeam) lampBeam = CreateLampBeam();
             if (lampBeam) lampBeam.enabled = RobotUpgrades.Lamps;
+            if (RobotUpgrades.HasArm && !arm) arm = CreateArm();
+            if (arm) arm.gameObject.SetActive(RobotUpgrades.HasArm);
+        }
+
+        // The SHOP's small_cran model, scaled to the robot and mounted on its front top.
+        Transform CreateArm()
+        {
+            var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
+            if (!catalog || !catalog.arm) return null;
+            var bounds = RobotBounds(robot);
+            var instance = Instantiate(catalog.arm);
+            instance.name = "Manipulator Arm";
+            foreach (var collider in instance.GetComponentsInChildren<Collider>(true)) Destroy(collider);
+            var renderers = instance.GetComponentsInChildren<Renderer>();
+            if (renderers.Length > 0)
+            {
+                var size = renderers[0].bounds;
+                foreach (var r in renderers) size.Encapsulate(r.bounds);
+                float largest = Mathf.Max(size.size.x, size.size.y, size.size.z);
+                if (largest > 1e-4f) instance.transform.localScale *= Drive.Length * 0.45f / largest;
+            }
+            instance.transform.SetPositionAndRotation(
+                bounds.center + Drive.Forward * (bounds.extents.magnitude * 0.25f) + Vector3.up * bounds.extents.y,
+                Quaternion.LookRotation(Drive.Forward, Vector3.up));
+            instance.transform.SetParent(robot, true);
+            armRest = instance.transform.localRotation;
+            return instance.transform;
+        }
+
+        void PlaceTestLever(Vector3 ground)
+        {
+            var forward = Drive.Forward;
+            forward.y = 0;
+            forward.Normalize();
+            var right = Vector3.Cross(Vector3.up, forward);
+            var position = ground + right * (Drive.Length * 1.8f) + forward * (Drive.Length * 1.2f);
+            RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
+        }
+
+        // With the feed on the CRT nothing renders to the screen itself; this keeps it cleared.
+        Camera CreateBackdrop()
+        {
+            var host = new GameObject($"{RobotName} / CRT Backdrop");
+            SceneManager.MoveGameObjectToScene(host, robot.gameObject.scene);
+            var camera = host.AddComponent<Camera>();
+            camera.cullingMask = 0;
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = Color.black;
+            camera.depth = -100;
+            camera.enabled = false;
+            return camera;
+        }
+
+        void PullLever()
+        {
+            var lever = NearLever;
+            if (!RobotUpgrades.HasArm) { hud.Notify("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP"); return; }
+            lever.Pull();
+            armSwing = 1;
+            hud.Notify($"LEVER {(lever.on ? "ON" : "OFF")}");
         }
 
         Light CreateLampBeam()
@@ -255,6 +324,11 @@ namespace MoonThemedGame.Scavenger
         // Chase view: follows the robot's heading with a little lag, ignores its tilt.
         void LateUpdate()
         {
+            if (arm)
+            {
+                armSwing = Mathf.MoveTowards(armSwing, 0, Time.deltaTime / 0.8f);
+                arm.localRotation = armRest * Quaternion.Euler(Mathf.Sin(armSwing * Mathf.PI) * 40, 0, 0);
+            }
             if (!Connected || !robot || !Drive) return;
             var target = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
             cameraYaw = Mathf.LerpAngle(cameraYaw, target, 1 - Mathf.Exp(-4 * Time.deltaTime));
@@ -380,6 +454,7 @@ namespace MoonThemedGame.Scavenger
             }
             if (Network) Network.TickRival(Connected && Powered);
             if (Connected) RefreshUplink();
+            NearLever = Connected && robot && Drive ? RobotLever.Nearest(robot.position, Drive.Length * 0.5f) : null;
             switch (Phase)
             {
                 case LinkPhase.Off:
@@ -394,6 +469,7 @@ namespace MoonThemedGame.Scavenger
                     else if (escape) Terminate();
                     else if (panelKey) patch.Toggle();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
+                    else if (interact && NearLever && Powered && state && state.Status == RobotStatus.Online) PullLever();
                     else if (satelliteKey >= 0 && Network) Network.Select(satelliteKey);
                     break;
                 case LinkPhase.Terminating:
@@ -485,6 +561,9 @@ namespace MoonThemedGame.Scavenger
                 if (picture) loss = Mathf.Max(loss, Mathf.Sin(Mathf.Clamp01(u / 0.4f) * Mathf.PI) * (Mathf.Repeat(Time.time * 9, 1) < 0.5f ? 0.9f : 0.4f));
                 collapse = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.4f, 1, u));
             }
+            var crtTarget = Connected ? hud.PrepareCrt() : null;
+            robotCamera.targetTexture = crtTarget;
+            if (backdrop) backdrop.enabled = crtTarget;
             robotCamera.cullingMask = picture ? sceneMask : 1 << OverlayLayer;
             robotCamera.clearFlags = picture ? sceneClear : CameraClearFlags.SolidColor;
             if (!interferenceMaterial) return;
@@ -529,8 +608,10 @@ namespace MoonThemedGame.Scavenger
         public void Disconnect()
         {
             if (!Connected) return;
+            if (backdrop) backdrop.enabled = false;
             if (robotCamera)
             {
+                robotCamera.targetTexture = null;
                 robotCamera.enabled = false;
                 robotCamera.GetComponent<AudioListener>().enabled = false;
             }
