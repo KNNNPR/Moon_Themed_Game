@@ -3,13 +3,16 @@ using UnityEngine;
 
 namespace MoonThemedGame.Repair
 {
-    // A bolt holding a freshly attached part; the wrench screws it in turn by turn.
+    public enum Fastener { Bolt, Screw }
+
+    // A bolt (wrench) or screw (screwdriver) holding a freshly fitted part, driven in turn by turn.
     [DisallowMultipleComponent]
     public sealed class RepairBolt : MonoBehaviour
     {
-        public const int Turns = 6;
-        static readonly Color LooseColor = new Color(0.86f, 0.47f, 0.16f);
-        static readonly Color TightColor = new Color(0.5f, 0.53f, 0.56f);
+        static readonly List<RepairBolt> all = new List<RepairBolt>();
+        static readonly Color RustyBolt = new Color(0.86f, 0.47f, 0.16f);
+        static readonly Color BrassScrew = new Color(0.86f, 0.74f, 0.38f);
+        static readonly Color Steel = new Color(0.5f, 0.53f, 0.56f);
 
         RepairRobotTarget robot;
         GameObject part;
@@ -17,21 +20,85 @@ namespace MoonThemedGame.Repair
         Renderer[] renderers;
         int turns;
 
+        public Fastener Kind { get; private set; }
+        public int Turns => Kind == Fastener.Bolt ? 6 : 5;
         public int TurnsDone => turns;
         public bool Tight => turns >= Turns;
+        public bool Seated => !robot || robot.Seated(part);
 
-        public static List<RepairBolt> Spawn(RepairRobotTarget robot, GameObject part, Vector3 viewer)
+        public static Fastener KindFor(GameObject part)
+        {
+            string name = part.name.ToLowerInvariant();
+            return name.Contains("wheel") || name.Contains("battery") ? Fastener.Bolt : Fastener.Screw;
+        }
+
+        public static bool NeedsHammer(GameObject part)
+        {
+            string name = part.name.ToLowerInvariant();
+            return name.Contains("wheel") || name.Contains("body");
+        }
+
+        // The loose fastener closest to where the player is looking; robot panels never hide it.
+        public static RepairBolt Aimed(Ray view, float reach, float maxAngle = 7)
+        {
+            RepairBolt best = null;
+            float bestAngle = maxAngle;
+            foreach (var bolt in all)
+            {
+                var offset = bolt.transform.position - view.origin;
+                if (offset.magnitude > reach) continue;
+                float angle = Vector3.Angle(view.direction, offset);
+                if (bolt.Tight) angle += 2;
+                if (angle < bestAngle) { bestAngle = angle; best = bolt; }
+            }
+            return best;
+        }
+
+        static Bounds BoundsOf(IEnumerable<Renderer> renderers)
+        {
+            bool first = true;
+            var bounds = new Bounds();
+            foreach (var r in renderers)
+            {
+                if (first) { bounds = r.bounds; first = false; }
+                else bounds.Encapsulate(r.bounds);
+            }
+            return bounds;
+        }
+
+        public static Vector3 Outward(RepairRobotTarget robot, GameObject part, out float size)
+        {
+            var bounds = BoundsOf(part.GetComponentsInChildren<Renderer>());
+            size = bounds.size.magnitude;
+            var outward = bounds.center - (robot ? robot.transform.position : bounds.center - Vector3.forward);
+            outward.y = 0;
+            return outward.sqrMagnitude > 1e-6f ? outward.normalized : Vector3.forward;
+        }
+
+        public static List<RepairBolt> Spawn(RepairRobotTarget robot, GameObject part, Vector3 viewer, Fastener kind)
         {
             var bolts = new List<RepairBolt>();
-            var renderers = part.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0) return bolts;
-            var bounds = renderers[0].bounds;
-            foreach (var r in renderers) bounds.Encapsulate(r.bounds);
+            var renderers = new List<Renderer>(part.GetComponentsInChildren<Renderer>());
+            if (renderers.Count == 0) return bolts;
             Physics.SyncTransforms();
+            var whole = BoundsOf(renderers);
 
-            if (part.name.ToLowerInvariant().Contains("wheel") && WheelAxis(part, robot, bounds, out var axle))
-                return SpawnHub(robot, part, bounds, axle, bolts);
+            if (part.name.ToLowerInvariant().Contains("wheel") && WheelAxis(part, robot, whole, out var axle))
+                return SpawnHub(robot, part, whole, axle, kind, bolts);
 
+            // A set of separate pieces (both headlights) gets its own pair of fasteners on each piece.
+            if (renderers.Count > 1)
+            {
+                foreach (var piece in renderers.GetRange(0, Mathf.Min(3, renderers.Count)))
+                    SpawnFace(robot, part, piece.bounds, viewer, kind, 2, bolts);
+                return bolts;
+            }
+            SpawnFace(robot, part, whole, viewer, kind, whole.size.magnitude > 0.8f ? 4 : 2, bolts);
+            return bolts;
+        }
+
+        static void SpawnFace(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 viewer, Fastener kind, int count, List<RepairBolt> bolts)
+        {
             var toViewer = (viewer - bounds.center).normalized;
             var normal = Vector3.up;
             float best = -2;
@@ -44,23 +111,26 @@ namespace MoonThemedGame.Repair
             var t2 = Vector3.Cross(normal, t1).normalized;
             float depth = Vector3.Dot(bounds.extents, Abs(normal));
             float e1 = Vector3.Dot(bounds.extents, Abs(t1)), e2 = Vector3.Dot(bounds.extents, Abs(t2));
-            float size = Mathf.Clamp(bounds.size.magnitude * 0.05f, 0.022f, 0.06f);
-            var layout = bounds.size.magnitude > 0.8f
+            float size = Mathf.Clamp(bounds.size.magnitude * 0.05f, 0.018f, 0.06f);
+            var layout = count >= 4
                 ? new[] { new Vector2(-1, -1), new Vector2(1, -1), new Vector2(-1, 1), new Vector2(1, 1) }
-                : new[] { new Vector2(-1, 0), new Vector2(1, 0) };
+                : e1 >= e2 ? new[] { new Vector2(-1, 0), new Vector2(1, 0) } : new[] { new Vector2(0, -1), new Vector2(0, 1) };
 
             foreach (var spot in layout)
             {
                 var point = bounds.center + normal * depth + t1 * (spot.x * e1 * 0.55f) + t2 * (spot.y * e2 * 0.55f);
+                var start = point + normal * 0.3f;
                 var surface = point;
                 var surfaceNormal = normal;
-                foreach (var hit in Physics.RaycastAll(point + normal * 0.3f, -normal, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
-                    if (hit.collider.transform.IsChildOf(part.transform) && Vector3.Distance(hit.point, point + normal * 0.3f) < Vector3.Distance(surface, point + normal * 0.3f) + 1e-3f)
-                    { surface = hit.point; surfaceNormal = hit.normal; }
-                bolts.Add(Create(robot, part, surface, surfaceNormal, size));
+                float nearest = float.MaxValue;
+                foreach (var hit in Physics.RaycastAll(start, -normal, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
+                    if (hit.collider.transform.IsChildOf(part.transform) && hit.distance < nearest)
+                    { nearest = hit.distance; surface = hit.point; surfaceNormal = Vector3.Dot(hit.normal, normal) > 0.3f ? hit.normal : normal; }
+                bolts.Add(Create(robot, part, surface, surfaceNormal, size, kind));
             }
-            return bolts;
         }
+
+        static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
 
         // The axle runs along the wheel's thinnest side, pointing away from the robot.
         static bool WheelAxis(GameObject part, RepairRobotTarget robot, Bounds bounds, out Vector3 axle)
@@ -71,14 +141,13 @@ namespace MoonThemedGame.Repair
             var size = filter.sharedMesh.bounds.size;
             var local = size.x <= size.y && size.x <= size.z ? Vector3.right : size.y <= size.z ? Vector3.up : Vector3.forward;
             axle = filter.transform.TransformDirection(local).normalized;
-            var robotCenter = robot ? robot.transform.position : bounds.center;
-            var outward = bounds.center - robotCenter;
+            var outward = bounds.center - (robot ? robot.transform.position : bounds.center);
             outward.y = 0;
             if (Vector3.Dot(axle, outward) < 0) axle = -axle;
             return true;
         }
 
-        static List<RepairBolt> SpawnHub(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 axle, List<RepairBolt> bolts)
+        static List<RepairBolt> SpawnHub(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 axle, Fastener kind, List<RepairBolt> bolts)
         {
             var t1 = Vector3.Cross(axle, Mathf.Abs(axle.y) > 0.9f ? Vector3.forward : Vector3.up).normalized;
             var t2 = Vector3.Cross(axle, t1).normalized;
@@ -96,37 +165,47 @@ namespace MoonThemedGame.Repair
                 foreach (var hit in Physics.RaycastAll(start, -axle, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
                     if (hit.collider.transform.IsChildOf(part.transform) && hit.distance < nearest)
                     { nearest = hit.distance; surface = hit.point; normal = Vector3.Dot(hit.normal, axle) > 0.5f ? hit.normal : axle; }
-                bolts.Add(Create(robot, part, surface, normal, size));
+                bolts.Add(Create(robot, part, surface, normal, size, kind));
             }
             return bolts;
         }
 
-        static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
-
-        static RepairBolt Create(RepairRobotTarget robot, GameObject part, Vector3 surface, Vector3 normal, float size)
+        static RepairBolt Create(RepairRobotTarget robot, GameObject part, Vector3 surface, Vector3 normal, float size, Fastener kind)
         {
-            var root = new GameObject("Bolt");
+            var root = new GameObject(kind == Fastener.Bolt ? "Bolt" : "Screw");
             root.transform.SetPositionAndRotation(surface + normal * size * 1.8f, Quaternion.FromToRotation(Vector3.up, normal));
-            var head = Piece(root.transform, new Vector3(size * 1.6f, size * 0.35f, size * 1.6f), 0);
-            var shaft = Piece(root.transform, new Vector3(size * 0.7f, size * 1.0f, size * 0.7f), -size * 1.2f);
+            var pieces = new List<Renderer>();
+            if (kind == Fastener.Bolt)
+            {
+                pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 1.6f, size * 0.35f, size * 1.6f), 0));
+                pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 0.7f, size * 1.0f, size * 0.7f), -size * 1.2f));
+            }
+            else
+            {
+                pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 1.3f, size * 0.16f, size * 1.3f), 0));
+                pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 0.45f, size * 1.0f, size * 0.45f), -size * 1.1f));
+                var slot = Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 1.2f, size * 0.05f, size * 0.22f), size * 0.13f);
+                slot.material.color = new Color(0.12f, 0.1f, 0.08f);
+            }
             var trigger = root.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
             trigger.radius = size * 2.2f;
             root.transform.SetParent(part.transform, true);
 
             var bolt = root.AddComponent<RepairBolt>();
+            bolt.Kind = kind;
             bolt.robot = robot;
             bolt.part = part;
             bolt.outLocal = root.transform.localPosition;
             bolt.inLocal = part.transform.InverseTransformPoint(surface + normal * size * 0.2f);
-            bolt.renderers = new[] { head, shaft };
-            bolt.Paint(LooseColor);
+            bolt.renderers = pieces.ToArray();
+            bolt.Paint(kind == Fastener.Bolt ? RustyBolt : BrassScrew);
             return bolt;
         }
 
-        static Renderer Piece(Transform parent, Vector3 scale, float height)
+        static Renderer Piece(PrimitiveType type, Transform parent, Vector3 scale, float height)
         {
-            var piece = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            var piece = GameObject.CreatePrimitive(type);
             Destroy(piece.GetComponent<Collider>());
             piece.transform.SetParent(parent, false);
             piece.transform.localPosition = Vector3.up * height;
@@ -138,18 +217,27 @@ namespace MoonThemedGame.Repair
 
         void Paint(Color color)
         {
-            foreach (var r in renderers) if (r) r.material.color = color;
+            for (int i = 0; i < renderers.Length; i++)
+                if (renderers[i] && !(Kind == Fastener.Screw && i == 2)) renderers[i].material.color = color;
         }
+
+        void OnEnable() => all.Add(this);
+        void OnDisable() => all.Remove(this);
 
         public void Turn(int direction)
         {
-            if (Tight && direction > 0) return;
+            if (!Seated || (Tight && direction > 0)) return;
             turns = Mathf.Clamp(turns + direction, 0, Turns);
             float t = turns / (float)Turns;
             transform.localPosition = Vector3.Lerp(outLocal, inLocal, t);
             transform.Rotate(Vector3.up, 60 * direction, Space.Self);
-            Paint(Color.Lerp(LooseColor, TightColor, t * t));
+            var loose = Kind == Fastener.Bolt ? RustyBolt : BrassScrew;
+            for (int i = 0; i < renderers.Length; i++)
+                if (renderers[i] && !(Kind == Fastener.Screw && i == 2)) renderers[i].material.color = Color.Lerp(loose, Steel, t * t);
             if (Tight && robot) robot.BoltTightened(part);
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetState() => all.Clear();
     }
 }

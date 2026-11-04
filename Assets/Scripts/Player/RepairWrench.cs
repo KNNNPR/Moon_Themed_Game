@@ -2,51 +2,49 @@ using UnityEngine;
 
 namespace MoonThemedGame.Repair
 {
-    // Aim at a bolt and scroll up to screw it in, down to back it out; a click also gives one turn.
+    // Wrench for bolts or screwdriver for screws: aim at one and scroll up to drive it in,
+    // down to back it out; a click also gives one turn.
     public sealed class RepairWrench : RepairCarryable
     {
-        static float Reach => 2.2f * PlayerBody.Scale;
+        public Fastener drives = Fastener.Bolt;
+        public string displayName = "WRENCH";
         RepairBolt target;
         float swing;
 
+        static float Reach => 2.2f * PlayerBody.Scale;
         protected override bool AlignInHand => true;
         protected override Vector3 HoldOffset => new Vector3(0.26f, -0.24f, 0.5f);
-        public override string Prompt => "E — Take wrench";
+        public override string Prompt => Loc.F("E — Take {0}", Loc.T(displayName));
 
         protected override void Carry()
         {
-            target = FindBolt();
+            target = RepairBolt.Aimed(new Ray(hand.transform.position, hand.transform.forward), Reach);
             int direction = 0;
             float scroll = Scroll();
             if (scroll > 0.01f || MouseClicked()) direction = 1;
             else if (scroll < -0.01f) direction = -1;
-            if (target && direction != 0 && !(direction > 0 && target.Tight))
+            if (target && target.Kind == drives && target.Seated && direction != 0 && !(direction > 0 && target.Tight))
             {
                 target.Turn(direction);
                 swing = 1;
             }
             swing = Mathf.MoveTowards(swing, 0, Time.deltaTime * 5);
-            transform.rotation *= Quaternion.Euler(0, 0, -40 * Mathf.Sin(swing * Mathf.PI));
+            var length = LongAxis();
+            var axis = drives == Fastener.Screw ? length : length == Vector3.forward ? Vector3.up : Vector3.forward;
+            transform.rotation *= Quaternion.AngleAxis(-40 * Mathf.Sin(swing * Mathf.PI), axis);
         }
 
-        RepairBolt FindBolt()
+        protected override string CarryHint
         {
-            var ray = new Ray(hand.transform.position, hand.transform.forward);
-            RepairBolt bolt = null;
-            float nearest = Reach;
-            foreach (var hit in Physics.RaycastAll(ray, Reach, ~0, QueryTriggerInteraction.Collide))
+            get
             {
-                var candidate = hit.collider.GetComponent<RepairBolt>();
-                if (!candidate && hit.collider.isTrigger) continue;
-                if (hit.distance >= nearest) continue;
-                nearest = hit.distance;
-                bolt = candidate;
+                string what = Loc.T(drives == Fastener.Bolt ? "bolt" : "screw");
+                if (!target) return Loc.F("Aim at a {0} on a fitted part", what);
+                if (target.Kind != drives) return Loc.T(target.Kind == Fastener.Bolt ? "That's a bolt — take the wrench" : "That's a screw — take the screwdriver");
+                if (!target.Seated) return Loc.T("The part sticks out — knock it in with the hammer first");
+                if (target.Tight) return Loc.T(drives == Fastener.Bolt ? "Bolt tight" : "Screw tight");
+                return Loc.F("Scroll up — tighten {0}  {1}/{2}", what, target.TurnsDone, target.Turns);
             }
-            return bolt;
         }
-
-        protected override string CarryHint => !target ? Loc.T("Aim at a bolt on a fitted part")
-            : target.Tight ? Loc.T("Bolt tight")
-            : Loc.F("Scroll up — tighten bolt  {0}/{1}", target.TurnsDone, RepairBolt.Turns);
     }
 }

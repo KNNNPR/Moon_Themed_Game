@@ -19,6 +19,9 @@ namespace MoonThemedGame.Repair
         sealed class Slot { public GameObject visual; public int part; }
         readonly List<Slot> slots = new List<Slot>();
         readonly Dictionary<GameObject, List<RepairBolt>> loose = new Dictionary<GameObject, List<RepairBolt>>();
+        sealed class Proud { public Vector3 home, offset; public int hits; }
+        readonly Dictionary<GameObject, Proud> proud = new Dictionary<GameObject, Proud>();
+        public const int HammerHits = 3;
         RepairPartDefinition[] definitions;
         bool initialized;
         public bool IsBeingCollected { get; private set; }
@@ -27,7 +30,7 @@ namespace MoonThemedGame.Repair
             get
             {
                 int count = 0;
-                foreach (var slot in slots) if (!slot.visual || !slot.visual.activeSelf || loose.ContainsKey(slot.visual)) count++;
+                foreach (var slot in slots) if (!slot.visual || !slot.visual.activeSelf || loose.ContainsKey(slot.visual) || proud.ContainsKey(slot.visual)) count++;
                 return count;
             }
         }
@@ -54,7 +57,13 @@ namespace MoonThemedGame.Repair
                     if (counts[i] > 0)
                         text.Append('\n').Append(string.IsNullOrWhiteSpace(definitions[i].displayName)
                             ? definitions[i].prefab.name : definitions[i].displayName).Append(" ×").Append(counts[i]);
-                if (loose.Count > 0) text.Append('\n').Append(Loc.F("Bolts to tighten with the wrench: {0} parts", loose.Count));
+                if (proud.Count > 0) text.Append('\n').Append(Loc.F("Knock in with the hammer: {0} parts", proud.Count));
+                int bolts = 0, screws = 0;
+                foreach (var pair in loose)
+                    foreach (var fastener in pair.Value)
+                        if (fastener && !fastener.Tight) { if (fastener.Kind == Fastener.Bolt) bolts++; else screws++; }
+                if (bolts > 0) text.Append('\n').Append(Loc.F("Bolts to tighten with the wrench: {0}", bolts));
+                if (screws > 0) text.Append('\n').Append(Loc.F("Screws to drive with the screwdriver: {0}", screws));
                 return text.ToString();
             }
         }
@@ -152,12 +161,49 @@ namespace MoonThemedGame.Repair
             return count > 0 ? sum / count : visual.transform.position;
         }
 
-        // The part sits in its slot but only counts once all of its bolts are tight.
+        // The part sits in its slot but only counts once it is seated and all of its fasteners are tight.
+        // Tight-fitting parts first stick out and have to be knocked in with the hammer.
         public void AttachLoose(GameObject visual, Vector3 viewer)
         {
             if (!visual || visual.activeSelf) return;
             visual.SetActive(true);
-            loose[visual] = RepairBolt.Spawn(this, visual, viewer);
+            if (RepairBolt.NeedsHammer(visual))
+            {
+                var outward = RepairBolt.Outward(this, visual, out float size);
+                var parent = visual.transform.parent;
+                var offset = parent ? parent.InverseTransformVector(outward * size * 0.07f) : outward * size * 0.07f;
+                var seat = new Proud { home = visual.transform.localPosition, offset = offset, hits = HammerHits };
+                visual.transform.localPosition = seat.home + seat.offset;
+                proud[visual] = seat;
+            }
+            loose[visual] = RepairBolt.Spawn(this, visual, viewer, RepairBolt.KindFor(visual));
+        }
+
+        public bool Seated(GameObject visual) => !proud.ContainsKey(visual);
+        public int HitsLeft(GameObject visual) => proud.TryGetValue(visual, out var seat) ? seat.hits : 0;
+
+        // The sticking-out part the player is looking at.
+        public GameObject FindProud(Ray view, float maxDistance)
+        {
+            GameObject best = null;
+            float bestAngle = 16;
+            foreach (var visual in proud.Keys)
+            {
+                if (!visual) continue;
+                var offset = SlotCenter(visual) - view.origin;
+                if (offset.magnitude > maxDistance) continue;
+                float angle = Vector3.Angle(view.direction, offset);
+                if (angle < bestAngle) { bestAngle = angle; best = visual; }
+            }
+            return best;
+        }
+
+        public void Strike(GameObject visual)
+        {
+            if (!visual || !proud.TryGetValue(visual, out var seat)) return;
+            seat.hits--;
+            visual.transform.localPosition = seat.home + seat.offset * (seat.hits / (float)HammerHits);
+            if (seat.hits <= 0) proud.Remove(visual);
         }
 
         internal void BoltTightened(GameObject visual)
@@ -172,6 +218,8 @@ namespace MoonThemedGame.Repair
             foreach (var bolts in loose.Values)
                 foreach (var bolt in bolts) if (bolt) Destroy(bolt.gameObject);
             loose.Clear();
+            foreach (var pair in proud) if (pair.Key) pair.Key.transform.localPosition = pair.Value.home;
+            proud.Clear();
         }
         public override void Interact() { }
     }

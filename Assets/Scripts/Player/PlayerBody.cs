@@ -144,9 +144,9 @@ namespace MoonThemedGame.Repair
 
             slots = new[]
             {
-                MakeSlot("WRENCH", catalog ? catalog.wrench : null, -48, waist, true),
-                MakeSlot("SCREWDRIVER", catalog ? catalog.screwdriver : null, 0, waist, false),
-                MakeSlot("HAMMER", catalog ? catalog.hammer : null, 48, waist, false)
+                MakeSlot("WRENCH", catalog ? catalog.wrench : null, -48, waist, Fastener.Bolt),
+                MakeSlot("SCREWDRIVER", catalog ? catalog.screwdriver : null, 0, waist, Fastener.Screw),
+                MakeSlot("HAMMER", catalog ? catalog.hammer : null, 48, waist, null)
             };
         }
 
@@ -200,7 +200,7 @@ namespace MoonThemedGame.Repair
             return material;
         }
 
-        Slot MakeSlot(string name, GameObject prefab, float angle, float waist, bool wrench)
+        Slot MakeSlot(string name, GameObject prefab, float angle, float waist, Fastener? drives)
         {
             var direction = Quaternion.Euler(0, angle, 0) * Vector3.forward;
             var anchor = Joint(name + " holster", root, new Vector3(0, waist - 0.03f, -0.08f) + new Vector3(direction.x * 0.2f, 0, direction.z * 0.155f));
@@ -220,8 +220,15 @@ namespace MoonThemedGame.Repair
                 float largest = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
                 if (largest > 1e-4f) instance.transform.localScale *= ToolLength * Scale / largest;
             }
-            RepairCarryable tool = wrench ? instance.AddComponent<RepairWrench>() : instance.AddComponent<RepairTool>();
-            if (tool is RepairTool generic) generic.displayName = name;
+            RepairCarryable tool;
+            if (drives.HasValue)
+            {
+                var driver = instance.AddComponent<RepairWrench>();
+                driver.drives = drives.Value;
+                driver.displayName = name;
+                tool = driver;
+            }
+            else tool = instance.AddComponent<RepairTool>();
             slot.tool = tool;
             slot.hang = Quaternion.FromToRotation(tool.LongAxis(), Vector3.down);
             slot.offset = new Vector3(0, -0.1f, 0.04f);
