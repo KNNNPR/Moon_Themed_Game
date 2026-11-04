@@ -108,9 +108,9 @@ namespace MoonThemedGame.Scavenger
             else { style.normal.textColor = color; GUI.Label(rect, value, style); }
         }
 
-        Vector2 Pointer => hud ? hud.ToSource(Event.current.mousePosition) : Event.current.mousePosition;
+        static Vector2 Pointer => Event.current.mousePosition;
 
-        // Drawn by ScavengerFeedHud inside the feed, so it goes through the same CRT.
+        // Drawn by ScavengerFeedHud right after the feed text, so it always sits on top of it.
         internal void Gui()
         {
             if (!IsOpen || !Network) return;

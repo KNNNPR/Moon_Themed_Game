@@ -68,10 +68,8 @@ namespace MoonThemedGame.Scavenger
         Transform arm;
         Quaternion armRest;
         float armSwing;
-        Camera backdrop;
 
         public RobotLever NearLever { get; private set; }
-        public bool FeedOnCrt => robotCamera && robotCamera.targetTexture;
         Collider[] robotColliders;
         Vector3 antenna;
         float cameraSize, cameraYaw;
@@ -199,7 +197,6 @@ namespace MoonThemedGame.Scavenger
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
             if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
-            backdrop = CreateBackdrop();
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -250,20 +247,6 @@ namespace MoonThemedGame.Scavenger
             var right = Vector3.Cross(Vector3.up, forward);
             var position = ground + right * (Drive.Length * 1.8f) + forward * (Drive.Length * 1.2f);
             RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
-        }
-
-        // With the feed on the CRT nothing renders to the screen itself; this keeps it cleared.
-        Camera CreateBackdrop()
-        {
-            var host = new GameObject($"{RobotName} / CRT Backdrop");
-            SceneManager.MoveGameObjectToScene(host, robot.gameObject.scene);
-            var camera = host.AddComponent<Camera>();
-            camera.cullingMask = 0;
-            camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = Color.black;
-            camera.depth = -100;
-            camera.enabled = false;
-            return camera;
         }
 
         void PullLever()
@@ -561,9 +544,6 @@ namespace MoonThemedGame.Scavenger
                 if (picture) loss = Mathf.Max(loss, Mathf.Sin(Mathf.Clamp01(u / 0.4f) * Mathf.PI) * (Mathf.Repeat(Time.time * 9, 1) < 0.5f ? 0.9f : 0.4f));
                 collapse = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.4f, 1, u));
             }
-            var crtTarget = Connected ? hud.PrepareCrt() : null;
-            robotCamera.targetTexture = crtTarget;
-            if (backdrop) backdrop.enabled = crtTarget;
             robotCamera.cullingMask = picture ? sceneMask : 1 << OverlayLayer;
             robotCamera.clearFlags = picture ? sceneClear : CameraClearFlags.SolidColor;
             if (!interferenceMaterial) return;
@@ -608,10 +588,8 @@ namespace MoonThemedGame.Scavenger
         public void Disconnect()
         {
             if (!Connected) return;
-            if (backdrop) backdrop.enabled = false;
             if (robotCamera)
             {
-                robotCamera.targetTexture = null;
                 robotCamera.enabled = false;
                 robotCamera.GetComponent<AudioListener>().enabled = false;
             }

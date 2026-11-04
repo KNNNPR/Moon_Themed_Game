@@ -12,16 +12,6 @@ namespace MoonThemedGame.Scavenger
         public Color phosphor = new Color(0.78f, 0.96f, 0.8f);
         public Color warning = new Color(1f, 0.3f, 0.22f);
         public Font font;
-
-        [Header("CRT")]
-        public bool crt = true;
-        [Range(0, 0.4f)] public float crtCurvature = 0.12f;
-        [Range(0, 1)] public float crtScanlines = 0.35f;
-        [Range(0, 2)] public float crtGlow = 0.6f;
-        [Tooltip("Turn on if the camera picture shows upside down.")]
-        public bool crtFlipFeed;
-        [Tooltip("Turn on if the text shows upside down.")]
-        public bool crtFlipOverlay;
         [Range(0, 1)] public float wear = 0.12f;
         public string firmware = "PH-SCAV 0.9.3b";
 
@@ -185,74 +175,18 @@ namespace MoonThemedGame.Scavenger
             "DIAL SCAV_BOT  ch 0x3F2A", "SAT UPLINK", "HANDSHAKE", "AUTH OPERATOR", "VIDEO STREAM"
         };
 
-        RenderTexture feedTarget, overlayTarget;
-        Material crtMaterial;
         RfPatchPanel patch;
-        bool crtShown;
-
-        // The robot camera renders into feedTarget and the text into overlayTarget; both go through the CRT tube.
-        public RenderTexture PrepareCrt()
-        {
-            if (!crt) return null;
-            if (!crtMaterial)
-            {
-                var source = Resources.Load<Material>("ScavengerFeedCRT");
-                var shader = source ? source.shader : Shader.Find("Moon Game/Scavenger Feed CRT");
-                if (!shader || !shader.isSupported) return null;
-                crtMaterial = new Material(shader) { name = "Scavenger Feed CRT (runtime)", hideFlags = HideFlags.DontSave };
-            }
-            Target(ref feedTarget, 24, "Scavenger feed");
-            Target(ref overlayTarget, 0, "Scavenger feed text");
-            return feedTarget;
-        }
-
-        static void Target(ref RenderTexture target, int depth, string name)
-        {
-            int width = Mathf.Max(1, Screen.width), height = Mathf.Max(1, Screen.height);
-            if (target && target.width == width && target.height == height) return;
-            if (target) { target.Release(); Destroy(target); }
-            target = new RenderTexture(width, height, depth, RenderTextureFormat.ARGB32) { name = name, hideFlags = HideFlags.DontSave };
-            target.Create();
-        }
-
-        // Screen point -> point in the undistorted feed, matching the shader's barrel bend.
-        public Vector2 ToSource(Vector2 point)
-        {
-            if (!crtShown) return point;
-            var size = new Vector2(Screen.width, Screen.height);
-            var c = new Vector2(point.x / size.x, point.y / size.y) * 2 - Vector2.one;
-            c *= 1 + crtCurvature * Vector2.Dot(c, c);
-            return Vector2.Scale((c + Vector2.one) * 0.5f, size);
-        }
 
         void OnGUI()
         {
-            if (!link || !link.Connected) { crtShown = false; return; }
+            if (!link || !link.Connected) return;
             if (!patch) patch = GetComponent<RfPatchPanel>();
-            if (Event.current.type != EventType.Repaint)
+            if (Event.current.type == EventType.Repaint)
             {
-                if (patch) patch.Gui();
-                return;
+                EnsureStyles();
+                DrawContent();
             }
-            EnsureStyles();
-            crtShown = crt && crtMaterial && feedTarget && overlayTarget && link.FeedOnCrt;
-            var previous = RenderTexture.active;
-            if (crtShown)
-            {
-                RenderTexture.active = overlayTarget;
-                GL.Clear(false, true, Color.clear);
-            }
-            DrawContent();
             if (patch) patch.Gui();
-            if (!crtShown) return;
-            RenderTexture.active = previous;
-            crtMaterial.SetTexture("_Overlay", overlayTarget);
-            crtMaterial.SetFloat("_Curvature", crtCurvature);
-            crtMaterial.SetFloat("_Scanlines", crtScanlines);
-            crtMaterial.SetFloat("_Glow", crtGlow);
-            crtMaterial.SetFloat("_FlipY", crtFlipFeed ? 1 : 0);
-            crtMaterial.SetFloat("_FlipOverlay", crtFlipOverlay ? 1 : 0);
-            Graphics.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), feedTarget, crtMaterial);
         }
 
         void DrawContent()
@@ -269,13 +203,6 @@ namespace MoonThemedGame.Scavenger
                     return;
             }
             DrawLive(unit, line);
-        }
-
-        void OnDestroy()
-        {
-            if (feedTarget) { feedTarget.Release(); Destroy(feedTarget); }
-            if (overlayTarget) { overlayTarget.Release(); Destroy(overlayTarget); }
-            if (crtMaterial) Destroy(crtMaterial);
         }
 
         void DrawHandshake(float line)
