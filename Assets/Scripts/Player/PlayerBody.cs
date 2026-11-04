@@ -8,8 +8,8 @@ using static MoonThemedGame.Repair.SuitMesh;
 namespace MoonThemedGame.Repair
 {
     // A faceted, cel-shaded suit under the first-person camera with a tool belt. The arms reach for
-    // whatever is carried. Holding the mouse wheel freezes the view and tilts it down to the belt;
-    // moving the mouse picks a tool, releasing the wheel takes it or puts it back.
+    // whatever is carried. Holding the mouse wheel freezes the view and the hands fan the belt tools
+    // out in front; moving the mouse picks one, releasing the wheel takes it or puts it back.
     [DisallowMultipleComponent, RequireComponent(typeof(FirstPersonController))]
     public sealed class PlayerBody : MonoBehaviour
     {
@@ -18,8 +18,9 @@ namespace MoonThemedGame.Repair
             public Transform anchor;
             public RepairCarryable tool;
             public string name;
-            public Quaternion hang;
-            public Vector3 offset;
+            public Quaternion hang, restRotation;
+            public Vector3 offset, restPosition;
+            public float show;
             public bool Stowed => tool && tool.Holder == anchor;
         }
 
@@ -35,7 +36,6 @@ namespace MoonThemedGame.Repair
         const float ToolLength = 0.3f;
         const float UpperArm = 0.31f, Forearm = 0.35f;
         const float SelectStep = 140;
-        const float LookDuration = 0.18f;
         static readonly Color Suit = new Color(0.86f, 0.84f, 0.78f);
         static readonly Color Dark = new Color(0.22f, 0.21f, 0.2f);
         static readonly Color Strap = new Color(0.36f, 0.27f, 0.17f);
@@ -53,8 +53,8 @@ namespace MoonThemedGame.Repair
         Material baseMaterial;
         bool open;
         int selected = 1, startIndex = 1;
-        float selectX, blend, stride, walk, messageUntil;
-        Vector3 lastPosition, beltCenter;
+        float selectX, stride, walk, messageUntil;
+        Vector3 lastPosition;
         string message;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -140,7 +140,6 @@ namespace MoonThemedGame.Repair
 
             left = MakeArm(-1);
             right = MakeArm(1);
-            beltCenter = new Vector3(0, waist - 0.1f, 0.12f);
 
             slots = new[]
             {
@@ -236,13 +235,20 @@ namespace MoonThemedGame.Repair
             return slot;
         }
 
-        static void Stow(Slot slot) => slot.tool.Holster(slot.anchor, slot.offset, slot.hang);
+        static void Stow(Slot slot)
+        {
+            slot.tool.Holster(slot.anchor, slot.offset, slot.hang);
+            slot.restPosition = slot.tool.transform.localPosition;
+            slot.restRotation = slot.tool.transform.localRotation;
+        }
 
         bool CanOpen()
         {
             if (!view || !view.isActiveAndEnabled || GameSettingsMenu.BlockGameplayInput || Cursor.lockState != CursorLockMode.Locked) return false;
             return controller && controller.enabled;
         }
+
+        bool Available(Slot slot) => slot.tool && (slot.Stowed || slot.tool == RepairCarryable.Current);
 
         void Update()
         {
@@ -256,38 +262,85 @@ namespace MoonThemedGame.Repair
                 else
                 {
                     selectX += mouse.delta.ReadValue().x;
-                    int index = Mathf.Clamp(startIndex + Mathf.RoundToInt(selectX / SelectStep), 0, slots.Length - 1);
+                    int count = 0;
+                    foreach (var slot in slots) if (Available(slot)) count++;
+                    int position = Mathf.Clamp(startIndex + Mathf.RoundToInt(selectX / SelectStep), 0, Mathf.Max(0, count - 1));
+                    int index = SlotAt(position);
                     if (index != selected) { Highlight(selected, false); selected = index; Highlight(selected, true); }
                     if (!mouse.middleButton.isPressed) Close(true);
                 }
             }
             BeltOpen = open;
-            blend = Mathf.MoveTowards(blend, open ? 1 : 0, Time.deltaTime / LookDuration);
-            FirstPersonController.LookFrozen = open || blend > 0;
+            FirstPersonController.LookFrozen = open;
         }
 
-        void LateUpdate()
+        // Index into slots of the n-th tool that is on the belt or in hand.
+        int SlotAt(int position)
         {
-            if (!controller || !controller.CameraRoot || blend <= 0) return;
-            float t = blend * blend * (3 - 2 * blend);
-            controller.CameraRoot.localRotation = Quaternion.Euler(Mathf.Lerp(controller.Pitch, BeltPitch(), t), 0, 0);
+            for (int i = 0, n = 0; i < slots.Length; i++)
+                if (Available(slots[i]) && n++ == position) return i;
+            return -1;
         }
 
-        float BeltPitch()
+        int PositionOf(int index)
         {
-            var offset = root.TransformPoint(beltCenter) - controller.CameraRoot.position;
-            float ahead = Vector3.Dot(offset, Flat(transform.forward));
-            return Mathf.Clamp(Mathf.Atan2(-offset.y, Mathf.Max(0.01f, ahead)) * Mathf.Rad2Deg, 35, 84);
+            for (int i = 0, n = 0; i < slots.Length; i++)
+                if (Available(slots[i])) { if (i == index) return n; n++; }
+            return 0;
+        }
+
+        // Where a tool hangs in the fan held out in front of the camera.
+        void DisplayPose(int index, out Vector3 position, out Quaternion rotation)
+        {
+            int count = 0;
+            foreach (var slot in slots) if (Available(slot)) count++;
+            float spread = PositionOf(index) - (count - 1) * 0.5f;
+            bool chosen = index == selected;
+            float unit = Scale;
+            var camera = view.transform;
+            var local = new Vector3(spread * 0.17f, chosen ? -0.06f : -0.11f, chosen ? 0.46f : 0.53f);
+            local.y += Mathf.Sin(Time.time * 2.2f + index) * 0.004f;
+            position = camera.position + camera.rotation * (local * unit);
+            var tool = slots[index].tool;
+            var upright = Quaternion.FromToRotation(tool.LongAxis(), Vector3.up);
+            rotation = camera.rotation * Quaternion.Euler(-12, spread * -8, -spread * 14) * upright;
+            position -= rotation * Vector3.Scale(CenterOffset(tool), tool.transform.lossyScale);
+        }
+
+        static Vector3 CenterOffset(RepairCarryable tool)
+        {
+            var filter = tool.GetComponent<MeshFilter>();
+            return filter && filter.sharedMesh ? filter.sharedMesh.bounds.center : Vector3.zero;
+        }
+
+        // Tools glide between belt or hand and the fan; runs after every LateUpdate.
+        void PoseTools()
+        {
+            var carried = RepairCarryable.Current;
+            foreach (var slot in slots)
+            {
+                if (!slot.tool) continue;
+                bool shown = open && Available(slot);
+                slot.show = Mathf.MoveTowards(slot.show, shown ? 1 : 0, Time.deltaTime / 0.22f);
+                if (slot.Stowed) slot.tool.transform.SetLocalPositionAndRotation(slot.restPosition, slot.restRotation);
+                if (slot.show <= 0 || !(slot.Stowed || slot.tool == carried)) continue;
+                int index = System.Array.IndexOf(slots, slot);
+                DisplayPose(index, out var position, out var rotation);
+                float t = slot.show * slot.show * (3 - 2 * slot.show);
+                var from = slot.tool.transform;
+                from.SetPositionAndRotation(Vector3.Lerp(from.position, position, t), Quaternion.Slerp(from.rotation, rotation, t));
+            }
         }
 
         // Runs after every LateUpdate, so the hands land on the carried item where it is drawn.
         void PoseArms()
         {
             if (!root || left == null || !left.shoulder) return;
+            if (view) PoseTools();
             var carried = RepairCarryable.Current;
             Vector3? leftTarget = null, rightTarget = null;
-            if (open && selected >= 0 && selected < slots.Length)
-                rightTarget = slots[selected].anchor.TransformPoint(slots[selected].offset);
+            if (open && selected >= 0 && selected < slots.Length && slots[selected].tool)
+                rightTarget = Grip(slots[selected].tool, slots[selected].tool.RendererBounds());
             else if (carried && view)
             {
                 var bounds = carried.RendererBounds();
@@ -299,6 +352,12 @@ namespace MoonThemedGame.Repair
                     rightTarget = bounds.center + view.transform.right * reach + below;
                 }
                 else rightTarget = Grip(carried, bounds);
+            }
+            if (open && view)
+            {
+                // The off hand cradles the rest of the fan from below.
+                var camera = view.transform;
+                leftTarget = camera.position + camera.rotation * (new Vector3(-0.05f, -0.24f, 0.5f) * Scale);
             }
             Solve(left, leftTarget);
             Solve(right, rightTarget);
@@ -344,12 +403,18 @@ namespace MoonThemedGame.Repair
 
         void Open()
         {
+            var carried = RepairCarryable.Current;
+            bool beltTool = false;
+            foreach (var slot in slots) if (carried && slot.tool == carried) beltTool = true;
+            if ((carried && !beltTool) || HeldProp.Holding) { Message(Loc.T("Hands full")); return; }
+            if (SlotAt(0) < 0) return;
             open = true;
             selectX = 0;
-            startIndex = 1;
-            var carried = RepairCarryable.Current;
-            for (int i = 0; i < slots.Length; i++) if (carried && slots[i].tool == carried) startIndex = i;
-            selected = startIndex;
+            int middle = 0;
+            foreach (var slot in slots) if (Available(slot)) middle++;
+            startIndex = (middle - 1) / 2;
+            for (int i = 0; i < slots.Length; i++) if (carried && slots[i].tool == carried) startIndex = PositionOf(i);
+            selected = SlotAt(startIndex);
             Highlight(selected, true);
         }
 
@@ -357,20 +422,20 @@ namespace MoonThemedGame.Repair
         {
             open = false;
             BeltOpen = false;
+            FirstPersonController.LookFrozen = false;
             Highlight(selected, false);
             if (!confirm || selected < 0 || selected >= slots.Length) return;
             var slot = slots[selected];
             var carried = RepairCarryable.Current;
             Slot carriedSlot = null;
             foreach (var s in slots) if (carried && s.tool == carried) carriedSlot = s;
-            if ((carried && carriedSlot == null) || HeldProp.Holding) { Message(Loc.T("Hands full")); return; }
             if (carriedSlot != null) Stow(carriedSlot);
             if (slot.Stowed && slot != carriedSlot) slot.tool.Unholster();
         }
 
         void Highlight(int index, bool on)
         {
-            if (index >= 0 && index < slots.Length && slots[index].tool && slots[index].Stowed) slots[index].tool.SetHighlighted(on);
+            if (index >= 0 && index < slots.Length && slots[index].tool) slots[index].tool.SetHighlighted(on);
         }
 
         void Message(string text)
@@ -394,36 +459,11 @@ namespace MoonThemedGame.Repair
 
         void OnGUI()
         {
-            if (GameSettingsMenu.IsOpen) return;
+            if (GameSettingsMenu.IsOpen || open) return;
             if (message != null && Time.time < messageUntil)
                 RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 60, message);
-            if (!open)
-            {
-                if (CanOpen() && RepairCarryable.Current && !(RepairCarryable.Current is RepairPartProp))
-                    RepairHud.Text(new Rect(18, Screen.height - 44, 420, 28), Loc.T("Hold mouse wheel — tool belt"), RepairHud.Style(14, TextAnchor.MiddleLeft), RepairHud.Dim);
-                return;
-            }
-            const float cell = 170, height = 64, gap = 10;
-            float total = cell * slots.Length + gap * (slots.Length - 1);
-            float left = Screen.width / 2f - total / 2, top = Screen.height * 0.68f;
-            RepairHud.Panel(new Rect(left - 14, top - 38, total + 28, height + 92), RepairHud.Dim);
-            RepairHud.Text(new Rect(left, top - 34, total, 26), Loc.T("TOOL BELT"), RepairHud.Style(15), RepairHud.Amber);
-            var carried = RepairCarryable.Current;
-            for (int i = 0; i < slots.Length; i++)
-            {
-                var slot = slots[i];
-                var rect = new Rect(left + (cell + gap) * i, top, cell, height);
-                bool chosen = i == selected;
-                RepairHud.Panel(rect, chosen ? RepairHud.Amber : RepairHud.Dim);
-                if (chosen) RepairHud.Fill(new Rect(rect.x + 1, rect.y + 1, rect.width - 2, rect.height - 2), new Color(1, 0.69f, 0.22f, 0.12f));
-                string state = slot.Stowed ? Loc.T("ON BELT") : carried && slot.tool == carried ? Loc.T("IN HAND") : Loc.T("EMPTY");
-                RepairHud.Text(new Rect(rect.x, rect.y + 8, cell, 26), Loc.T(slot.name), RepairHud.Style(chosen ? 17 : 15), chosen ? RepairHud.Amber : RepairHud.Dim);
-                RepairHud.Text(new Rect(rect.x, rect.y + 34, cell, 22), state, RepairHud.Style(12), RepairHud.Dim);
-            }
-            var pick = slots.Length > 0 ? slots[selected] : null;
-            string action = pick == null ? "" : carried && pick.tool == carried ? Loc.T("Release wheel — put back on the belt")
-                : pick.Stowed ? Loc.T("Release wheel — take") : Loc.T("Release wheel — close");
-            RepairHud.Text(new Rect(left - 14, top + height + 10, total + 28, 24), Loc.T("Move the mouse to choose") + "   ·   " + action, RepairHud.Style(13), RepairHud.Amber);
+            if (CanOpen() && RepairCarryable.Current && !(RepairCarryable.Current is RepairPartProp))
+                RepairHud.Corner(Loc.T("Hold mouse wheel — tool belt"));
         }
 
         void OnEnable()
@@ -437,7 +477,6 @@ namespace MoonThemedGame.Repair
         {
             open = false;
             BeltOpen = false;
-            blend = 0;
             FirstPersonController.LookFrozen = false;
             Application.onBeforeRender -= PoseArms;
         }

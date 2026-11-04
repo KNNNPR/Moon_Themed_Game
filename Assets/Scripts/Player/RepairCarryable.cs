@@ -173,7 +173,7 @@ namespace MoonThemedGame.Repair
             var desired = hand.transform.position + hand.transform.rotation * new Vector3(offset.x, offset.y, offset.z + radius * 0.6f);
             transform.rotation = hand.transform.rotation * heldRotation;
             transform.position = desired - transform.TransformVector(localCenter);
-            Carry();
+            if (!PlayerBody.BeltOpen) Carry();
         }
 
         public void Drop(bool toss)
@@ -206,7 +206,7 @@ namespace MoonThemedGame.Repair
         {
             if (!IsCarried || GameSettingsMenu.IsOpen || PlayerBody.BeltOpen) return;
             RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 24, CarryHint);
-            RepairHud.Hint(Screen.width / 2f, Screen.height - 64, Loc.F("{0} — Drop", GameControls.Label(GameCommand.Throw)), 14);
+            RepairHud.Hint(Screen.width / 2f, Screen.height - 56, Loc.F("{0} — Drop", GameControls.Label(GameCommand.Throw)), 13);
         }
 
         protected override void OnDisable()
