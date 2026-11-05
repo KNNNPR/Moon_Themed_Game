@@ -9,6 +9,11 @@ Countersteer controls the slide and rear grip returns gradually after
 releasing the handbrake. Extra speed-dependent downforce is applied only while the
 bot is supported on its wheels.
 
+Stability: wheel contacts steeper than `maxGroundSteepness` (wall faces) are not ground, so the bot
+cannot drive up vertical surfaces; traction fades as the body tilts past `tractionTilt`. Drive and
+brake forces act near the centre of mass (`pitchFreeDrive`, grip `rollFreeGrip`) so hard braking
+does not tip the bot onto its nose, and suspension force is capped so a nose-dive cannot launch it.
+
 There is no automatic recovery. R (gamepad north/Y button) rights the bot only when
 it has overturned, slowed down near a real surface and has room to stand upright.
 The feed shows the recovery key only when the action is available. The action stops
