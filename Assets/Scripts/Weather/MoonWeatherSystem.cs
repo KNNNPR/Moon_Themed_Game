@@ -55,7 +55,8 @@ namespace MoonThemedGame.Weather
         public int ShelterCount => Mathf.Min(4, 1 + (additionalShelters?.Length ?? 0));
         public Bounds GetShelter(int index) => index == 0 ? Shelter : additionalShelters[index - 1];
         public float Density { get; private set; }
-        static readonly Color DustTint = new Color(0.045f, 0.052f, 0.06f);
+        // Keep dust above the retro post-process black threshold so it reads as haze.
+        static readonly Color DustTint = new Color(0.14f, 0.15f, 0.17f);
         static readonly Color RadiationTint = new Color(0.13f, 0.32f, 0.065f);
         public Color AtmosphereTint { get; private set; } = DustTint;
         public float OpacityLimit { get; private set; } = 0.96f;
@@ -66,10 +67,24 @@ namespace MoonThemedGame.Weather
         WeatherKind nextOne, nextTwo;
         System.Random random;
         bool firstTail = true;
-        float nextMeteor, emissionRemainder;
+        float nextMeteor, emissionRemainder, intensityLead;
+        ScavengerLink scavenger;
         ParticleSystem particles;
         readonly ParticleSystem.Particle[] liveParticles = new ParticleSystem.Particle[1200];
         readonly RaycastHit[] groundHits = new RaycastHit[64];
+
+        // Camera.main belongs to the operator and is disabled while driving the rover.
+        public Camera ViewCamera
+        {
+            get
+            {
+                if(!scavenger)scavenger=FindFirstObjectByType<ScavengerLink>();
+                if(scavenger && scavenger.Connected && scavenger.robotCamera && scavenger.robotCamera.isActiveAndEnabled)
+                    return scavenger.robotCamera;
+                var camera=Camera.main;
+                return camera && camera.isActiveAndEnabled ? camera : null;
+            }
+        }
 
         public static string Name(WeatherKind kind) => kind switch
         {
@@ -124,7 +139,7 @@ namespace MoonThemedGame.Weather
         {
             get
             {
-                float elapsed = CurrentDuration - Remaining;
+                float elapsed = CurrentDuration - Remaining + intensityLead;
                 float rise = atmosphereFadeIn > 0 ? Mathf.Clamp01(elapsed / atmosphereFadeIn) : 1;
                 float fall = atmosphereFadeOut > 0 ? Mathf.Clamp01(Remaining / atmosphereFadeOut) : 1;
                 return Mathf.SmoothStep(0, 1, rise) * Mathf.SmoothStep(0, 1, fall);
@@ -133,21 +148,25 @@ namespace MoonThemedGame.Weather
 
         public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? 1 + (toxicEnergyMultiplier - 1) * Intensity : 1;
 
-        public void SetWeather(WeatherKind kind, float duration = -1)
+        // Manual/context-menu selection is visible immediately; the forecast queue still fades naturally.
+        public void SetWeather(WeatherKind kind, float duration = -1, bool immediate = true)
         {
+            if(random==null)random=new System.Random(forecastSeed);
             Current = kind;
             CurrentDuration = Remaining = duration > 0 ? duration : Duration(kind);
             nextOne = (WeatherKind)(((int)kind + 1) % 4);
             nextTwo = (WeatherKind)(((int)kind + 2) % 4);
             firstTail = true;
+            intensityLead=immediate?atmosphereFadeIn:0;
             nextMeteor = MeteorInterval();
+            if(immediate)SnapAtmosphere();
             WeatherChanged?.Invoke(Current);
         }
 
         public void SnapAtmosphere()
         {
             Density = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
-            AtmosphereTint = Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
+            AtmosphereTint = Current == WeatherKind.Radiation ? RadiationTint : DustTint;
             OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
         }
 
@@ -161,6 +180,7 @@ namespace MoonThemedGame.Weather
                 firstTail = false;
                 CurrentDuration = Duration(Current);
                 Remaining += CurrentDuration;
+                intensityLead=0;
                 nextMeteor = MeteorInterval();
                 WeatherChanged?.Invoke(Current);
             }
@@ -200,6 +220,7 @@ namespace MoonThemedGame.Weather
             var host = new GameObject("Exterior moon dust / haze"); host.transform.SetParent(transform, false);
             particles = host.AddComponent<ParticleSystem>(); particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             var main = particles.main; main.loop = true; main.playOnAwake = false; main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.cullingMode=ParticleSystemCullingMode.AlwaysSimulate;
             main.maxParticles = 1200; main.startLifetime = 7; main.startSpeed = 0;
             var emission = particles.emission; emission.enabled = false;
             var shape = particles.shape; shape.enabled = false;
@@ -220,8 +241,9 @@ namespace MoonThemedGame.Weather
             bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation;
             if (!dust && !toxic) return;
             emissionRemainder += Time.deltaTime * (dust ? 45 : 12) * Intensity;
-            var camera = Camera.main;
+            var camera = ViewCamera;
             var center = camera && !IsSheltered(camera.transform.position) ? camera.transform.position : shelterCenter;
+            particles.transform.position=center;
             while (emissionRemainder >= 1)
             {
                 emissionRemainder--;
@@ -239,8 +261,10 @@ namespace MoonThemedGame.Weather
 
         public bool TryFindStrike(out Vector3 point, out Vector3 normal)
         {
-            var state = FindAnyObjectByType<ScavengerRobotState>();
-            var center = state && !IsSheltered(state.transform.position) ? state.transform.position : shelterCenter;
+            var camera=ViewCamera;
+            var state=scavenger && scavenger.Connected ? scavenger.state : null;
+            var focus=state ? state.transform.position : camera ? camera.transform.position : shelterCenter;
+            var center = !IsSheltered(focus) ? focus : shelterCenter;
             for (int attempt = 0; attempt < 32; attempt++)
             {
                 var direction = UnityEngine.Random.insideUnitCircle.normalized;
@@ -248,7 +272,7 @@ namespace MoonThemedGame.Weather
                     ? UnityEngine.Random.Range(0, 2.5f) : UnityEngine.Random.Range(strikeDistance.x, strikeDistance.y);
                 var candidate = center + new Vector3(direction.x, 0, direction.y) * radius;
                 if (IsBaseFootprint(candidate, 3)) continue;
-                int count = Physics.RaycastNonAlloc(candidate + Vector3.up * 100, Vector3.down, groundHits, 200, groundLayers, QueryTriggerInteraction.Ignore);
+                int count = Physics.RaycastNonAlloc(candidate + Vector3.up * 200, Vector3.down, groundHits, 500, groundLayers, QueryTriggerInteraction.Ignore);
                 float nearest = float.MaxValue;
                 int selected = -1;
                 for (int i = 0; i < count; i++)
@@ -299,5 +323,15 @@ namespace MoonThemedGame.Weather
         [ContextMenu("Weather / Radiation")] void Toxic() => SetWeather(WeatherKind.Radiation);
         [ContextMenu("Weather / Meteorite Rain")] void Meteors() => SetWeather(WeatherKind.MeteoriteRain);
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState() => Active = null;
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        static void RestoreActive()
+        {
+            // Also runs when entering Play with domain/scene reload disabled.
+            if(!Active)
+            {
+                var weather=FindFirstObjectByType<MoonWeatherSystem>();
+                if(weather && weather.isActiveAndEnabled)Active=weather;
+            }
+        }
     }
 }

@@ -144,9 +144,30 @@ namespace MoonThemedGame.Repair
                 Destroy(replacement);
                 return null;
             }
-            if (spawned) { spawned.SetActive(false); Destroy(spawned); }
-            spawned = replacement;
-            return target;
+
+            // Land the remaining geometry on the chosen delivery surface.
+            var renderers = spawned.GetComponentsInChildren<MeshRenderer>();
+            if (renderers.Length == 0) { Destroy(spawned); return; }
+            Bounds bounds = renderers[0].bounds;
+            foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+            // Surviving geometry must never finish below the landing surface.
+            Vector3 restPosition = spawned.transform.position;
+            restPosition.x += anchor.position.x - bounds.center.x;
+            restPosition.y += anchor.position.y - bounds.min.y + 0.02f;
+            restPosition.z += anchor.position.z - bounds.center.z;
+            spawned.transform.position = restPosition + Vector3.up * dropHeight;
+            // Initialize only AFTER damage, scaling and positioning: missing wheels
+            // must not contribute springs, and wheel radii must be in world metres.
+            var drive = spawned.AddComponent<ScavengerDrive>();
+            drive.controllable = false;
+            drive.mass = robotMass;
+            drive.gravity = gravity;
+            drive.travel = suspensionTravel;
+            drive.dampingRatio = suspensionDamping;
+            drive.Setup(Vector3.forward);
+            drive.PlaceAt(spawned.transform.position, spawned.transform.rotation);
+            var stabilizer = spawned.AddComponent<RepairLandingStabilizer>();
+            stabilizer.Initialize(drive, restPosition.y, bounds.size.y * 0.35f);
         }
 
         void OnDrawGizmosSelected()

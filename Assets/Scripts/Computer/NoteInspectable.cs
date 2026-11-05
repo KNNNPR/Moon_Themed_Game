@@ -26,7 +26,6 @@ namespace MoonThemedGame.Computer
         CursorLockMode previousLock;
         bool previousVisible, viewing;
         int closedFrame = -1;
-        GUIStyle hintStyle;
 
         public override string Prompt => "E — Read note";
         public bool Viewing => viewing;
@@ -155,11 +154,7 @@ namespace MoonThemedGame.Computer
         void OnGUI()
         {
             if (!viewing || direction <= 0 || transition < 1) return;
-            if (hintStyle == null)
-                hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15 };
-            GUI.color = new Color(1, 1, 1, 0.8f);
-            GUI.Label(new Rect(0, Screen.height - 48, Screen.width, 30), Loc.F("{0} / ESC — Put down", GameControls.Label(GameCommand.Interact)), hintStyle);
-            GUI.color = Color.white;
+            InteractionHud.Footer(Loc.F("[{0} / ESC] Put down",GameControls.Label(GameCommand.Interact)));
         }
 
         protected override void OnDisable()

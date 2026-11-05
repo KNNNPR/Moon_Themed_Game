@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -34,8 +35,16 @@ namespace MoonThemedGame.Interactions
         public static string Label(GameCommand command)
         {
             var key=Binding(command);
-            string value=Keyboard.current != null ? Keyboard.current[key].displayName : key.ToString();
-            return string.IsNullOrEmpty(value) ? key.ToString().ToUpperInvariant() : value.ToUpperInvariant();
+            // Bindings address physical keys; a Russian OS layout must not turn E/G into У/П.
+            string value=key.ToString();
+            if(value.StartsWith("Digit",StringComparison.Ordinal))return value.Substring(5);
+            if(value.StartsWith("Numpad",StringComparison.Ordinal))return "NUM "+value.Substring(6).ToUpperInvariant();
+            return key switch
+            {
+                Key.Escape=>"ESC",Key.LeftArrow=>"LEFT",Key.RightArrow=>"RIGHT",Key.UpArrow=>"UP",Key.DownArrow=>"DOWN",
+                Key.LeftShift=>"L SHIFT",Key.RightShift=>"R SHIFT",Key.LeftCtrl=>"L CTRL",Key.RightCtrl=>"R CTRL",
+                _=>value.ToUpperInvariant()
+            };
         }
         public static bool Pressed(GameCommand command) => Keyboard.current != null && Keyboard.current[Binding(command)].wasPressedThisFrame;
         public static bool Held(GameCommand command) => Keyboard.current != null && Keyboard.current[Binding(command)].isPressed;
@@ -55,11 +64,24 @@ namespace MoonThemedGame.Interactions
             foreach(GameCommand command in Enum.GetValues(typeof(GameCommand))) PlayerPrefs.DeleteKey("controls."+command);
             PlayerPrefs.Save(); Changed?.Invoke();
         }
-        public static string FormatPrompt(string prompt) => prompt.Replace("E —",Label(GameCommand.Interact)+" —").Replace("G —",Label(GameCommand.Throw)+" —")
+        // Existing localization keys remain valid; displayed hints use bracketed controls.
+        public static string FormatHint(string prompt)
+        {
+            if(string.IsNullOrEmpty(prompt))return prompt;
+            prompt=Regex.Replace(prompt,@"(?<![\w\[])(E|G|LMB|RMB|MMB|ЛКМ|ПКМ|СКМ|Scroll up|Колесо вверх|Hold mouse wheel|Зажать колёсико)\s*[—–]\s*",match=>
+            {
+                string key=match.Groups[1].Value;
+                key=key=="E"?Label(GameCommand.Interact):key=="G"?Label(GameCommand.Throw):
+                    key=="Hold mouse wheel"?"MMB HOLD":key=="Зажать колёсико"?"УДЕРЖ. СКМ":key.ToUpperInvariant();
+                return "["+key+"] ";
+            });
+            return prompt.Replace(" — ",", ").Replace(" – ",", ").Replace("—"," ").Replace("–"," ");
+        }
+        public static string FormatPrompt(string prompt) => FormatHint(prompt
             .Replace("[E]","["+Label(GameCommand.Interact)+"]").Replace("[H]","["+Label(GameCommand.RobotPanel)+"]")
             .Replace("WASD - DRIVE",Label(GameCommand.Forward)+"/"+Label(GameCommand.Left)+"/"+Label(GameCommand.Backward)+"/"+Label(GameCommand.Right)+" - DRIVE")
             .Replace("1/2/3 - SATELLITE",Label(GameCommand.SatelliteOne)+"/"+Label(GameCommand.SatelliteTwo)+"/"+Label(GameCommand.SatelliteThree)+" - SATELLITE")
-            .Replace(" H - TUNER"," ["+Label(GameCommand.RobotPanel)+"] - TUNER");
+            .Replace(" H - TUNER"," ["+Label(GameCommand.RobotPanel)+"] - TUNER"));
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetSession() { keys=null; Changed=null; }
     }
 }

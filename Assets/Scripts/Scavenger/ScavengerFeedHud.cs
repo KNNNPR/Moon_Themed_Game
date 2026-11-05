@@ -347,7 +347,7 @@ namespace MoonThemedGame.Scavenger
             {
                 bool full = salvage.Full;
                 string prompt = full ? Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION") : Loc.F("[E] PICK UP {0}", SalvageField.PartName(salvage.Near.prefab));
-                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, full ? warning : phosphor, 42, Centered(text));
+                InteractionHud.Prompt(Screen.width/2f,Screen.height*0.7f,GameControls.FormatPrompt(prompt),16);
             }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
