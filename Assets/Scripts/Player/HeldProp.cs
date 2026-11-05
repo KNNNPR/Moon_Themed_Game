@@ -20,9 +20,10 @@ namespace MoonThemedGame.Interactions
         bool radioOn;
         Coroutine collisionRestore;
         public override string Prompt => radioTrack
-            ? "E — Take radio\n"+GameControls.Label(GameCommand.RadioPrevious)+" / "+GameControls.Label(GameCommand.RadioNext)+" — radio11   "+GameControls.Label(GameCommand.RadioPlay)+" — Play   "+GameControls.Label(GameCommand.RadioOff)+" — Off"
+            ? Loc.F("E — Take radio\n{0} / {1} — radio11   {2} — Play   {3} — Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
             : "E — Take apple";
         public bool IsHeld => hand;
+        public static bool Holding => held;
         void Awake()
         {
             body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -55,7 +56,7 @@ namespace MoonThemedGame.Interactions
                 audioSource.volume = 0.65f;
             }
         }
-        public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !held;
+        public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !held && !MoonThemedGame.Repair.RepairCarryable.Current;
         void Start() => body.Sleep();
         public override void Interact()
         {
@@ -126,7 +127,7 @@ namespace MoonThemedGame.Interactions
         protected override void OnDisable() { Drop(false); base.OnDisable(); }
         void OnGUI()
         {
-            if (hand && !GameSettingsMenu.IsOpen) GUI.Label(new Rect(Screen.width/2f-230,Screen.height-70,460,50), GameControls.Label(GameCommand.Throw)+" — Throw" + (radioTrack ? "    "+GameControls.Label(GameCommand.RadioPlay)+" Play / "+GameControls.Label(GameCommand.RadioOff)+" Off" : ""));
+            if (hand && !GameSettingsMenu.IsOpen) GUI.Label(new Rect(Screen.width/2f-230,Screen.height-70,460,50), Loc.F("{0} — Throw", GameControls.Label(GameCommand.Throw)) + (radioTrack ? Loc.F("    {0} Play / {1} Off", GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff)) : ""));
         }
     }
 }

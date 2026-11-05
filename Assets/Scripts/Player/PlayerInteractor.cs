@@ -107,7 +107,7 @@ namespace MoonThemedGame.Interactions
                 if (promptStyle == null)
                     promptStyle = new GUIStyle(GUI.skin.label)
                         { alignment = TextAnchor.MiddleCenter, fontSize = 16, wordWrap = true };
-                string prompt = GameControls.FormatPrompt(target.Prompt);
+                string prompt = GameControls.FormatPrompt(Loc.T(target.Prompt));
                 float width = Mathf.Max(1f, Mathf.Min(380f, Screen.width - 32f));
                 float height = promptStyle.CalcHeight(new GUIContent(prompt), width);
                 GUI.Label(new Rect((Screen.width - width) / 2f, Screen.height / 2f + 18f,

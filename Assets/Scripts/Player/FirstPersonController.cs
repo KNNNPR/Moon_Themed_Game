@@ -24,6 +24,11 @@ public class FirstPersonController : MonoBehaviour
     private float verticalVelocity;
     private float pitch;
 
+    // Set while the tool belt is open: the mouse picks a tool instead of turning the head.
+    public static bool LookFrozen;
+    public Transform CameraRoot => cameraRoot;
+    public float Pitch => pitch;
+
     private void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -78,6 +83,7 @@ public class FirstPersonController : MonoBehaviour
 
     private void UpdateLook()
     {
+        if (LookFrozen) return;
         Vector2 look = lookAction.action.ReadValue<Vector2>();
 
         transform.Rotate(Vector3.up, look.x * mouseSensitivity);

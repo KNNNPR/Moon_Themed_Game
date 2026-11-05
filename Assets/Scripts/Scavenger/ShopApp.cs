@@ -24,7 +24,7 @@ namespace MoonThemedGame.Scavenger
         {
             public Upgrade upgrade;
             public VisualElement root, preview, buy;
-            public Label level, value, next, buyLabel;
+            public Label title, description, level, value, next, buyLabel;
             public Wireframe wireframe;
             public float yaw;
         }
@@ -36,7 +36,7 @@ namespace MoonThemedGame.Scavenger
 
         PcMonitorTerminal terminal;
         VisualElement window, close;
-        Label balance, status;
+        Label heading, balance, status;
         readonly List<Card> cards = new List<Card>();
         ShopCatalog catalog;
         float statusUntil;
@@ -44,6 +44,10 @@ namespace MoonThemedGame.Scavenger
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
 
         void Awake() => terminal = GetComponent<PcMonitorTerminal>();
+
+        void OnEnable() => Loc.Changed += Refresh;
+
+        void OnDisable() => Loc.Changed -= Refresh;
 
         void Update()
         {
@@ -70,7 +74,7 @@ namespace MoonThemedGame.Scavenger
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
             }
-            balance.text = $"BALANCE {terminal.Credits} CR";
+            balance.text = Loc.F("BALANCE {0} CR", terminal.Credits);
             if (Time.time > statusUntil) status.text = "";
         }
 
@@ -99,10 +103,10 @@ namespace MoonThemedGame.Scavenger
         void Buy(Card card)
         {
             var upgrade = card.upgrade;
-            if (RobotUpgrades.IsMax(upgrade)) { Say($"{RobotUpgrades.Title(upgrade)} ALREADY AT MAX", Muted); return; }
+            if (RobotUpgrades.IsMax(upgrade)) { Say(Loc.F("{0} ALREADY AT MAX", RobotUpgrades.Title(upgrade)), Muted); return; }
             int price = RobotUpgrades.Price(upgrade);
-            if (!RobotUpgrades.TryBuy(upgrade, terminal)) { Say($"NOT ENOUGH CREDITS - NEED {price} CR", Alarm); return; }
-            Say($"INSTALLED: {RobotUpgrades.Title(upgrade)} MK{RobotUpgrades.Level(upgrade) + 1}  -{price} CR", Good);
+            if (!RobotUpgrades.TryBuy(upgrade, terminal)) { Say(Loc.F("NOT ENOUGH CREDITS - NEED {0} CR", price), Alarm); return; }
+            Say(Loc.F("INSTALLED: {0} MK{1}  -{2} CR", RobotUpgrades.Title(upgrade), RobotUpgrades.Level(upgrade) + 1, price), Good);
             Refresh();
         }
 
@@ -154,7 +158,7 @@ namespace MoonThemedGame.Scavenger
             title.style.flexDirection = FlexDirection.Row;
             title.style.alignItems = Align.Center;
             title.style.marginBottom = 6;
-            var heading = MakeLabel("PARTS DEPOT // ROBOT UPGRADES", 18, Text);
+            heading = MakeLabel("", 18, Text);
             heading.style.flexGrow = 1;
             title.Add(heading);
             balance = MakeLabel("", 15, Good);
@@ -208,8 +212,9 @@ namespace MoonThemedGame.Scavenger
             column.style.minWidth = 0;
             column.style.marginLeft = 10;
             column.style.overflow = Overflow.Hidden;
-            column.Add(Line(RobotUpgrades.Title(upgrade), 15, Text));
-            var description = MakeLabel(RobotUpgrades.Description(upgrade), 11, Muted);
+            card.title = Line(RobotUpgrades.Title(upgrade), 15, Text);
+            column.Add(card.title);
+            var description = card.description = MakeLabel(RobotUpgrades.Description(upgrade), 11, Muted);
             description.style.whiteSpace = WhiteSpace.Normal;
             description.style.height = 28;
             description.style.marginTop = 3;
@@ -246,23 +251,27 @@ namespace MoonThemedGame.Scavenger
 
         void Refresh()
         {
+            if (heading == null) return;
+            heading.text = Loc.T("PARTS DEPOT // ROBOT UPGRADES");
             foreach (var card in cards)
             {
                 var upgrade = card.upgrade;
                 int level = RobotUpgrades.Level(upgrade), max = RobotUpgrades.MaxLevel(upgrade);
                 bool full = RobotUpgrades.IsMax(upgrade);
-                card.level.text = "LVL " + new string('#', level) + new string('.', max - level) + $"  {level}/{max}";
-                card.value.text = "NOW   " + RobotUpgrades.Value(upgrade, level);
-                card.next.text = full ? "NEXT  --" : "NEXT  " + RobotUpgrades.Value(upgrade, level + 1);
+                card.title.text = RobotUpgrades.Title(upgrade);
+                card.description.text = RobotUpgrades.Description(upgrade);
+                card.level.text = Loc.F("LVL {0}  {1}/{2}", new string('#', level) + new string('.', max - level), level, max);
+                card.value.text = Loc.F("NOW   {0}", RobotUpgrades.Value(upgrade, level));
+                card.next.text = Loc.F("NEXT  {0}", full ? "--" : RobotUpgrades.Value(upgrade, level + 1));
                 if (full)
                 {
-                    card.buyLabel.text = "[INSTALLED]";
+                    card.buyLabel.text = Loc.T("[INSTALLED]");
                     card.buyLabel.style.color = Good;
                 }
                 else
                 {
                     int price = RobotUpgrades.Price(upgrade);
-                    card.buyLabel.text = $"[BUY  {price} CR]";
+                    card.buyLabel.text = Loc.F("[BUY  {0} CR]", price);
                     card.buyLabel.style.color = terminal.Credits >= price ? Text : Alarm;
                 }
             }
@@ -274,11 +283,13 @@ namespace MoonThemedGame.Scavenger
             var from = new List<Vector3>();
             var to = new List<Vector3>();
             var root = model.transform.worldToLocalMatrix;
-            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
+            var sources = new List<(Mesh mesh, Transform transform)>();
+            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true)) sources.Add((filter.sharedMesh, filter.transform));
+            foreach (var skinned in model.GetComponentsInChildren<SkinnedMeshRenderer>(true)) sources.Add((skinned.sharedMesh, skinned.transform));
+            foreach (var (mesh, transform) in sources)
             {
-                var mesh = filter.sharedMesh;
                 if (!mesh || !mesh.isReadable) continue;
-                var matrix = root * filter.transform.localToWorldMatrix;
+                var matrix = root * transform.localToWorldMatrix;
                 var vertices = mesh.vertices;
                 var triangles = mesh.triangles;
                 var bounds = mesh.bounds;

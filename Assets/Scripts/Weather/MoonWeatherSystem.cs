@@ -31,7 +31,9 @@ namespace MoonThemedGame.Weather
         [Min(0)] public float toxicDensity = 0.009f;
         [Range(0, 1)] public float toxicOpacity = 0.28f;
         [Min(0.1f)] public float atmosphereTransition = 3;
-        [Min(1)] public float toxicEnergyMultiplier = 2;
+        [Tooltip("Seconds every weather takes to build up after it starts and to die down before it ends.")]
+        [Min(0)] public float atmosphereFadeIn = 25, atmosphereFadeOut = 20;
+        [Min(1)] public float toxicEnergyMultiplier = 4;
         [Header("Meteorites")]
         [Min(5)] public float warningSeconds = 5;
         [Min(0.2f)] public float fallSeconds = 1.6f;
@@ -117,7 +119,19 @@ namespace MoonThemedGame.Weather
             }
             return false;
         }
-        public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? toxicEnergyMultiplier : 1;
+        // 0..1: how far the current weather has built up; it dies down towards the end of its period.
+        public float Intensity
+        {
+            get
+            {
+                float elapsed = CurrentDuration - Remaining;
+                float rise = atmosphereFadeIn > 0 ? Mathf.Clamp01(elapsed / atmosphereFadeIn) : 1;
+                float fall = atmosphereFadeOut > 0 ? Mathf.Clamp01(Remaining / atmosphereFadeOut) : 1;
+                return Mathf.SmoothStep(0, 1, rise) * Mathf.SmoothStep(0, 1, fall);
+            }
+        }
+
+        public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? 1 + (toxicEnergyMultiplier - 1) * Intensity : 1;
 
         public void SetWeather(WeatherKind kind, float duration = -1)
         {
@@ -126,14 +140,14 @@ namespace MoonThemedGame.Weather
             nextOne = (WeatherKind)(((int)kind + 1) % 4);
             nextTwo = (WeatherKind)(((int)kind + 2) % 4);
             firstTail = true;
-            nextMeteor = 0.8f;
+            nextMeteor = MeteorInterval();
             WeatherChanged?.Invoke(Current);
         }
 
         public void SnapAtmosphere()
         {
-            Density = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
-            AtmosphereTint = Current == WeatherKind.Radiation ? RadiationTint : DustTint;
+            Density = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
+            AtmosphereTint = Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
             OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
         }
 
@@ -147,10 +161,12 @@ namespace MoonThemedGame.Weather
                 firstTail = false;
                 CurrentDuration = Duration(Current);
                 Remaining += CurrentDuration;
-                nextMeteor = 0.8f;
+                nextMeteor = MeteorInterval();
                 WeatherChanged?.Invoke(Current);
             }
         }
+
+        float MeteorInterval() => UnityEngine.Random.Range(Mathf.Max(5.5f, meteorInterval.x), Mathf.Max(meteorInterval.x, meteorInterval.y));
 
         WeatherKind PickAfter(WeatherKind previous)
         {
@@ -160,7 +176,7 @@ namespace MoonThemedGame.Weather
         void Update()
         {
             AdvanceSchedule(Time.deltaTime);
-            float target = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
+            float target = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
             AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? RadiationTint : DustTint, blend);
@@ -168,10 +184,11 @@ namespace MoonThemedGame.Weather
             UpdateParticles();
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)
             {
-                nextMeteor -= Time.deltaTime;
+                // Sparse first strikes while the shower builds up, sparse again as it passes.
+                nextMeteor -= Time.deltaTime * Mathf.Max(0.15f, Intensity);
                 if (nextMeteor <= 0)
                 {
-                    nextMeteor = UnityEngine.Random.Range(Mathf.Max(5.5f, meteorInterval.x), Mathf.Max(meteorInterval.x, meteorInterval.y));
+                    nextMeteor = MeteorInterval();
                     if (PendingStrikes < 3 && TryFindStrike(out var point, out var normal)) ScheduleStrike(point, normal);
                 }
             }
@@ -202,7 +219,7 @@ namespace MoonThemedGame.Weather
             particles.SetParticles(liveParticles, count);
             bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation;
             if (!dust && !toxic) return;
-            emissionRemainder += Time.deltaTime * (dust ? 45 : 12);
+            emissionRemainder += Time.deltaTime * (dust ? 45 : 12) * Intensity;
             var camera = Camera.main;
             var center = camera && !IsSheltered(camera.transform.position) ? camera.transform.position : shelterCenter;
             while (emissionRemainder >= 1)
@@ -266,7 +283,7 @@ namespace MoonThemedGame.Weather
                 {
                     state.ApplyEnergyDamage(impactEnergyDamage * (1 - distance / strikeRadius));
                     var link = FindAnyObjectByType<ScavengerLink>();
-                    if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify("METEOR IMPACT - ENERGY LOST");
+                    if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify(Loc.T("METEOR IMPACT - ENERGY LOST"));
                 }
             }
             WeatherImpactFx.Spawn(this, point, normal);

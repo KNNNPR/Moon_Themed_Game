@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using MoonThemedGame.Interactions;
+using MoonThemedGame.Weather;
 using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
@@ -36,7 +38,7 @@ namespace MoonThemedGame.Scavenger
         int packets;
         string notice;
         float noticeUntil;
-        bool subscribed, weakSignal, leavingSoon, covered, charging;
+        bool subscribed, weakSignal, leavingSoon, covered, charging, irradiated, frontWarned;
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -69,8 +71,8 @@ namespace MoonThemedGame.Scavenger
             connectedAt = Time.time;
             packets = Random.Range(10000, 40000);
             log.Clear();
-            AddLog("LINK ESTABLISHED  ch 0x3F2A");
-            AddLog($"FW {firmware}");
+            AddLog(Loc.T("LINK ESTABLISHED  ch 0x3F2A"));
+            AddLog(Loc.F("FW {0}", firmware));
             OnUplinkChanged(link.Uplink);
             nextSample = nextLog = 0;
         }
@@ -82,25 +84,25 @@ namespace MoonThemedGame.Scavenger
             AddLog(message);
         }
 
-        string SatName => link.Network && link.Network.Active != null ? link.Network.Active.name : "NONE";
+        string SatName => link.Network && link.Network.Active != null ? link.Network.Active.name : Loc.T("NONE");
 
         void OnUplinkChanged(UplinkStatus status)
         {
             if (!link.Connected) return;
             AddLog(status switch
             {
-                UplinkStatus.Ok when link.ViaRelay => "UPLINK via BASE RELAY",
-                UplinkStatus.Ok => $"UPLINK via {SatName}  {Bars(link.Network.Active.Bars(link.Network.Clock))}",
-                UplinkStatus.OutOfRange => $"ERR {SatName} out of range - uplink lost",
-                UplinkStatus.Intercepted => $"ALERT {SatName} carrier hijacked by {link.Network.rivalName}",
-                UplinkStatus.Hopping => "RECEIVER RETUNE - carrier offline",
-                _ => "ERR no satellite selected"
+                UplinkStatus.Ok when link.ViaRelay => Loc.T("UPLINK via BASE RELAY"),
+                UplinkStatus.Ok => Loc.F("UPLINK via {0}  {1}", SatName, Bars(link.Network.Active.Bars(link.Network.Clock))),
+                UplinkStatus.OutOfRange => Loc.F("ERR {0} out of range - uplink lost", SatName),
+                UplinkStatus.Intercepted => Loc.F("ALERT {0} carrier hijacked by {1}", SatName, link.Network.rivalName),
+                UplinkStatus.Hopping => Loc.T("RECEIVER RETUNE - carrier offline"),
+                _ => Loc.T("ERR no satellite selected")
             });
         }
 
         void OnHandover(Satellite satellite)
         {
-            if (link.Connected) AddLog($"HANDOVER -> {satellite.name}");
+            if (link.Connected) AddLog(Loc.F("HANDOVER -> {0}", satellite.name));
         }
 
         void OnRival(RivalPhase phase)
@@ -109,20 +111,20 @@ namespace MoonThemedGame.Scavenger
             var network = link.Network;
             if (phase == RivalPhase.Incoming)
             {
-                AddLog($"WARN rival carrier {network.rivalName} jamming CH{network.CarrierChannel + 1}");
-                AddLog("WARN retune to a free channel [H]");
+                AddLog(Loc.F("WARN rival carrier {0} jamming CH{1}", network.rivalName, network.CarrierChannel + 1));
+                AddLog(Loc.T("WARN retune to a free channel [H]"));
             }
-            else if (phase == RivalPhase.None) AddLog($"CARRIER LOCKED CH{network.CarrierChannel + 1} - {network.rivalName} lost the signal");
+            else if (phase == RivalPhase.None) AddLog(Loc.F("CARRIER LOCKED CH{0} - {1} lost the signal", network.CarrierChannel + 1, network.rivalName));
         }
 
-        public static string Reason(UplinkStatus status) => status switch
+        public static string Reason(UplinkStatus status) => Loc.T(status switch
         {
             UplinkStatus.Intercepted => "SIGNAL HIJACKED BY RIVAL SATELLITE",
             UplinkStatus.Hopping => "RECEIVER RETUNING TO NEW CHANNEL",
             UplinkStatus.OutOfRange => "SATELLITE OUT OF RANGE",
             UplinkStatus.NoSatellite => "NO SATELLITE SELECTED",
             _ => ""
-        };
+        });
 
         void AddLog(string line)
         {
@@ -148,23 +150,35 @@ namespace MoonThemedGame.Scavenger
                 if (signal) packets += Random.Range(20, 30);
             }
             bool nowCharging = state && state.Charging;
-            if (nowCharging && !charging) AddLog("DOCKED AT CHARGE STATION - CHARGING");
-            else if (!nowCharging && charging) AddLog(state && state.Normalized >= 0.999f ? "CHARGE FULL" : "UNDOCKED FROM CHARGER");
+            if (nowCharging && !charging) AddLog(Loc.T("DOCKED AT CHARGE STATION - CHARGING"));
+            else if (!nowCharging && charging) AddLog(Loc.T(state && state.Normalized >= 0.999f ? "CHARGE FULL" : "UNDOCKED FROM CHARGER"));
             charging = nowCharging;
+            bool radiation = state && state.Irradiated;
+            if (radiation && !irradiated) AddLog(Loc.T("WARN RADIATION RISING - cell drain growing"));
+            else if (!radiation && irradiated) AddLog(Loc.T("RADIATION LEVEL NORMAL"));
+            irradiated = radiation;
+            var weather = MoonWeatherSystem.Active;
+            if (weather)
+            {
+                var next = weather.Forecast(0);
+                bool front = next.kind != WeatherKind.Sunny && next.kind != weather.Current && weather.Remaining < 20;
+                if (front && !frontWarned) AddLog(Loc.F("WARN WEATHER FRONT - {0} IN {1}s", Loc.T(MoonWeatherSystem.Name(next.kind)), Mathf.CeilToInt(weather.Remaining)));
+                frontWarned = front;
+            }
             bool cover = link.Cover > 0.3f;
-            if (cover && !covered) AddLog($"WARN overhead cover {Mathf.RoundToInt(link.Cover * 100)}% - signal degraded");
-            else if (!cover && covered) AddLog("SKY CLEAR - signal restored");
+            if (cover && !covered) AddLog(Loc.F("WARN overhead cover {0}% - signal degraded", Mathf.RoundToInt(link.Cover * 100)));
+            else if (!cover && covered) AddLog(Loc.T("SKY CLEAR - signal restored"));
             covered = cover;
             bool weak = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && !cover && link.UplinkQuality < 0.35f;
-            if (weak && !weakSignal) AddLog($"WARN {SatName} signal weak");
+            if (weak && !weakSignal) AddLog(Loc.F("WARN {0} signal weak", SatName));
             weakSignal = weak;
             bool leaving = link.Uplink == UplinkStatus.Ok && !link.ViaRelay && link.Network.ActiveLeavingSoon;
-            if (leaving && !leavingSoon) AddLog($"WARN {SatName} leaves range in {Mathf.CeilToInt(link.Network.Active.TimeLeft(link.Network.Clock))}s");
+            if (leaving && !leavingSoon) AddLog(Loc.F("WARN {0} leaves range in {1}s", SatName, Mathf.CeilToInt(link.Network.Active.TimeLeft(link.Network.Clock))));
             leavingSoon = leaving;
             if (Time.time >= nextLog)
             {
                 nextLog = Time.time + Random.Range(1.2f, 3f) * (k > 0.4f ? 0.5f : 1);
-                if (signal) AddLog(k > 0.2f && Random.value < k + 0.3f ? Pick(FailingLog) : Pick(RoutineLog));
+                if (signal) AddLog(Loc.T(k > 0.2f && Random.value < k + 0.3f ? Pick(FailingLog) : Pick(RoutineLog)));
             }
         }
 
@@ -175,10 +189,22 @@ namespace MoonThemedGame.Scavenger
             "DIAL SCAV_BOT  ch 0x3F2A", "SAT UPLINK", "HANDSHAKE", "AUTH OPERATOR", "VIDEO STREAM"
         };
 
+        RfPatchPanel patch;
+
         void OnGUI()
         {
-            if (!link || !link.Connected || Event.current.type != EventType.Repaint) return;
-            EnsureStyles();
+            if (!link || !link.Connected) return;
+            if (!patch) patch = GetComponent<RfPatchPanel>();
+            if (Event.current.type == EventType.Repaint)
+            {
+                EnsureStyles();
+                DrawContent();
+            }
+            if (patch) patch.Gui();
+        }
+
+        void DrawContent()
+        {
             float unit = Screen.height / 42f;
             float line = unit * 1.35f;
             switch (link.Phase)
@@ -200,18 +226,18 @@ namespace MoonThemedGame.Scavenger
             bool power = link.Powered;
             bool uplink = link.Uplink == UplinkStatus.Ok;
             var origin = new Vector2(Screen.width * 0.3f, Screen.height * 0.36f);
-            Draw(new Rect(origin.x, origin.y - line * 1.5f, Screen.width, line), "ESTABLISHING CONNECTION" + Dots(t), phosphor, 80, text);
+            Draw(new Rect(origin.x, origin.y - line * 1.5f, Screen.width, line), Loc.T("ESTABLISHING CONNECTION") + Dots(t), phosphor, 80, text);
             for (int i = 0; i < Handshake.Length; i++)
             {
                 float shown = t - step * i;
                 if (shown < 0) break;
                 string result;
+                bool failed = false;
                 if (i == 0) result = "";
                 else if (shown < step * 0.8f) result = " " + new string('.', 1 + Mathf.FloorToInt(shown / step * 10));
-                else if (i == 1) result = uplink ? $" ({SatName}) .... OK" : $" ({SatName}) .... FAIL";
-                else result = i == Handshake.Length - 1 && !(power && uplink) ? " ......... NO CARRIER" : " ......... OK";
-                var tint = result.EndsWith("NO CARRIER") || result.EndsWith("FAIL") ? warning : phosphor;
-                Draw(new Rect(origin.x, origin.y + line * i, Screen.width, line), "> " + Handshake[i] + result, tint, 81 + i, text);
+                else if (i == 1) { failed = !uplink; result = $" ({SatName}) .... " + Loc.T(uplink ? "OK" : "FAIL"); }
+                else { failed = i == Handshake.Length - 1 && !(power && uplink); result = " ......... " + Loc.T(failed ? "NO CARRIER" : "OK"); }
+                Draw(new Rect(origin.x, origin.y + line * i, Screen.width, line), "> " + Loc.T(Handshake[i]) + result, failed ? warning : phosphor, 81 + i, text);
             }
         }
 
@@ -220,11 +246,11 @@ namespace MoonThemedGame.Scavenger
             var center = new Rect(0, Screen.height * 0.36f, Screen.width, unit * 3);
             float u = link.PhaseTime / link.terminateDuration;
             if (Mathf.Repeat(Time.time * 14, 1) < 0.15f && u > 0.5f) return;
-            Alert(center, "CONNECTION TERMINATED", warning, 70);
+            Alert(center, Loc.T("CONNECTION TERMINATED"), warning, 70);
             int up = Mathf.FloorToInt(Uptime);
             Draw(new Rect(0, center.yMax + unit * 0.5f, Screen.width, line),
-                $"LINK CLOSED BY OPERATOR   SESSION {up / 60:00}:{up % 60:00}   PKT {packets}", phosphor, 71, Centered(text));
-            Draw(new Rect(0, center.yMax + unit * 0.5f + line, Screen.width, line), $"UPLINK {SatName} RELEASED", Dim(phosphor), 72, Centered(text));
+                Loc.F("LINK CLOSED BY OPERATOR   SESSION {0:00}:{1:00}   PKT {2}", up / 60, up % 60, packets), phosphor, 71, Centered(text));
+            Draw(new Rect(0, center.yMax + unit * 0.5f + line, Screen.width, line), Loc.F("UPLINK {0} RELEASED", SatName), Dim(phosphor), 72, Centered(text));
         }
 
         static string Dots(float t) => new string('.', 1 + Mathf.FloorToInt(t * 3) % 3);
@@ -244,13 +270,14 @@ namespace MoonThemedGame.Scavenger
                 int up = Mathf.FloorToInt(Uptime);
                 var left = new[]
                 {
-                    $"{ScavengerLink.RobotName} // LIVE FEED",
-                    $"LINK 0x3F2A  PKT {packets}  LOSS {loss.ToString("0.0", inv)}%",
-                    $"LAT {Mathf.RoundToInt(latency)}ms  RSSI {Mathf.RoundToInt(rssi)}dBm",
-                    $"POS {position.x.ToString("0.00", inv)} {position.y.ToString("0.00", inv)} {position.z.ToString("0.00", inv)}  HDG {Mathf.RoundToInt(heading):000}",
+                    Loc.F("{0} // LIVE FEED", ScavengerLink.RobotName),
+                    Loc.F("LINK 0x3F2A  PKT {0}  LOSS {1}%", packets, loss.ToString("0.0", inv)),
+                    Loc.F("LAT {0}ms  RSSI {1}dBm", Mathf.RoundToInt(latency), Mathf.RoundToInt(rssi)),
+                    Loc.F("POS {0} {1} {2}  HDG {3:000}", position.x.ToString("0.00", inv), position.y.ToString("0.00", inv), position.z.ToString("0.00", inv), Mathf.RoundToInt(heading)),
                     SatLine(),
-                    $"CELL {volts.ToString("0.0", inv)}V  T {cellTemp.ToString("0.0", inv)}C  CARGO {(state ? state.Cargo : 0)}/{(state ? state.cargoCapacity : 0)}{(RobotUpgrades.Lamps ? "  LAMP HI" : "")}",
-                    $"UPTIME {up / 3600:00}:{up / 60 % 60:00}:{up % 60:00}"
+                    Loc.F("CELL {0}V  T {1}C  CARGO {2}/{3}{4}", volts.ToString("0.0", inv), cellTemp.ToString("0.0", inv), state ? state.Cargo : 0, state ? state.cargoCapacity : 0, RobotUpgrades.Lamps ? Loc.T("  LAMP HI") : ""),
+                    Loc.F("UPTIME {0:00}:{1:00}:{2:00}", up / 3600, up / 60 % 60, up % 60),
+                    SalvageLine()
                 };
                 for (int i = 0; i < left.Length; i++)
                     Draw(new Rect(pad, pad + line * i, Screen.width, line), left[i], i == 0 ? phosphor : Dim(phosphor), i, text);
@@ -266,9 +293,9 @@ namespace MoonThemedGame.Scavenger
                 float width = unit * 11;
                 float x = Screen.width - pad - width;
                 var tint = state.LowCharge || !link.Powered ? warning : phosphor;
-                Draw(new Rect(x, pad, width, line), $"CHARGE {Mathf.CeilToInt(state.Normalized * 100):000}%", tint, 20, text);
+                Draw(new Rect(x, pad, width, line), Loc.F("CHARGE {0:000}%", Mathf.CeilToInt(state.Normalized * 100)), tint, 20, text);
                 Draw(new Rect(x, pad + line, width, line), Bar(state.Normalized, 16), tint, 21, text);
-                Draw(new Rect(x, pad + line * 2, width, line), $"STATUS {StatusText(state)}", tint, 22, text);
+                Draw(new Rect(x, pad + line * 2, width, line), Loc.F("STATUS {0}", StatusText(state)), tint, 22, text);
 
                 var center = new Rect(0, Screen.height * 0.38f, Screen.width, unit * 3);
                 var below = new Rect(0, center.yMax + unit * 0.5f, Screen.width, line);
@@ -277,47 +304,85 @@ namespace MoonThemedGame.Scavenger
                     var network = link.Network;
                     string title = link.Uplink switch
                     {
-                        UplinkStatus.Intercepted => "SIGNAL HIJACKED",
-                        UplinkStatus.Hopping => $"RETUNING  {Mathf.CeilToInt(network.HopTimeLeft)}",
-                        _ => "NO UPLINK"
+                        UplinkStatus.Intercepted => Loc.T("SIGNAL HIJACKED"),
+                        UplinkStatus.Hopping => Loc.F("RETUNING  {0}", Mathf.CeilToInt(network.HopTimeLeft)),
+                        _ => Loc.T("NO UPLINK")
                     };
                     Alert(center, title, warning, 34);
                     Draw(below, Reason(link.Uplink), phosphor, 35, Centered(text));
-                    string hint = link.Uplink == UplinkStatus.Intercepted ? "[H] TUNER - PLUG A FREE CHANNEL AND LOCK"
-                        : link.Uplink == UplinkStatus.Hopping ? "RETUNING CARRIER..." : "PRESS 1 / 2 / 3 TO SWITCH SATELLITE";
+                    string hint = link.Uplink == UplinkStatus.Intercepted ? Loc.T("[H] TUNER - PLUG A FREE CHANNEL AND LOCK")
+                        : link.Uplink == UplinkStatus.Hopping ? Loc.T("RETUNING CARRIER...") : Loc.F("PRESS {0} TO SWITCH SATELLITE", SatelliteKeys);
                     Draw(new Rect(0, below.yMax, Screen.width, line), hint, Dim(phosphor), 36, Centered(text));
                 }
                 else switch (state.Status)
                 {
                     case RobotStatus.Failing:
-                        Alert(center, $"SIGNAL LOSS IN {Mathf.CeilToInt(state.TimeLeft)}", warning, 30);
+                        Alert(center, Loc.F("SIGNAL LOSS IN {0}", Mathf.CeilToInt(state.TimeLeft)), warning, 30);
                         break;
                     case RobotStatus.Offline:
-                        Alert(center, "ROBOT OFFLINE", warning, 31);
-                        Draw(below, $"[E] ORDER EVACUATION - {state.evacuationCost} CR   BALANCE {link.terminal.Credits} CR", phosphor, 32, Centered(text));
+                        Alert(center, Loc.T("ROBOT OFFLINE"), warning, 31);
+                        Draw(below, Loc.F("[E] ORDER EVACUATION - {0} CR   BALANCE {1} CR", state.evacuationCost, link.terminal.Credits), phosphor, 32, Centered(text));
                         break;
                     case RobotStatus.Evacuating:
-                        Alert(center, $"EVACUATION EN ROUTE  {Mathf.CeilToInt(state.TimeLeft)}", phosphor, 33);
+                        Alert(center, Loc.F("EVACUATION EN ROUTE  {0}", Mathf.CeilToInt(state.TimeLeft)), phosphor, 33);
                         break;
                 }
             }
             if (link.Powered) DrawSatellites(unit, line);
+            if (state && state.Irradiated && signal && Mathf.Repeat(Time.time * 1.5f, 1) < 0.75f)
+                Draw(new Rect(0, unit * 8.4f, Screen.width, line), Loc.F("RADIATION - CELL DRAIN x{0} - RETURN TO BASE", state.RadiationMultiplier.ToString("0.0", CultureInfo.InvariantCulture)), warning, 97, Centered(text));
+            var lever = link.NearLever;
+            if (lever && signal && state && state.Status == RobotStatus.Online)
+            {
+                bool reach = RobotUpgrades.HasArm && link.ArmCanReach(lever);
+                string prompt = !RobotUpgrades.HasArm ? Loc.T("LEVER - MANIPULATOR ARM REQUIRED (SHOP)")
+                    : link.ArmBusy ? Loc.T("ARM ENGAGED...")
+                    : reach ? Loc.F("[E] PULL LEVER  ({0})", Loc.T(lever.on ? "ON" : "OFF"))
+                    : Loc.T("LEVER - DRIVE CLOSER, ARM CAN'T REACH");
+                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, reach || link.ArmBusy ? phosphor : warning, 41, Centered(text));
+            }
+            var salvage = link.Salvage;
+            if (!lever && salvage && salvage.Near && signal && state && state.Status == RobotStatus.Online)
+            {
+                bool full = salvage.Full;
+                string prompt = full ? Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION") : Loc.F("[E] PICK UP {0}", SalvageField.PartName(salvage.Near.prefab));
+                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, full ? warning : phosphor, 42, Centered(text));
+            }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), "WASD - DRIVE   1/2/3 - SATELLITE   H - TUNER   ESC - BACK TO PC", phosphor, 60, text);
+            Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), Loc.F("{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", DriveKeys, SatelliteKeys, GameControls.Label(GameCommand.RobotPanel)), phosphor, 60, text);
+        }
+
+        string SalvageLine()
+        {
+            var salvage = link.Salvage;
+            if (!salvage || !salvage.Closest || !link.robot) return Loc.T("SALVAGE NO SIGNAL");
+            var offset = salvage.Closest.transform.position - link.robot.position;
+            offset.y = 0;
+            var forward = link.Drive ? link.Drive.Forward : link.robot.forward;
+            forward.y = 0;
+            int angle = Mathf.RoundToInt(Vector3.SignedAngle(forward, offset, Vector3.up));
+            string bearing = Mathf.Abs(angle) <= 10 ? "^^" : angle < 0 ? "<< " + -angle : angle + " >>";
+            return Loc.F("SALVAGE {0}M  {1}", Mathf.RoundToInt(salvage.ClosestDistance), bearing);
         }
 
         string SatLine()
         {
-            string coverText = link.Cover > 0 ? $"  COVER {Mathf.RoundToInt(link.Cover * 100)}%" : "";
-            if (link.ViaRelay) return $"LINK BASE RELAY  Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%{coverText}";
+            string coverText = link.Cover > 0 ? Loc.F("  COVER {0}%", Mathf.RoundToInt(link.Cover * 100)) : "";
+            if (link.ViaRelay) return Loc.F("LINK BASE RELAY  Q {0}%{1}", Mathf.RoundToInt(link.UplinkQuality * 100), coverText);
             var satellite = link.Network ? link.Network.Active : null;
-            if (satellite == null) return "SAT NONE";
+            if (satellite == null) return Loc.T("SAT NONE");
             float clock = link.Network.Clock;
             return satellite.InRange(clock)
-                ? $"SAT {satellite.name}  Q {Mathf.RoundToInt(link.UplinkQuality * 100)}%  LEFT {Clock(satellite.TimeLeft(clock))}{coverText}"
-                : $"SAT {satellite.name}  OUT OF RANGE";
+                ? Loc.F("SAT {0}  Q {1}%  LEFT {2}{3}", satellite.name, Mathf.RoundToInt(link.UplinkQuality * 100), Clock(satellite.TimeLeft(clock)), coverText)
+                : Loc.F("SAT {0}  OUT OF RANGE", satellite.name);
         }
+
+        static string DriveKeys => GameControls.Label(GameCommand.Forward) + "/" + GameControls.Label(GameCommand.Left) + "/" +
+            GameControls.Label(GameCommand.Backward) + "/" + GameControls.Label(GameCommand.Right);
+
+        static string SatelliteKeys => GameControls.Label(GameCommand.SatelliteOne) + "/" + GameControls.Label(GameCommand.SatelliteTwo) + "/" +
+            GameControls.Label(GameCommand.SatelliteThree);
 
         static string Bars(int bars) => "[" + new string('|', bars) + new string('.', 4 - bars) + "]";
 
@@ -336,23 +401,23 @@ namespace MoonThemedGame.Scavenger
             float width = unit * 16;
             float x = Screen.width - unit - width;
             float y = Screen.height - unit - line * (network.satellites.Count + 2);
-            Draw(new Rect(x, y, width, line), "SATELLITES", Dim(phosphor), 90, text);
+            Draw(new Rect(x, y, width, line), Loc.T("SATELLITES"), Dim(phosphor), 90, text);
             for (int i = 0; i < network.satellites.Count; i++)
             {
                 var sat = network.satellites[i];
                 bool active = i == network.ActiveIndex;
-                string timer = sat.InRange(clock) ? Clock(sat.TimeLeft(clock)) + " left" : "back " + Clock(sat.TimeToReturn(clock));
+                string timer = sat.InRange(clock) ? Loc.F("{0} left", Clock(sat.TimeLeft(clock))) : Loc.F("back {0}", Clock(sat.TimeToReturn(clock)));
                 string row = $"{(active ? ">" : " ")}[{i + 1}] {sat.name,-6} {Bars(sat.Bars(clock))} {timer}";
                 var tint = !sat.InRange(clock) ? Dim(Dim(phosphor)) : active ? phosphor : Dim(phosphor);
                 Draw(new Rect(x, y + line * (i + 1), width, line), row, tint, 91 + i, text);
             }
             if (link.Uplink == UplinkStatus.Ok && network.Rival == RivalPhase.Incoming && network.RivalOnActive && Mathf.Repeat(Time.time * 3, 1) < 0.7f)
                 Draw(new Rect(0, unit * 7.2f, Screen.width, line),
-                    $"RIVAL {network.rivalName} INTERCEPTING {network.Active.name}  {Mathf.RoundToInt(network.RivalProgress * 100)}%  -  [H] TUNER", warning, 96, Centered(text));
+                    Loc.F("RIVAL {0} INTERCEPTING {1}  {2}%  -  [H] TUNER", network.rivalName, network.Active.name, Mathf.RoundToInt(network.RivalProgress * 100)), warning, 96, Centered(text));
             if (link.Uplink == UplinkStatus.Ok && !link.ViaRelay && network.ActiveLeavingSoon && Mathf.Repeat(Time.time * 2, 1) < 0.7f)
             {
                 int left = Mathf.CeilToInt(network.Active.TimeLeft(clock));
-                Draw(new Rect(0, unit * 6, Screen.width, line), $"{network.Active.name} LEAVES RANGE IN {left}s - SWITCH SATELLITE (1/2/3)", warning, 95, Centered(text));
+                Draw(new Rect(0, unit * 6, Screen.width, line), Loc.F("{0} LEAVES RANGE IN {1}s - SWITCH SATELLITE ({2})", network.Active.name, left, SatelliteKeys), warning, 95, Centered(text));
             }
         }
 
@@ -376,14 +441,14 @@ namespace MoonThemedGame.Scavenger
             return "[" + new string('|', filled) + new string('.', cells - filled) + "]";
         }
 
-        static string StatusText(ScavengerRobotState state) => state.Status switch
+        static string StatusText(ScavengerRobotState state) => Loc.T(state.Status switch
         {
             _ when state.Charging => "CHARGING",
             RobotStatus.Online => state.LowCharge ? "LOW CHARGE" : "ONLINE",
             RobotStatus.Failing => "CRITICAL",
             RobotStatus.Offline => "OFFLINE",
             _ => "EVACUATING"
-        };
+        });
 
         // Big alerts glow hard and skip the faded glyphs so they read at a glance.
         void Alert(Rect rect, string message, Color color, int salt)

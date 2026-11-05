@@ -45,3 +45,17 @@ PC_Renderer и Mobile_Renderer используют один проход Exteri
 
 Проверка в изолированной копии Unity: `MoonThemedGame.Editor.MoonWeatherSetup.ApplyAndValidate`.
 Результаты и снимки — `Logs/WeatherCaptures`.
+
+## Плавная смена погоды
+
+Любая погода набирает силу за **Atmosphere Fade In** (25 с) от начала периода и стихает за
+**Atmosphere Fade Out** (20 с) до его конца — `MoonWeatherSystem.Intensity` (0..1):
+
+* пыль и радиационная дымка: плотность и частицы;
+* радиация: расход батареи робота растёт от ×1 до ×4 (**Toxic Energy Multiplier**) и обратно;
+  на мониторе погоды — текущий `ENERGY DRAIN`;
+* метеоритный дождь: первые удары редкие, в разгаре — с обычным интервалом, к концу опять реже.
+
+Радиация вне укрытий базы сажает батарею робота SCAVENGER и тогда, когда он просто стоит
+снаружи. В камере робота мигает «RADIATION - CELL DRAIN xN - RETURN TO BASE»; за 20 с до
+непогоды в журнал пишется «WARN WEATHER FRONT - … IN Ns».

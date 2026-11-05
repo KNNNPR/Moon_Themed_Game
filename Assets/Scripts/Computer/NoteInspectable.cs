@@ -158,7 +158,7 @@ namespace MoonThemedGame.Computer
             if (hintStyle == null)
                 hintStyle = new GUIStyle(GUI.skin.label) { alignment = TextAnchor.MiddleCenter, fontSize = 15 };
             GUI.color = new Color(1, 1, 1, 0.8f);
-            GUI.Label(new Rect(0, Screen.height - 48, Screen.width, 30), GameControls.Label(GameCommand.Interact)+" / ESC — Put down", hintStyle);
+            GUI.Label(new Rect(0, Screen.height - 48, Screen.width, 30), Loc.F("{0} / ESC — Put down", GameControls.Label(GameCommand.Interact)), hintStyle);
             GUI.color = Color.white;
         }
 

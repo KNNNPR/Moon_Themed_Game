@@ -12,6 +12,12 @@ Shader "Moon Game/PC Monitor CRT"
         _Scanlines("Scanline Strength", Range(0, 0.4)) = 0.09
         _Flicker("Subtle Flicker", Range(0, 0.04)) = 0.004
         _GlassTint("Glass Reflection", Color) = (0.012, 0.021, 0.028, 1)
+        _Mask("Phosphor Mask", Range(0, 0.6)) = 0.25
+        _Vignette("Tube Vignette", Range(0, 1)) = 0.45
+        _Bleed("Color Bleed (Texels)", Range(0, 3)) = 1
+        _BlackLevel("Lit Phosphor Black", Color) = (0.11, 0.06, 0.02, 1)
+        _Phosphor("Phosphor Color", Color) = (1, 0.69, 0.22, 1)
+        _Monochrome("Monochrome", Range(0, 1)) = 0.85
         [HideInInspector] _HoverHighlight("Interaction Highlight", Range(0, 2)) = 0
         [HideInInspector] _PreviewTime("Preview Time (-1 = Live)", Float) = -1
     }
@@ -34,11 +40,13 @@ Shader "Moon Game/PC Monitor CRT"
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_TexelSize;
-                half4 _GlassTint;
+                half4 _GlassTint, _BlackLevel, _Phosphor;
                 float _Curvature, _WaveStrength, _VerticalDrift, _WaveSpeed;
                 float _Brightness, _Glow, _Scanlines, _Flicker, _PreviewTime, _HoverHighlight;
+                float _Mask, _Vignette, _Bleed, _Monochrome;
             CBUFFER_END
             #define MOON_PC_HOVER 1
+            #define MOON_CRT_TUBE 1
             #include "PCMonitorCRT.hlsl"
             struct ScreenAttributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct ScreenVaryings { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 positionWS:TEXCOORD1; half3 normalWS:TEXCOORD2; half fog:TEXCOORD3; UNITY_VERTEX_OUTPUT_STEREO };

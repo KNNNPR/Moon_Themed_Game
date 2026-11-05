@@ -30,6 +30,7 @@ namespace MoonThemedGame.Interactions
         GameCommand? capturing;
         int captureFrame;
         readonly Dictionary<GameCommand, Button> bindingButtons = new Dictionary<GameCommand, Button>();
+        readonly Dictionary<GameCommand, Label> bindingNames = new Dictionary<GameCommand, Label>();
         public VisualElement Root => root;
         public PanelSettings Panel => panel;
         public bool IsCapturing => capturing.HasValue;
@@ -142,6 +143,7 @@ namespace MoonThemedGame.Interactions
             var volumeValue=Text(Mathf.RoundToInt(volume.value*100)+"%","volume-value");
             volume.RegisterValueChangedCallback(evt=>{ AudioListener.volume=evt.newValue; PlayerPrefs.SetFloat("audio.master",evt.newValue); volumeValue.text=Mathf.RoundToInt(evt.newValue*100)+"%"; });
             audioRow.Add(volume); audioRow.Add(volumeValue);
+            homePanel.Add(ActionButton("LANGUAGE: ENGLISH",Loc.Toggle,"language"));
             homePanel.Add(ActionButton("CONTROLS  >",ShowControls,"controls"));
             homePanel.Add(ActionButton("RESUME",Close,"resume"));
             homePanel.Add(ActionButton("EXIT GAME",RequestQuit,"quit"));
@@ -152,13 +154,13 @@ namespace MoonThemedGame.Interactions
             foreach(GameCommand command in Enum.GetValues(typeof(GameCommand)))
             {
                 var row=Box("binding-row"); scroll.Add(row);
-                row.Add(Text(GameControls.Name(command),"binding-name"));
+                var nameLabel=Text(GameControls.Name(command),"binding-name"); bindingNames[command]=nameLabel; row.Add(nameLabel);
                 var captured=command;
                 var button=ActionButton(GameControls.Label(command),()=>BeginRebind(captured),"bind-"+command);
                 button.AddToClassList("binding-key"); bindingButtons[command]=button; row.Add(button);
             }
             var controlActions=Box("text-actions"); controlsPanel.Add(controlActions);
-            var reset=ActionButton("RESTORE DEFAULTS",()=>{capturing=null;GameControls.ResetBindings(); bindStatus.text="Default keys restored.";},"reset-keys"); reset.AddToClassList("small-action"); controlActions.Add(reset);
+            var reset=ActionButton("RESTORE DEFAULTS",()=>{capturing=null;GameControls.ResetBindings(); bindStatus.text=Loc.T("Default keys restored.");},"reset-keys"); reset.AddToClassList("small-action"); controlActions.Add(reset);
             var back=ActionButton("BACK",()=>ShowPage(Page.Home),"back-controls"); back.AddToClassList("small-action"); controlActions.Add(back);
             quitPanel=Box("quit-confirm"); quitPanel.name="quit-confirm"; body.Add(quitPanel);
             quitPanel.Add(Text("EXIT TO DESKTOP?","section-title"));
@@ -169,6 +171,13 @@ namespace MoonThemedGame.Interactions
             ShowPage(Page.Home);
             root.style.display=DisplayStyle.None;
             GameControls.Changed+=RefreshBindings;
+            Loc.Stamp(root); Loc.Apply(root);
+            Loc.Changed+=Relocalize;
+        }
+        void Relocalize()
+        {
+            Loc.Apply(root);
+            RefreshBindings();
         }
         void ShowPage(Page next)
         {
@@ -182,14 +191,15 @@ namespace MoonThemedGame.Interactions
         void RefreshBindings()
         {
             foreach(var pair in bindingButtons) pair.Value.text=GameControls.Label(pair.Key);
+            foreach(var row in bindingNames) row.Value.text=GameControls.Name(row.Key);
         }
         public void BeginRebind(GameCommand command)
         {
             ShowControls();
             capturing=command; captureFrame=Time.frameCount;
             bindingButtons[command].Blur();
-            RefreshBindings(); bindingButtons[command].text="PRESS KEY...";
-            bindStatus.text="Waiting: "+GameControls.Name(command)+". Press ESC to cancel.";
+            RefreshBindings(); bindingButtons[command].text=Loc.T("PRESS KEY...");
+            bindStatus.text=Loc.F("Waiting: {0}. Press ESC to cancel.", GameControls.Name(command));
         }
         public bool AcceptRebind(Key key)
         {
@@ -199,7 +209,7 @@ namespace MoonThemedGame.Interactions
             if(accepted) { capturing=null; RefreshBindings(); }
             return accepted;
         }
-        void CancelRebind() { capturing=null; RefreshBindings(); bindStatus.text="Assignment cancelled."; }
+        void CancelRebind() { capturing=null; RefreshBindings(); bindStatus.text=Loc.T("Assignment cancelled."); }
         public void RequestQuit()
         {
             if(capturing.HasValue) CancelRebind();
@@ -218,6 +228,7 @@ namespace MoonThemedGame.Interactions
         void OnDestroy()
         {
             GameControls.Changed-=RefreshBindings;
+            Loc.Changed-=Relocalize;
             if(panel) Destroy(panel);
         }
     }

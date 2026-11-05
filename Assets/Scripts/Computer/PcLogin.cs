@@ -54,6 +54,21 @@ namespace MoonThemedGame.Computer
 
         void Awake() => terminal = GetComponent<PcMonitorTerminal>();
 
+        void Start()
+        {
+            Loc.Changed += Relocalize;
+            Relocalize();
+        }
+
+        void OnDestroy() => Loc.Changed -= Relocalize;
+
+        // Also switches the teammate's desktop labels (SHOP / SCAVENGER / ...) with the game language.
+        void Relocalize()
+        {
+            if (terminal) terminal.SetLanguage(Loc.Russian ? TerminalLanguage.Russian : TerminalLanguage.English);
+            if (overlay != null && stage == Stage.Waiting) Loc.Apply(overlay);
+        }
+
 #if ENABLE_INPUT_SYSTEM
         void OnEnable()
         {
@@ -112,24 +127,24 @@ namespace MoonThemedGame.Computer
                     if (tab) editingPassword = !editingPassword;
                     else if (enter && !editingPassword)
                     {
-                        if (user.Length == 0) SetStatus("USER REQUIRED", Alarm);
+                        if (user.Length == 0) SetStatus(Loc.T("USER REQUIRED"), Alarm);
                         else editingPassword = true;
                     }
                     else if (enter)
                     {
-                        if (user.Length == 0) { editingPassword = false; SetStatus("USER REQUIRED", Alarm); }
-                        else if (typed.Length == 0) SetStatus("PASSWORD REQUIRED", Alarm);
-                        else { SetStage(Stage.Verifying); SetStatus("VERIFYING", Muted); }
+                        if (user.Length == 0) { editingPassword = false; SetStatus(Loc.T("USER REQUIRED"), Alarm); }
+                        else if (typed.Length == 0) SetStatus(Loc.T("PASSWORD REQUIRED"), Alarm);
+                        else { SetStage(Stage.Verifying); SetStatus(Loc.T("VERIFYING"), Muted); }
                     }
                     break;
                 case Stage.Verifying:
-                    status.text = "VERIFYING" + new string('.', 1 + Mathf.FloorToInt(stageTime * 4) % 3);
+                    status.text = Loc.T("VERIFYING") + new string('.', 1 + Mathf.FloorToInt(stageTime * 4) % 3);
                     if (stageTime < verifyTime) break;
-                    if (Valid) { SetStage(Stage.Granted); SetStatus($"ACCESS GRANTED - WELCOME, {user.ToUpperInvariant()}", Good); }
+                    if (Valid) { SetStage(Stage.Granted); SetStatus(Loc.F("ACCESS GRANTED - WELCOME, {0}", user.ToUpperInvariant()), Good); }
                     else
                     {
                         SetStage(Stage.Waiting);
-                        SetStatus("ACCESS DENIED - INVALID USER OR PASSWORD", Alarm);
+                        SetStatus(Loc.T("ACCESS DENIED - INVALID USER OR PASSWORD"), Alarm);
                         typed = "";
                         editingPassword = true;
                     }
@@ -192,6 +207,8 @@ namespace MoonThemedGame.Computer
             status = MakeLabel("", 16, Muted);
             overlay.Add(status);
             desktop.Add(overlay);
+            Loc.Stamp(overlay);
+            Loc.Apply(overlay);
         }
 
         static VisualElement Field(string name, Label value)
@@ -200,7 +217,7 @@ namespace MoonThemedGame.Computer
             row.style.flexDirection = FlexDirection.Row;
             row.style.marginBottom = 6;
             var label = MakeLabel(name, 18, Muted);
-            label.style.width = 130;
+            label.style.width = 150;
             row.Add(label);
             row.Add(value);
             return row;
