@@ -4,12 +4,12 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Interactions
 {
-    public enum GameCommand { Forward, Backward, Left, Right, Interact, Throw, Repair, VisualStyle, RadioPrevious, RadioNext, RadioPlay, RadioOff, RobotPanel, SatelliteOne, SatelliteTwo, SatelliteThree, Menu }
+    public enum GameCommand { Forward, Backward, Left, Right, Interact, Throw, Repair, VisualStyle, RadioPrevious, RadioNext, RadioPlay, RadioOff, RobotPanel, SatelliteOne, SatelliteTwo, SatelliteThree, Menu, RobotCameraReset, RobotHandbrake, RobotRecover }
 
     public static class GameControls
     {
-        static readonly Key[] defaults = { Key.W,Key.S,Key.A,Key.D,Key.E,Key.G,Key.F,Key.F6,Key.LeftArrow,Key.RightArrow,Key.UpArrow,Key.DownArrow,Key.H,Key.Digit1,Key.Digit2,Key.Digit3,Key.Escape };
-        static readonly string[] names = { "Move forward", "Move backward", "Move left", "Move right", "Interact / take", "Throw object", "Repair robot", "Retro / ASCII", "Previous station", "Next station", "Radio on", "Radio off", "Robot tuner", "Satellite 1", "Satellite 2", "Satellite 3", "Open settings" };
+        static readonly Key[] defaults = { Key.W,Key.S,Key.A,Key.D,Key.E,Key.G,Key.F,Key.F6,Key.LeftArrow,Key.RightArrow,Key.UpArrow,Key.DownArrow,Key.H,Key.Digit1,Key.Digit2,Key.Digit3,Key.Escape,Key.C,Key.Space,Key.R };
+        static readonly string[] names = { "Move forward", "Move backward", "Move left", "Move right", "Interact / take", "Throw object", "Repair robot", "Retro / ASCII", "Previous station", "Next station", "Radio on", "Radio off", "Robot tuner", "Satellite 1", "Satellite 2", "Satellite 3", "Open settings", "Reset robot camera", "Robot handbrake", "Right overturned robot" };
         static Key[] keys;
         public static event Action Changed;
         static void Load()
@@ -21,7 +21,14 @@ namespace MoonThemedGame.Interactions
                 int saved = PlayerPrefs.GetInt("controls."+(GameCommand)i, (int)defaults[i]);
                 if (Enum.IsDefined(typeof(Key), saved) && saved != (int)Key.None) keys[i]=(Key)saved;
             }
+            // New defaults must not steal an existing custom binding from an older save.
+            foreach(var command in new[]{GameCommand.RobotCameraReset,GameCommand.RobotHandbrake,GameCommand.RobotRecover})
+                if(!PlayerPrefs.HasKey("controls."+command) && Occupied(keys[(int)command],command))
+                    foreach(Key candidate in Enum.GetValues(typeof(Key)))
+                        if(candidate!=Key.None && candidate!=Key.Escape && !Occupied(candidate,command)) {keys[(int)command]=candidate;break;}
         }
+        static bool Occupied(Key key,GameCommand except)
+        { for(int i=0;i<keys.Length;i++)if(i!=(int)except && keys[i]==key)return true;return false; }
         public static string Name(GameCommand command) => Loc.T(names[(int)command]);
         public static Key Binding(GameCommand command) { Load(); return keys[(int)command]; }
         public static string Label(GameCommand command)

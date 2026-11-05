@@ -7,7 +7,7 @@ namespace MoonThemedGame.Editor
 {
     public static class ScavengerStartLocationMenu
     {
-        // Bakes the placeholder start area into the open scene so it can be moved, edited or replaced.
+        // Creates an editable spawn marker without adding geometry to the level.
         [MenuItem("Tools/Moon Game/Scavenger/Create Start Location")]
         public static void Create()
         {
@@ -27,7 +27,7 @@ namespace MoonThemedGame.Editor
             Renderer chargeBuilding = null;
             foreach (var r in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
                 if (r.name == "Cube.026") chargeBuilding = r;
-            var location = ScavengerStartLocation.BuildFor(robot.transform, chargeBuilding);
+            var location = ScavengerStartLocation.CreateMarkerFor(robot.transform, chargeBuilding);
             Undo.RegisterCreatedObjectUndo(location, "Create Scavenger Start Location");
             Selection.activeGameObject = location;
             EditorSceneManager.MarkSceneDirty(location.scene);

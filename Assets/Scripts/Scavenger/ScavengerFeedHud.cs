@@ -350,6 +350,9 @@ namespace MoonThemedGame.Scavenger
             }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
+            if(link.CanRecoverRobot)
+                Draw(new Rect(0,Screen.height*0.54f,Screen.width,line),Loc.F("[{0}] RIGHT THE ROBOT",GameControls.Label(GameCommand.RobotRecover)),warning,62,Centered(text));
+            Draw(new Rect(pad, Screen.height - pad - line*2, Screen.width, line), Loc.F("[{0}] HANDBRAKE   MOUSE / RIGHT STICK - LOOK   [{1}] / MMB - RECENTER", GameControls.Label(GameCommand.RobotHandbrake),GameControls.Label(GameCommand.RobotCameraReset)), Dim(phosphor), 61, text);
             Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), Loc.F("{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", DriveKeys, SatelliteKeys, GameControls.Label(GameCommand.RobotPanel)), phosphor, 60, text);
         }
 
