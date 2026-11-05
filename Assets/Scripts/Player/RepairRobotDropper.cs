@@ -124,7 +124,6 @@ namespace MoonThemedGame.Repair
             drive.travel = suspensionTravel;
             drive.dampingRatio = suspensionDamping;
             drive.Setup(Vector3.forward);
-            drive.SetFallbackGround(anchor.position.y);
             drive.PlaceAt(spawned.transform.position, spawned.transform.rotation);
             var stabilizer = spawned.AddComponent<RepairLandingStabilizer>();
             stabilizer.Initialize(drive, restPosition.y, bounds.size.y * 0.35f);

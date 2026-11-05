@@ -9,8 +9,8 @@ namespace MoonThemedGame.Scavenger
     // Arcade rally dynamics on the existing sphere-cast wheel suspension.
     // Each wheel is a sphere
     // of its own radius, so its rim catches the edge of a step and rolls up onto it like a
-    // car onto a curb (up to about one wheel radius). Where no collider is found the
-    // hangar floor height acts as ground, so the robot never falls through the level.
+    // car onto a curb (up to about one wheel radius). Wheels are supported only by
+    // real colliders, so bridge edges and drops do not create invisible ground.
     [DisallowMultipleComponent]
     public sealed class ScavengerDrive : MonoBehaviour
     {
@@ -68,7 +68,7 @@ namespace MoonThemedGame.Scavenger
         Rigidbody body;
         BoxCollider hull;
         Collider[] own;
-        float throttle, steer, length, wheelBase, groundHeight, stiffness, damper, overturnedFor;
+        float throttle, steer, length, wheelBase, stiffness, damper, overturnedFor;
         float drift, restClearance, driftSign=1;
         bool wasHandbrake;
 
@@ -111,7 +111,6 @@ namespace MoonThemedGame.Scavenger
             var local = LocalBounds(renderers);
             var world = WorldBounds(renderers);
             length = Mathf.Max(world.size.x, world.size.z);
-            groundHeight = world.min.y;
             restClearance = transform.position.y-world.min.y;
 
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
@@ -201,8 +200,6 @@ namespace MoonThemedGame.Scavenger
             return bounds;
         }
 
-        public void SetFallbackGround(float height) => groundHeight = height;
-
         public void PlaceAt(Vector3 position, Quaternion rotation)
         {
             throttle = steer = drift = overturnedFor = 0;
@@ -282,13 +279,7 @@ namespace MoonThemedGame.Scavenger
                 if (hit.distance <= 0 || System.Array.IndexOf(own, hit.collider) >= 0 || hit.collider.attachedRigidbody == body) continue;
                 if (hit.distance < distance) { distance = hit.distance; contact = hit.point; normal = hit.normal; }
             }
-            if (distance < float.MaxValue) return true;
-            if (direction.y >= -0.1f) return false;
-            float planeDistance = (origin.y - radius - groundHeight) / -direction.y;
-            if (planeDistance < 0 || planeDistance > reach) return false;
-            distance = planeDistance;
-            contact = origin + direction * distance - Vector3.up * radius;
-            return true;
+            return distance < float.MaxValue;
         }
 
         void Traction(int grounded, Vector2 input, float dt, bool handbrake)

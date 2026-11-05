@@ -25,7 +25,7 @@ namespace MoonThemedGame.Scavenger
         public float TimeToReturn(float time) => InRange(time) ? 0 : period - Cycle(time);
         public float WindowProgress(float time) => InRange(time) ? Cycle(time) / window : 0;
         public float Angle(float time) => 2 * Mathf.PI * (Cycle(time) - window * 0.5f) / period;
-        public float Strength(float time) => InRange(time) ? 0.25f + 0.75f * Mathf.Sin(Mathf.PI * Cycle(time) / window) : 0;
+        public float Strength(float time) => InRange(time) ? 0.85f + 0.15f * Mathf.Sin(Mathf.PI * Cycle(time) / window) : 0;
         public int Bars(float time) => InRange(time) ? Mathf.Clamp(Mathf.CeilToInt(Strength(time) * 4), 1, 4) : 0;
     }
 
@@ -44,7 +44,7 @@ namespace MoonThemedGame.Scavenger
         [Tooltip("Anything this close above the robot's antenna counts as cover.")]
         public float skyCheckHeight = 60;
         [Tooltip("Share of the signal lost when the sky above is fully covered.")]
-        [Range(0, 1)] public float coverPenalty = 0.8f;
+        [Range(0, 1)] public float coverPenalty = 0.45f;
 
         [Header("Rival intercept")]
         public string rivalName = "CERBERUS-9";
@@ -186,7 +186,11 @@ namespace MoonThemedGame.Scavenger
             {
                 int count = Physics.RaycastNonAlloc(antenna, direction, hits, skyCheckHeight, ~0, QueryTriggerInteraction.Ignore);
                 for (int i = 0; i < count; i++)
+                {
+                    // Cliffs and vertical walls beside the rover do not cover the sky overhead.
+                    if(hits[i].normal.y>-0.2f)continue;
                     if (ignore == null || Array.IndexOf(ignore, hits[i].collider) < 0) { covered++; break; }
+                }
             }
             return covered / (float)SkyRays.Length;
         }

@@ -463,7 +463,7 @@ namespace MoonThemedGame.Repair
             if (message != null && Time.time < messageUntil)
                 RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 60, message);
             if (CanOpen() && RepairCarryable.Current && !(RepairCarryable.Current is RepairPartProp))
-                RepairHud.Corner(Loc.T("Hold mouse wheel — tool belt"));
+                RepairHud.Corner(Loc.T("[MMB HOLD] Tool belt"));
         }
 
         void OnEnable()

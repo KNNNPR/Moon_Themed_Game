@@ -100,7 +100,7 @@ namespace MoonThemedGame.Editor
                 bounds=Bounds(testBot);
                 var forward=ScavengerLink.DetectForward(testBot.transform,bounds.center);
                 drive=testBot.AddComponent<ScavengerDrive>(); drive.Setup(forward);
-                drive.SetFallbackGround(-1000); drive.controllable=true;
+                drive.controllable=true;
                 drive.Body.interpolation=RigidbodyInterpolation.None;
                 Physics.simulationMode=SimulationMode.Script;
                 Time.fixedDeltaTime=0.02f;
@@ -190,6 +190,27 @@ namespace MoonThemedGame.Editor
                 Require(Vector3.Distance(before,drive.Body.position)>drive.Length*3,"The car stuck on a low kerb.");
                 Require(Vector3.Dot(drive.transform.up,Vector3.up)>0.6f,"Low kerb overturned the car.");
                 Object.DestroyImmediate(obstacle); obstacle=null;
+
+                // Starting at bridge height must not leave a virtual floor beside/beyond the deck.
+                ground.transform.position-=Vector3.up*drive.Length*3;
+                obstacle=GameObject.CreatePrimitive(PrimitiveType.Cube);
+                obstacle.name="Raised bridge deck";
+                obstacle.transform.rotation=Quaternion.LookRotation(drive.Heading);
+                obstacle.transform.localScale=new Vector3(drive.Length*3,0.4f,drive.Length*4);
+                obstacle.transform.position=Stage+drive.Heading*drive.Length-Vector3.up*0.2f;
+                Physics.SyncTransforms();Reset();Simulate(Vector2.zero,0.5f);
+                Require(Mathf.Abs(drive.Body.position.y-rest.y)<drive.Length*0.15f,"Suspension cannot stand on a real bridge deck.");
+                drive.PlaceAt(rest+Vector3.Cross(Vector3.up,drive.Heading)*drive.Length*3,restRotation);
+                Physics.SyncTransforms();Simulate(Vector2.zero,1);
+                float besideDrop=rest.y-drive.Body.position.y;
+                Require(besideDrop>drive.Length*0.4f,"Invisible support beside the bridge: "+besideDrop);
+                Reset();Simulate(Vector2.up,5);
+                float edgeDrop=rest.y-drive.Body.position.y;
+                Require(edgeDrop>drive.Length*2,"Driving off a bridge still rides an invisible plane: "+edgeDrop);
+                Require(drive.Body.position.y>ground.transform.position.y-1,"Bot fell through real terrain below the bridge.");
+                report.AppendLine($"Real ground only: bridge supports suspension; beside-deck drop {besideDrop:F2}m in 1s; driving off deck falls {edgeDrop:F2}m onto lower terrain.");
+                Object.DestroyImmediate(obstacle);obstacle=null;
+                ground.transform.position=Stage-Vector3.up*0.5f;Physics.SyncTransforms();
 
                 Reset();
                 drive.PlaceAt(rest+Vector3.up*20,restRotation);

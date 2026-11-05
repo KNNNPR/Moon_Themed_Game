@@ -206,7 +206,7 @@ namespace MoonThemedGame.Repair
         {
             if (!IsCarried || GameSettingsMenu.IsOpen || PlayerBody.BeltOpen) return;
             RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 24, CarryHint);
-            RepairHud.Hint(Screen.width / 2f, Screen.height - 56, Loc.F("{0} — Drop", GameControls.Label(GameCommand.Throw)), 13);
+            InteractionHud.Footer(Loc.F("[{0}] Drop", GameControls.Label(GameCommand.Throw)));
         }
 
         protected override void OnDisable()

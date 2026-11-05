@@ -100,9 +100,10 @@ Shader "Moon Game/Exterior Weather Atmosphere"
                 float saturation = lerp(_Palette.x, 1, bright * 0.65);
                 float3 color = lerp(luma.xxx, source.rgb, saturation);
                 color *= lerp(_Palette.y, 1, smoothstep(0.015, 0.18, luma));
-                color = lerp(color, _FogTint.rgb, weatherFog);
                 // Small bright emitters remain useful landmarks through the haze.
                 color = lerp(color, _HazeColor.rgb, baseFog * (1 - bright * 0.22));
+                // Weather must remain visible over the permanent lunar haze, including distant terrain.
+                color = lerp(color, _FogTint.rgb, weatherFog);
                 if (_Palette.z > 0) color += LightHalo(input.texcoord) * _Palette.z;
                 return half4(color, source.a);
             }
