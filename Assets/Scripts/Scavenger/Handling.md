@@ -9,6 +9,11 @@ Countersteer controls the slide and rear grip returns gradually after
 releasing the handbrake. Extra speed-dependent downforce is applied only while the
 bot is supported on its wheels.
 
+Stability: wheel contacts steeper than `maxGroundSteepness` (wall faces) are not ground, so the bot
+cannot drive up vertical surfaces; traction fades as the body tilts past `tractionTilt`. Drive and
+brake forces act near the centre of mass (`pitchFreeDrive`, grip `rollFreeGrip`) so hard braking
+does not tip the bot onto its nose, and suspension force is capped so a nose-dive cannot launch it.
+
 There is no automatic recovery. R (gamepad north/Y button) rights the bot only when
 it has overturned, slowed down near a real surface and has room to stand upright.
 The feed shows the recovery key only when the action is available. The action stops
@@ -68,3 +73,5 @@ in Play mode and builds. Repeated installs do not add duplicates.
 properties, fence/cargo boxes, migration from MeshColliders, case-sensitive material
 selection, terrain exclusion, duplicate prevention and scene save/reload in an
 isolated copy. Report: `Logs/LandscapeColliders/validation.txt`.
+
+Location buttons: the five `Buttons`-material cylinders in LandScape.fbx are wired by `LocationMechanisms` at scene load as push-button `RobotLever`s, pressed with the manipulator arm ([E], arm from the SHOP required). `Cylinder.045`/`.046`/`.049` knock the `DOOR_LOCK` off its gate and swing the `FENCE_DOOR` leaves open away from the robot (`LocationGate`; later presses close/reopen). `Cylinder.043` (top) and `Cylinder.042` (shaft bottom) send `Platform` up to the `Cube.072` ground level or back down (`LocationPlatform`). The test lever is no longer spawned.
