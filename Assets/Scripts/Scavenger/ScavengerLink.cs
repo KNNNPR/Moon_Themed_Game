@@ -199,10 +199,10 @@ namespace MoonThemedGame.Scavenger
             baseAcceleration = Drive.acceleration;
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
-            if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
             if (!TryGetComponent(out SalvageField salvage)) salvage = gameObject.AddComponent<SalvageField>();
             Salvage = salvage;
             Salvage.Setup(this, homePosition);
+            LocationMechanisms.Report = text => hud.Notify(text);
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -245,16 +245,6 @@ namespace MoonThemedGame.Scavenger
             return instance.transform;
         }
 
-        void PlaceTestLever(Vector3 ground)
-        {
-            var forward = Drive.Forward;
-            forward.y = 0;
-            forward.Normalize();
-            var right = Vector3.Cross(Vector3.up, forward);
-            var position = ground + right * (Drive.Length * 1.8f) + forward * (Drive.Length * 1.2f);
-            RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
-        }
-
         public bool ArmBusy => robotArm && robotArm.Busy;
         public bool ArmCanReach(RobotLever lever) => robotArm && robotArm.CanReach(lever);
         public bool CanRecoverRobot => Phase==LinkPhase.Live && Powered && Uplink==UplinkStatus.Ok &&
@@ -273,8 +263,10 @@ namespace MoonThemedGame.Scavenger
             var lever = NearLever;
             if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify(Loc.T("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP")); return; }
             if (robotArm.Busy) return;
-            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
+            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T(lever.button ? "ARM CAN'T REACH - DRIVE CLOSER TO THE BUTTON" : "ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
+            LocationMechanisms.Presser = robot.position;
             robotArm.Pull(lever);
+            if (lever.button) return;
             hud.Notify(Loc.T(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER"));
         }
 

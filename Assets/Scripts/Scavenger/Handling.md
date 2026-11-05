@@ -73,3 +73,5 @@ in Play mode and builds. Repeated installs do not add duplicates.
 properties, fence/cargo boxes, migration from MeshColliders, case-sensitive material
 selection, terrain exclusion, duplicate prevention and scene save/reload in an
 isolated copy. Report: `Logs/LandscapeColliders/validation.txt`.
+
+Location buttons: the five `Buttons`-material cylinders in LandScape.fbx are wired by `LocationMechanisms` at scene load as push-button `RobotLever`s, pressed with the manipulator arm ([E], arm from the SHOP required). `Cylinder.045`/`.046`/`.049` knock the `DOOR_LOCK` off its gate and swing the `FENCE_DOOR` leaves open away from the robot (`LocationGate`; later presses close/reopen). `Cylinder.043` (top) and `Cylinder.042` (shaft bottom) send `Platform` up to the `Cube.072` ground level or back down (`LocationPlatform`). The test lever is no longer spawned.
