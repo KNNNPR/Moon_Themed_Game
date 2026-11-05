@@ -127,6 +127,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
             if (!terminal.GetComponent<SatelliteConsoleApp>()) terminal.gameObject.AddComponent<SatelliteConsoleApp>();
             if (!terminal.GetComponent<ShopApp>()) terminal.gameObject.AddComponent<ShopApp>();
+            if (!terminal.GetComponent<RepairMessagesApp>()) terminal.gameObject.AddComponent<RepairMessagesApp>();
         }
 
         void Awake()
@@ -201,6 +202,7 @@ namespace MoonThemedGame.Scavenger
             if (!TryGetComponent(out SalvageField salvage)) salvage = gameObject.AddComponent<SalvageField>();
             Salvage = salvage;
             Salvage.Setup(this, homePosition);
+            LocationMechanisms.Report = text => hud.Notify(text);
             WeatherAtmosphereFeature.DensityScale = camera => camera == robotCamera ? RobotUpgrades.FogScale : 1;
         }
 
@@ -227,18 +229,31 @@ namespace MoonThemedGame.Scavenger
             var instance = Instantiate(catalog.arm);
             instance.name = "Manipulator Arm";
             foreach (var collider in instance.GetComponentsInChildren<Collider>(true)) Destroy(collider);
-            var renderers = instance.GetComponentsInChildren<Renderer>();
-            if (renderers.Length > 0)
+            var root = instance.transform;
+            Transform Bone(string name)
             {
-                var size = renderers[0].bounds;
-                foreach (var r in renderers) size.Encapsulate(r.bounds);
-                float largest = Mathf.Max(size.size.x, size.size.y, size.size.z);
-                if (largest > 1e-4f) instance.transform.localScale *= Drive.Length * 0.45f / largest;
+                foreach (var t in instance.GetComponentsInChildren<Transform>(true)) if (t.name == name) return t;
+                return null;
             }
-            instance.transform.SetPositionAndRotation(
-                bounds.center + Drive.Forward * (bounds.extents.magnitude * 0.25f) + Vector3.up * bounds.extents.y,
-                Quaternion.LookRotation(Drive.Forward, Vector3.up));
-            instance.transform.SetParent(robot, true);
+            var shoulder = Bone("Bone");
+            var elbow = Bone("Bone.001");
+            var tip = Bone("Bone.002_end");
+            var forward = Drive.Forward;
+            var up = robot.up;
+            var mount = bounds.center + forward * (Drive.Length * 0.2f) + up * Vector3.Dot(bounds.extents, new Vector3(Mathf.Abs(up.x), Mathf.Abs(up.y), Mathf.Abs(up.z)));
+            if (shoulder && elbow && tip)
+            {
+                // Point the folded arm along the robot so the claw sticks out past the nose.
+                var along = tip.position - shoulder.position;
+                var lift = Vector3.ProjectOnPlane(elbow.position - shoulder.position, along);
+                var model = Quaternion.LookRotation(along, lift);
+                root.rotation = Quaternion.LookRotation(forward, up) * Quaternion.Inverse(model) * root.rotation;
+                float length = Vector3.Distance(shoulder.position, elbow.position) + Vector3.Distance(elbow.position, tip.parent.position) + Vector3.Distance(tip.parent.position, tip.position);
+                if (length > 1e-4f) root.localScale *= Drive.Length * 1.1f / length;
+                root.position += mount - shoulder.position;
+            }
+            else root.SetPositionAndRotation(mount, Quaternion.LookRotation(forward, up));
+            root.SetParent(robot, true);
             robotArm = instance.AddComponent<RobotArm>();
             return instance.transform;
         }
@@ -261,8 +276,10 @@ namespace MoonThemedGame.Scavenger
             var lever = NearLever;
             if (!RobotUpgrades.HasArm || !robotArm) { hud.Notify(Loc.T("MANIPULATOR ARM REQUIRED - BUY IT IN SHOP")); return; }
             if (robotArm.Busy) return;
-            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T("ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
+            if (!robotArm.CanReach(lever)) { hud.Notify(Loc.T(lever.button ? "ARM CAN'T REACH - DRIVE CLOSER TO THE BUTTON" : "ARM CAN'T REACH - DRIVE CLOSER TO THE LEVER")); return; }
+            LocationMechanisms.Presser = robot.position;
             robotArm.Pull(lever);
+            if (lever.button) return;
             hud.Notify(Loc.T(lever.on ? "ARM: PUSHING LEVER DOWN" : "ARM: LIFTING LEVER"));
         }
 

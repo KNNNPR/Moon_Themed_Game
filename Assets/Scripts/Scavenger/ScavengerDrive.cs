@@ -51,6 +51,15 @@ namespace MoonThemedGame.Scavenger
         [Range(0, 2)] public float handbrakeYawBoost = 0.9f;
         [Range(0, 2)] public float speedDownforce = 1.25f;
 
+        [Header("Stability")]
+        [Tooltip("Wheel contacts whose normal points up less than this (world Y) are ignored as walls.")]
+        [Range(0, 1)] public float maxGroundSteepness = 0.3f;
+        [Tooltip("Body tilt (up.y) where traction starts to fade and where it is gone.")]
+        public Vector2 tractionTilt = new Vector2(0.8f, 0.55f);
+        [Tooltip("How far drive and brake forces are raised from the tyre contact toward the centre of mass; 1 = no pitching.")]
+        [Range(0, 1)] public float pitchFreeDrive = 0.9f;
+        [Range(0, 1)] public float rollFreeGrip = 0.6f;
+
         [Header("Body")]
         public float mass = 400;
         public float gravity = 4;
@@ -263,7 +272,8 @@ namespace MoonThemedGame.Scavenger
             if (!wheel.grounded) return;
             float compression = rest * 1.5f - wheel.length;
             float velocity = (previous - wheel.length) / dt;
-            float force = Mathf.Max(0, stiffness * compression + damper * velocity);
+            // Capped so a sudden nose-dive cannot fire the bot into the air off its own springs.
+            float force = Mathf.Clamp(stiffness * compression + damper * velocity, 0, stiffness * rest * 3);
             body.AddForceAtPosition(up * force, wheel.contact);
         }
 
@@ -277,6 +287,8 @@ namespace MoonThemedGame.Scavenger
             {
                 var hit = hits[i];
                 if (hit.distance <= 0 || System.Array.IndexOf(own, hit.collider) >= 0 || hit.collider.attachedRigidbody == body) continue;
+                // A wall face is not ground: standing on it is what lets the wheels drive up vertical surfaces.
+                if (hit.normal.y < maxGroundSteepness) continue;
                 if (hit.distance < distance) { distance = hit.distance; contact = hit.point; normal = hit.normal; }
             }
             return distance < float.MaxValue;
@@ -294,25 +306,31 @@ namespace MoonThemedGame.Scavenger
             // Keep momentum during a handbrake turn; deliberate reverse input still brakes.
             if(handbrake && input.y*driftSign>=0)accel*=0.35f;
             float support = Mathf.Clamp01(grounded/Mathf.Max(1f,wheels.Count*0.65f));
+            support *= Mathf.InverseLerp(tractionTilt.y, tractionTilt.x, transform.up.y);
             var planarVelocity=Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up);
             if(handbrake && planarVelocity.sqrMagnitude>0.0001f)
                 body.AddForce(-planarVelocity.normalized*Mathf.Min(handbrakeDeceleration*length,planarVelocity.magnitude/dt)*support,ForceMode.Acceleration);
             // Reference-step grip makes the small amount of tyre slip consistent at any physics rate.
 
             // Side slip is taken from the body's travel, not per wheel, so skid-steering still turns.
+            // Forces follow the body's own plane, not each contact's normal, so a steep contact cannot steer thrust upward.
+            var up = transform.up;
+            var drive = Vector3.ProjectOnPlane(forward, up).normalized;
+            var side = Vector3.Cross(up, drive);
+            var centre = body.worldCenterOfMass;
             foreach (var wheel in wheels)
             {
                 if (!wheel.grounded) continue;
-                var drive = Vector3.ProjectOnPlane(forward, wheel.normal).normalized;
-                var side = Vector3.Cross(wheel.normal, drive);
                 float slip = Vector3.Dot(body.linearVelocity, side);
                 float axleGrip=wheel.frontAxle?1:Mathf.Lerp(1,wheel.rearAxle?driftRearGrip:Mathf.Sqrt(driftRearGrip),drift);
                 float grip=(1-Mathf.Pow(Mathf.Max(0.001f,1-lateralGrip*axleGrip),dt/0.02f))/dt;
-                var force = drive * accel - side * slip * grip;
-                body.AddForceAtPosition(force * (body.mass * support / grounded), wheel.contact);
+                float share = body.mass * support / grounded;
+                // Hard braking at tyre height tips the bot over its nose; raise the push toward the centre of mass.
+                float height = Vector3.Dot(centre - wheel.contact, up);
+                body.AddForceAtPosition(drive * accel * share, wheel.contact + up * (height * pitchFreeDrive));
+                body.AddForceAtPosition(-side * slip * grip * share, wheel.contact + up * (height * rollFreeGrip));
             }
 
-            var up = transform.up;
             float yaw = Vector3.Dot(body.angularVelocity, up);
             // Signed speed reverses the steering in reverse, just like an RC car.
             // Stationary steering turns the front wheels without spinning the whole rover.

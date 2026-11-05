@@ -6,6 +6,7 @@ namespace MoonThemedGame.Scavenger
 {
     // A lever the robot can pull with its manipulator arm ([E] in the feed when close).
     // Put it on any object; `handle` swings between the two angles around its local X axis.
+    // With `button` set it is a push button instead: the arm presses it and the cap dips in.
     public sealed class RobotLever : MonoBehaviour
     {
         static readonly List<RobotLever> all = new List<RobotLever>();
@@ -19,9 +20,16 @@ namespace MoonThemedGame.Scavenger
         [Min(0.05f)] public float pullTime = 0.6f;
         public bool on;
 
+        [Header("Push button")]
+        public bool button;
+        public string label = "LEVER";
+        public Vector3 pressAxis;
+        public float pressDepth;
+
         public event Action<RobotLever> Pulled;
 
-        float angle;
+        float angle, pressed = 1;
+        Vector3 rest;
         Material lampMaterial;
 
         public static IReadOnlyList<RobotLever> All => all;
@@ -50,14 +58,32 @@ namespace MoonThemedGame.Scavenger
             return best;
         }
 
+        public void MakeButton(string name, Vector3 axis, float depth)
+        {
+            button = true;
+            label = name;
+            pressAxis = axis.normalized;
+            pressDepth = depth;
+            pullTime = 0.3f;
+            rest = transform.position;
+        }
+
         public void Pull()
         {
+            if (button) pressed = 0;
             on = !on;
             Pulled?.Invoke(this);
         }
 
         void Update()
         {
+            if (button)
+            {
+                if (pressed >= 1) return;
+                pressed = Mathf.MoveTowards(pressed, 1, Time.deltaTime / 0.35f);
+                transform.position = rest + pressAxis * (pressDepth * Mathf.Sin(pressed * Mathf.PI));
+                return;
+            }
             float target = on ? onAngle : offAngle;
             angle = Mathf.MoveTowards(angle, target, Mathf.Abs(onAngle - offAngle) / pullTime * Time.deltaTime);
             Apply();

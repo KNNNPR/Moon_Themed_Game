@@ -335,11 +335,12 @@ namespace MoonThemedGame.Scavenger
             if (lever && signal && state && state.Status == RobotStatus.Online)
             {
                 bool reach = RobotUpgrades.HasArm && link.ArmCanReach(lever);
-                string prompt = !RobotUpgrades.HasArm ? Loc.T("LEVER - MANIPULATOR ARM REQUIRED (SHOP)")
+                string prompt = !RobotUpgrades.HasArm ? Loc.T(lever.button ? "BUTTON - MANIPULATOR ARM REQUIRED (SHOP)" : "LEVER - MANIPULATOR ARM REQUIRED (SHOP)")
                     : link.ArmBusy ? Loc.T("ARM ENGAGED...")
+                    : reach && lever.button ? Loc.F("[E] PRESS BUTTON - {0}", Loc.T(lever.label))
                     : reach ? Loc.F("[E] PULL LEVER  ({0})", Loc.T(lever.on ? "ON" : "OFF"))
-                    : Loc.T("LEVER - DRIVE CLOSER, ARM CAN'T REACH");
-                InteractionHud.Prompt(Screen.width/2f,Screen.height*0.7f,GameControls.FormatPrompt(prompt),16);
+                    : Loc.T(lever.button ? "BUTTON - DRIVE CLOSER, ARM CAN'T REACH" : "LEVER - DRIVE CLOSER, ARM CAN'T REACH");
+                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, reach || link.ArmBusy ? phosphor : warning, 41, Centered(text));
             }
             var salvage = link.Salvage;
             if (!lever && salvage && salvage.Near && signal && state && state.Status == RobotStatus.Online)

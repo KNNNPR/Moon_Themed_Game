@@ -12,18 +12,30 @@ namespace MoonThemedGame.Repair
         [Range(0.1f, 0.9f)] public float grabAt = 0.62f;
         [Tooltip("Gap in metres between the robot top and the grip when it closes.")]
         [Min(0f)] public float gripClearance = 0.02f;
+        [Tooltip("Height of the parked grip above the repair stand, in metres.")]
+        [Min(0.1f)] public float parkedGripHeight = 11f;
+        [Tooltip("Seconds to lift the attached robot back to the parked height.")]
+        [Min(0.1f)] public float liftDuration = 2f;
+        [Tooltip("Clearance from the ceiling to the lowest point of the robot before removal.")]
+        [Min(0f)] public float ceilingClearance = 0.15f;
         public bool IsBusy { get; private set; }
+        public bool IsReady { get; private set; }
 
         RepairRobotTarget candidate, carried;
         bool attached;
-        Vector3 contactCorrection, appliedCorrection;
-        int takeState, idleState;
+        float liftElapsed;
+        Vector3 parkedGrip, contactGrip, exitGrip, appliedCorrection;
+        int takeState;
 
         public static void ConnectScene(RepairRobotDropper source)
         {
             // Explicit room names: merely spawning a crane never starts a collection.
             var host = GameObject.Find("Cran");
-            if (!host || host.scene != source.gameObject.scene) return;
+            if (!host || host.scene != source.gameObject.scene)
+            {
+                Debug.LogWarning("Repair crane 'Cran' is missing or inactive in the repair bay scene.", source);
+                return;
+            }
             var pickup = host.GetComponent<RepairCranePickup>();
             if (!pickup) pickup = host.AddComponent<RepairCranePickup>();
             pickup.dropper = source;
@@ -48,51 +60,50 @@ namespace MoonThemedGame.Repair
                 }
         }
 
-        void Awake()
-        {
-            if (!craneAnimator) craneAnimator = GetComponentInChildren<Animator>();
-            InitializeIdle();
-        }
-
         void InitializeIdle()
         {
             takeState = Animator.StringToHash("Base Layer.Take");
-            idleState = Animator.StringToHash("Base Layer.Nothing");
-            if (!craneAnimator || !craneAnimator.runtimeAnimatorController) return;
+            if (!craneAnimator || !craneAnimator.runtimeAnimatorController || !grip) return;
             craneAnimator.enabled = true;
             craneAnimator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
             craneAnimator.Rebind();
             craneAnimator.Update(0f);
-            if (craneAnimator.HasState(0, idleState))
+            IsReady = craneAnimator.HasState(0, takeState);
+            if (!IsReady)
             {
-                craneAnimator.Play(idleState, 0, 0f);
-                craneAnimator.Update(0f);
+                Debug.LogWarning("Repair crane animator has no Base Layer.Take state.", this);
+                return;
             }
+            var anchor = dropper.landingPoint ? dropper.landingPoint : dropper.transform;
+            parkedGrip = anchor.position + Vector3.up * parkedGripHeight;
+            Park();
+        }
+
+        void Park()
+        {
+            RemoveContactCorrection();
             craneAnimator.speed = 0f;
+            craneAnimator.Play(takeState, 0, 0f);
+            craneAnimator.Update(0f);
+            MoveGripTo(parkedGrip);
         }
 
         public bool TryCollect()
         {
-            if (IsBusy || !dropper || !craneAnimator || !grip ||
-                !craneAnimator.runtimeAnimatorController || !craneAnimator.HasState(0, takeState)) return false;
+            if (IsBusy || !IsReady || !dropper || !craneAnimator || !grip) return false;
             var robot = dropper.CurrentRobot;
             if (!robot || !robot.TryReserveCollection()) return false;
             if (carried) Destroy(carried.gameObject); // Previous completed delivery.
             candidate = robot;
             attached = false;
+            liftElapsed = 0f;
             RemoveContactCorrection();
             IsBusy = true;
             craneAnimator.enabled = true;
-            // Sample the grasp pose before the first rendered animation frame.
-            // Move the crane down to the robot instead of moving the robot up to it.
-            craneAnimator.speed = 0f;
-            craneAnimator.Play(takeState, 0, grabAt);
-            craneAnimator.Update(0f);
-            float gap = grip.position.y - RobotTop(candidate).y - gripClearance;
-            contactCorrection = Vector3.down * Mathf.Max(0f, gap);
+            Bounds bounds = RobotBounds(candidate);
+            contactGrip = new Vector3(bounds.center.x, bounds.max.y + gripClearance, bounds.center.z);
+            Park();
             craneAnimator.speed = 1f;
-            craneAnimator.Play(takeState, 0, 0f);
-            craneAnimator.Update(0f);
             return true;
         }
 
@@ -109,59 +120,112 @@ namespace MoonThemedGame.Repair
             appliedCorrection = Vector3.zero;
         }
 
-        void ApplyContactCorrection(float phase)
+        void MoveGripTo(Vector3 position)
         {
-            float amount = phase <= grabAt
-                ? Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(phase / grabAt))
-                : 1f - Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((phase - grabAt) / (1f - grabAt)));
-            appliedCorrection = contactCorrection * amount;
-            craneAnimator.transform.position += appliedCorrection;
+            var offset = position - grip.position;
+            craneAnimator.transform.position += offset;
+            appliedCorrection += offset;
         }
 
-        static Vector3 RobotTop(RepairRobotTarget robot)
+        void ApplyDescent(float phase, float reach)
+        {
+            float amount = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(phase / reach));
+            // The clip animates the claws and arm, while the grip follows the live repair bay.
+            MoveGripTo(Vector3.Lerp(parkedGrip, contactGrip, amount));
+        }
+
+        static Bounds RobotBounds(RepairRobotTarget robot)
         {
             Bounds bounds = new Bounds(robot.transform.position, Vector3.zero);
             bool first = true;
             foreach (var renderer in robot.GetComponentsInChildren<MeshRenderer>())
             {
-                if (renderer.name.StartsWith("Interaction /")) continue;
+                if (!renderer.enabled || renderer.name.StartsWith("Interaction /")) continue;
                 if (first) { bounds = renderer.bounds; first = false; }
                 else bounds.Encapsulate(renderer.bounds);
             }
-            return new Vector3(bounds.center.x, bounds.max.y, bounds.center.z);
+            return bounds;
         }
 
         void LateUpdate()
         {
             if (!IsBusy) return;
             if (!candidate || !craneAnimator || !grip) { Cancel(); return; }
+            float reach = Mathf.Clamp(grabAt, 0.1f, 0.9f);
+            if (attached)
+            {
+                AdvanceLift(reach);
+                return;
+            }
             var state = craneAnimator.GetCurrentAnimatorStateInfo(0);
             if (state.fullPathHash != takeState) { Cancel(); return; }
-            if (!attached && state.normalizedTime >= grabAt)
+            if (state.normalizedTime < reach)
             {
-                if (!candidate.IsRepaired) { Cancel(); return; }
-                // Grasp at the sampled contact pose even if a frame steps past it.
-                craneAnimator.Play(takeState, 0, grabAt);
-                craneAnimator.Update(0f);
-                state = craneAnimator.GetCurrentAnimatorStateInfo(0);
-                ApplyContactCorrection(grabAt);
-                Attach();
+                ApplyDescent(state.normalizedTime, reach);
+                return;
             }
-            else ApplyContactCorrection(Mathf.Clamp01(state.normalizedTime));
-            if (state.normalizedTime < 0.995f) return;
-            // Take is a looping asset: explicitly hold its last pose after one cycle.
+
+            if (!candidate.IsRepaired) { Cancel(); return; }
+            // Grasp at the contact pose even if a frame steps past it.
+            RemoveContactCorrection();
+            craneAnimator.speed = 0f;
+            craneAnimator.Play(takeState, 0, reach);
+            craneAnimator.Update(0f);
+            MoveGripTo(contactGrip);
+            Attach();
+            PrepareExit(reach);
+        }
+
+        float FindCeilingHeight()
+        {
+            // Start just above the repaired robot and look for an overhead surface.
+            float height = float.PositiveInfinity;
+            foreach (var hit in Physics.RaycastAll(contactGrip, Vector3.up, 30f,
+                         Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (hit.collider.attachedRigidbody || hit.transform.IsChildOf(transform) ||
+                    hit.transform.IsChildOf(candidate.transform) || hit.normal.y > -0.5f) continue;
+                height = Mathf.Min(height, hit.point.y);
+            }
+            // Open bays and ceilings without colliders still lift the whole robot past
+            // the previous parking plane before removing it.
+            return float.IsPositiveInfinity(height) ? parkedGrip.y : height;
+        }
+
+        void PrepareExit(float reach)
+        {
+            float ceilingY = FindCeilingHeight();
+            // Measure the robot at the final wrist rotation, not at the pickup pose.
+            // Both samples happen in this LateUpdate before rendering.
             RemoveContactCorrection();
             craneAnimator.Play(takeState, 0, 0.999f);
             craneAnimator.Update(0f);
-            craneAnimator.speed = 0f;
-            if (attached)
-            {
-                dropper.ForgetCollectedRobot(candidate);
-                candidate.gameObject.SetActive(false);
-                Destroy(candidate.gameObject);
-                carried = null;
-            }
-            else candidate.CancelCollection();
+            MoveGripTo(parkedGrip);
+            exitGrip = parkedGrip;
+            exitGrip.y = Mathf.Max(contactGrip.y + 0.1f,
+                parkedGrip.y + ceilingY + ceilingClearance - RobotBounds(candidate).min.y);
+
+            RemoveContactCorrection();
+            craneAnimator.Play(takeState, 0, reach);
+            craneAnimator.Update(0f);
+            MoveGripTo(contactGrip);
+        }
+
+        void AdvanceLift(float reach)
+        {
+            liftElapsed += Time.deltaTime;
+            float progress = Mathf.Clamp01(liftElapsed / Mathf.Max(0.1f, liftDuration));
+            RemoveContactCorrection();
+            // Take loops at 1. Sample the final pose just before the wrap.
+            craneAnimator.Play(takeState, 0, Mathf.Lerp(reach, 0.999f, progress));
+            craneAnimator.Update(0f);
+            MoveGripTo(Vector3.Lerp(contactGrip, exitGrip, Mathf.SmoothStep(0f, 1f, progress)));
+            if (progress < 1f) return;
+
+            if (dropper) dropper.ForgetCollectedRobot(candidate);
+            candidate.gameObject.SetActive(false);
+            Destroy(candidate.gameObject);
+            carried = null;
             candidate = null;
             IsBusy = false;
         }
@@ -200,7 +264,8 @@ namespace MoonThemedGame.Repair
             }
             candidate = null;
             IsBusy = false;
-            if (craneAnimator) craneAnimator.speed = 0f;
+            if (IsReady && craneAnimator && grip) Park();
+            else if (craneAnimator) craneAnimator.speed = 0f;
         }
 
         void OnDisable()

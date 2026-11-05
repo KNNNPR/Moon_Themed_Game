@@ -16,8 +16,8 @@ namespace MoonThemedGame.Repair
     [DisallowMultipleComponent]
     public sealed class RepairRobotTarget : Interactable
     {
-        sealed class Slot { public GameObject visual; public int part; }
-        readonly List<Slot> slots = new List<Slot>();
+        internal sealed class Slot { public GameObject visual; public int part; }
+        List<Slot> slots = new List<Slot>();
         readonly Dictionary<GameObject, List<RepairBolt>> loose = new Dictionary<GameObject, List<RepairBolt>>();
         sealed class Proud { public Vector3 home, offset; public int hits; }
         readonly Dictionary<GameObject, Proud> proud = new Dictionary<GameObject, Proud>();
@@ -70,27 +70,36 @@ namespace MoonThemedGame.Repair
             }
         }
 
-        public void Initialize(RepairPartDefinition[] parts, int minimum, int maximum, int seed)
+        internal static List<Slot> FindSlots(Transform model, RepairPartDefinition[] parts)
         {
-            definitions = parts;
-            slots.Clear();
-            ClearBolts();
-            initialized = false;
-            IsBeingCollected = false;
-            foreach (Transform child in transform)
+            var slots = new List<Slot>();
+            foreach (Transform child in model)
             {
                 string name = child.name.Split('.')[0];
                 for (int p = 0; p < parts.Length; p++)
                 {
                     if (parts[p] == null || !parts[p].prefab ||
                         !string.Equals(name, parts[p].prefab.name, StringComparison.OrdinalIgnoreCase)) continue;
-                    child.gameObject.SetActive(true);
                     slots.Add(new Slot { visual = child.gameObject, part = p });
                     break;
                 }
             }
+            return slots;
+        }
+
+        public void Initialize(RepairPartDefinition[] parts, int minimum, int maximum, int seed)
+            => Initialize(parts, minimum, maximum, seed, null);
+
+        internal void Initialize(RepairPartDefinition[] parts, int minimum, int maximum, int seed, int[] missingSlots)
+        {
+            definitions = parts;
+            ClearBolts();
+            initialized = false;
+            IsBeingCollected = false;
+            slots = FindSlots(transform, parts);
             if (slots.Count == 0) throw new InvalidOperationException("Robot has no part slots matching Prefabs/Parts.");
-            foreach (int index in RepairDamagePlan.Select(slots.Count, minimum, maximum, seed))
+            foreach (var slot in slots) slot.visual.SetActive(true);
+            foreach (int index in missingSlots ?? RepairDamagePlan.Select(slots.Count, minimum, maximum, seed))
                 slots[index].visual.SetActive(false);
             initialized = true;
             interactionDistance = 4f;
