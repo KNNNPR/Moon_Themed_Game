@@ -123,6 +123,11 @@ namespace MoonThemedGame
             { "Satellite 2", "Спутник 2" },
             { "Satellite 3", "Спутник 3" },
             { "Open settings", "Открыть настройки" },
+            { "Reset robot camera", "Вернуть камеру робота" },
+            { "Robot handbrake", "Ручник робота" },
+            { "Right overturned robot", "Перевернуть бота на колёса" },
+            { "[{0}] RIGHT THE ROBOT", "[{0}] ПОСТАВИТЬ БОТА НА КОЛЁСА" },
+            { "ROBOT BACK ON WHEELS", "БОТ СНОВА НА КОЛЁСАХ" },
 
             // Interaction prompts
             { "E — Interact", "E — Взаимодействовать" },
@@ -261,6 +266,7 @@ namespace MoonThemedGame
             { "OFF", "ВЫКЛ" },
             { "LEVER - DRIVE CLOSER, ARM CAN'T REACH", "РЫЧАГ - ПОДЪЕДЬТЕ БЛИЖЕ, РУКА НЕ ДОСТАЁТ" },
             { "{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", "{0} - ЕХАТЬ   {1} - СПУТНИК   [{2}] - ТЮНЕР   ESC - К ПК" },
+            { "[{0}] HANDBRAKE   MOUSE / RIGHT STICK - LOOK   [{1}] / MMB - RECENTER", "[{0}] РУЧНИК   МЫШЬ / ПРАВЫЙ СТИК - ОБЗОР   [{1}] / СКМ - ВЕРНУТЬ КАМЕРУ" },
             { "  COVER {0}%", "  УКРЫТИЕ {0}%" },
             { "LINK BASE RELAY  Q {0}%{1}", "КАНАЛ РЕТРАНСЛЯТОР БАЗЫ  К {0}%{1}" },
             { "SAT NONE", "СПУТНИК НЕТ" },

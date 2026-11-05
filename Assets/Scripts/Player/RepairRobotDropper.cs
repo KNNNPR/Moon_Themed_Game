@@ -119,7 +119,6 @@ namespace MoonThemedGame.Repair
             // must not contribute springs, and wheel radii must be in world metres.
             var drive = spawned.AddComponent<ScavengerDrive>();
             drive.controllable = false;
-            drive.autoRecover = false;
             drive.mass = robotMass;
             drive.gravity = gravity;
             drive.travel = suspensionTravel;

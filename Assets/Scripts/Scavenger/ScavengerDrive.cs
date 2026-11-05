@@ -6,8 +6,8 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Rigidbody rover with a sphere-cast spring per wheel: W/S throttle, A/D skid-steer.
-    // Throttle and steering ramp in and out, so the robot has weight. Each wheel is a sphere
+    // Arcade rally dynamics on the existing sphere-cast wheel suspension.
+    // Each wheel is a sphere
     // of its own radius, so its rim catches the edge of a step and rolls up onto it like a
     // car onto a curb (up to about one wheel radius). Where no collider is found the
     // hangar floor height acts as ground, so the robot never falls through the level.
@@ -22,19 +22,34 @@ namespace MoonThemedGame.Scavenger
             public Quaternion restRotation;
             public float radius, length, spin, visualLift;
             public bool grounded;
+            public bool frontAxle;
+            public bool rearAxle;
             public Vector3 contact, normal;
         }
 
         [Header("Drive (robot lengths)")]
-        public float maxSpeed = 1.3f;
-        public float reverseFactor = 0.6f;
-        public float acceleration = 1.1f;
-        public float turnSpeed = 70;
+        public float maxSpeed = 4.2f;
+        public float reverseFactor = 0.5f;
+        public float acceleration = 4.1f;
+        [Tooltip("Maximum yaw speed in degrees per second; steering follows a car-like arc.")]
+        public float turnSpeed = 165;
         [Tooltip("How fast throttle follows the keys, per second.")]
-        public float throttleResponse = 1.6f;
-        public float steerResponse = 3;
-        [Range(0, 1)] public float lateralGrip = 0.6f;
-        public float coastDrag = 0.8f;
+        public float throttleResponse = 12;
+        public float steerResponse = 16;
+        [Range(0, 1)] public float lateralGrip = 0.14f;
+        public float coastDrag = 0.6f;
+        [Min(0)] public float rollingResistance = 0.18f;
+        [Min(0.1f)] public float braking = 8.5f;
+        [Range(5, 55)] public float steeringAngle = 35;
+        [Range(0, 0.8f)] public float highSpeedSteeringReduction = 0.5f;
+        [Min(1)] public float yawResponse = 16;
+
+        [Header("Rally / handbrake")]
+        [Range(0.05f, 1)] public float driftRearGrip = 0.07f;
+        [Min(0.1f)] public float gripRecovery = 2.1f;
+        [Min(0)] public float handbrakeDeceleration = 0.7f;
+        [Range(0, 2)] public float handbrakeYawBoost = 0.9f;
+        [Range(0, 2)] public float speedDownforce = 1.25f;
 
         [Header("Body")]
         public float mass = 400;
@@ -45,14 +60,17 @@ namespace MoonThemedGame.Scavenger
 
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
-        [Tooltip("Automatically right an overturned rover. Disable for damaged repair deliveries.")]
-        public bool autoRecover = true;
+        [Min(0.1f)] public float recoveryDelay = 0.6f;
 
         readonly List<Wheel> wheels = new List<Wheel>();
         readonly RaycastHit[] hits = new RaycastHit[16];
+        readonly Collider[] recoveryOverlaps = new Collider[32];
         Rigidbody body;
+        BoxCollider hull;
         Collider[] own;
-        float throttle, steer, length, groundHeight, stiffness, damper, upsideDown;
+        float throttle, steer, length, wheelBase, groundHeight, stiffness, damper, overturnedFor;
+        float drift, restClearance, driftSign=1;
+        bool wasHandbrake;
 
         public float Length => length;
         public Vector3 Forward => transform.TransformDirection(localForward);
@@ -66,6 +84,25 @@ namespace MoonThemedGame.Scavenger
             }
         }
         public float ForwardSpeed => body ? Vector3.Dot(body.linearVelocity, Forward) : 0;
+        public Rigidbody Body => body;
+        public float MaximumForwardSpeed => maxSpeed * length;
+        public bool IsOverturned => body && Vector3.Dot(transform.up,Vector3.up)<0.25f;
+        public float DriftAmount => drift;
+        public bool IsForwardDrift => drift>0.1f && driftSign>0;
+        public float SlipAngle
+        {
+            get
+            {
+                if(!body)return 0;
+                var velocity=Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up);
+                return velocity.sqrMagnitude>length*length*0.01f ? Vector3.SignedAngle(Heading,velocity,Vector3.up) : 0;
+            }
+        }
+        public bool CanRecover => controllable && IsOverturned && overturnedFor>=recoveryDelay &&
+            body.linearVelocity.sqrMagnitude<length*length && body.angularVelocity.sqrMagnitude<6.25f &&
+            TryRecoveryPose(out _,out _);
+        public float CurrentSteeringAngle => steer * steeringAngle * Mathf.Lerp(1, 1-highSpeedSteeringReduction,
+            Mathf.Clamp01(Mathf.Abs(ForwardSpeed)/Mathf.Max(0.01f, MaximumForwardSpeed)));
 
         public void Setup(Vector3 forward)
         {
@@ -75,6 +112,7 @@ namespace MoonThemedGame.Scavenger
             var world = WorldBounds(renderers);
             length = Mathf.Max(world.size.x, world.size.z);
             groundHeight = world.min.y;
+            restClearance = transform.position.y-world.min.y;
 
             foreach (var c in GetComponentsInChildren<Collider>()) c.enabled = false;
             var axle = Vector3.Cross(transform.up, Forward).normalized;
@@ -98,8 +136,20 @@ namespace MoonThemedGame.Scavenger
             }
 
             float wheelRadius = wheels.Count > 0 ? wheels[0].radius : world.size.y * 0.25f;
+            float front = float.MinValue, rear = float.MaxValue;
+            foreach (var wheel in wheels)
+            {
+                float along = Vector3.Dot(transform.TransformPoint(wheel.anchor)-world.center, Forward.normalized);
+                front = Mathf.Max(front, along); rear = Mathf.Min(rear, along);
+            }
+            wheelBase = wheels.Count > 1 ? Mathf.Max(length * 0.35f, front-rear) : length * 0.6f;
+            foreach (var wheel in wheels)
+            {
+                wheel.frontAxle = Vector3.Dot(transform.TransformPoint(wheel.anchor)-world.center, Forward.normalized) >= front-wheelBase*0.2f;
+                wheel.rearAxle = Vector3.Dot(transform.TransformPoint(wheel.anchor)-world.center, Forward.normalized) <= rear+wheelBase*0.2f;
+            }
             foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
-            var hull = gameObject.AddComponent<BoxCollider>();
+            hull = gameObject.AddComponent<BoxCollider>();
             float bottom = local.min.y + wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y);
             hull.center = new Vector3(local.center.x, (bottom + local.max.y) * 0.5f, local.center.z);
             hull.size = new Vector3(local.size.x * 0.85f, Mathf.Max(0.01f, local.max.y - bottom), local.size.z * 0.85f);
@@ -116,9 +166,9 @@ namespace MoonThemedGame.Scavenger
             body.interpolation = RigidbodyInterpolation.Interpolate;
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             body.linearDamping = 0.05f;
-            body.angularDamping = 3f;
+            body.angularDamping = 1.5f;
             body.solverIterations = 12;
-            body.centerOfMass = transform.InverseTransformPoint(new Vector3(world.center.x, world.min.y + wheelRadius, world.center.z));
+            body.centerOfMass = transform.InverseTransformPoint(new Vector3(world.center.x, world.min.y + wheelRadius*0.65f, world.center.z));
 
             int count = Mathf.Max(1, wheels.Count);
             float sag = travel * wheelRadius * 0.5f;
@@ -155,7 +205,8 @@ namespace MoonThemedGame.Scavenger
 
         public void PlaceAt(Vector3 position, Quaternion rotation)
         {
-            throttle = steer = 0;
+            throttle = steer = drift = overturnedFor = 0;
+            wasHandbrake=false;driftSign=1;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.position = position;
@@ -165,11 +216,23 @@ namespace MoonThemedGame.Scavenger
 
         void FixedUpdate()
         {
-            if (!body) return;
-            float dt = Time.fixedDeltaTime;
-            var input = controllable ? ReadInput() : Vector2.zero;
+            SimulateStep(ReadInput(), Time.fixedDeltaTime, ReadHandbrake());
+        }
+
+        // Also accepts external vehicle input (touch controls, AI or a deterministic physics run).
+        public void SimulateStep(Vector2 input, float dt, bool handbrake=false)
+        {
+            if (!body || dt <= 0) return;
+            input = controllable && !IsOverturned ? new Vector2(Mathf.Clamp(input.x,-1,1),Mathf.Clamp(input.y,-1,1)) : Vector2.zero;
+            handbrake &= controllable && !IsOverturned;
+            if(handbrake && !wasHandbrake)driftSign=ForwardSpeed<0?-1:1;
+            wasHandbrake=handbrake;
+            float planarSpeed=Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up).magnitude;
+            float driftTarget=handbrake && planarSpeed>length*0.4f ? 1 : 0;
+            drift=Mathf.MoveTowards(drift,driftTarget,(driftTarget>drift?7:gripRecovery)*dt);
+            overturnedFor=IsOverturned?overturnedFor+dt:0;
             throttle = Mathf.MoveTowards(throttle, input.y, throttleResponse * dt);
-            steer = Mathf.MoveTowards(steer, input.x, steerResponse * dt);
+            steer = Mathf.MoveTowards(steer, input.x, steerResponse * (Mathf.Abs(input.x)<0.01f?1.3f:1) * dt);
 
             body.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
             int grounded = 0;
@@ -179,8 +242,15 @@ namespace MoonThemedGame.Scavenger
                 Suspension(wheel, up, dt);
                 if (wheel.grounded) grounded++;
             }
-            if (grounded > 0) Traction(grounded);
-            if (autoRecover) KeepUpright(dt);
+            if (grounded > 0 && !IsOverturned)
+            {
+                Traction(grounded, input, dt, handbrake);
+                if(grounded>=2 && Vector3.Dot(up,Vector3.up)>0.5f)
+                {
+                    float speed=Mathf.Clamp01(Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up).magnitude/Mathf.Max(0.01f,MaximumForwardSpeed));
+                    body.AddForce(-up*gravity*speedDownforce*speed*speed,ForceMode.Acceleration);
+                }
+            }
         }
 
         // `length` is how far the wheel centre hangs below its mount point.
@@ -221,14 +291,22 @@ namespace MoonThemedGame.Scavenger
             return true;
         }
 
-        void Traction(int grounded)
+        void Traction(int grounded, Vector2 input, float dt, bool handbrake)
         {
             var forward = Forward;
             float speed = Vector3.Dot(body.linearVelocity, forward);
-            float limit = maxSpeed * length * (throttle < 0 ? reverseFactor : 1);
-            float accel = throttle * acceleration * length;
-            if (Mathf.Abs(speed) > limit && Mathf.Sign(speed) == Mathf.Sign(throttle)) accel = 0;
-            if (Mathf.Approximately(throttle, 0)) accel = -speed * coastDrag;
+            float limit = MaximumForwardSpeed * (throttle < 0 ? reverseFactor : 1);
+            float rate = (speed * input.y < -length*0.02f || !controllable) ? braking : acceleration;
+            float accel = Mathf.Clamp((throttle*limit-speed)/dt, -rate*length, rate*length);
+            if (controllable && Mathf.Abs(input.y)<0.01f)
+                accel = Mathf.Clamp((-speed*coastDrag-Mathf.Sign(speed)*rollingResistance*length)*(handbrake?0.15f:1), -Mathf.Abs(speed)/dt, Mathf.Abs(speed)/dt);
+            // Keep momentum during a handbrake turn; deliberate reverse input still brakes.
+            if(handbrake && input.y*driftSign>=0)accel*=0.35f;
+            float support = Mathf.Clamp01(grounded/Mathf.Max(1f,wheels.Count*0.65f));
+            var planarVelocity=Vector3.ProjectOnPlane(body.linearVelocity,Vector3.up);
+            if(handbrake && planarVelocity.sqrMagnitude>0.0001f)
+                body.AddForce(-planarVelocity.normalized*Mathf.Min(handbrakeDeceleration*length,planarVelocity.magnitude/dt)*support,ForceMode.Acceleration);
+            // Reference-step grip makes the small amount of tyre slip consistent at any physics rate.
 
             // Side slip is taken from the body's travel, not per wheel, so skid-steering still turns.
             foreach (var wheel in wheels)
@@ -237,22 +315,55 @@ namespace MoonThemedGame.Scavenger
                 var drive = Vector3.ProjectOnPlane(forward, wheel.normal).normalized;
                 var side = Vector3.Cross(wheel.normal, drive);
                 float slip = Vector3.Dot(body.linearVelocity, side);
-                var force = drive * accel - side * slip * lateralGrip / Time.fixedDeltaTime;
-                body.AddForceAtPosition(force * (body.mass / grounded), wheel.contact);
+                float axleGrip=wheel.frontAxle?1:Mathf.Lerp(1,wheel.rearAxle?driftRearGrip:Mathf.Sqrt(driftRearGrip),drift);
+                float grip=(1-Mathf.Pow(Mathf.Max(0.001f,1-lateralGrip*axleGrip),dt/0.02f))/dt;
+                var force = drive * accel - side * slip * grip;
+                body.AddForceAtPosition(force * (body.mass * support / grounded), wheel.contact);
             }
 
             var up = transform.up;
             float yaw = Vector3.Dot(body.angularVelocity, up);
-            float wanted = steer * turnSpeed * Mathf.Deg2Rad;
-            body.AddTorque(up * (wanted - yaw) * 3, ForceMode.Acceleration);
+            // Signed speed reverses the steering in reverse, just like an RC car.
+            // Stationary steering turns the front wheels without spinning the whole rover.
+            // Preserve the entry direction while sliding sideways; crossing 90 degrees must
+            // not reverse the steering servo and cancel a handbrake U-turn.
+            float steeringSpeed=Mathf.Lerp(speed,planarVelocity.magnitude*driftSign,drift);
+            float wanted = Mathf.Clamp(steeringSpeed / Mathf.Max(0.01f,wheelBase) * Mathf.Tan(CurrentSteeringAngle*Mathf.Deg2Rad)*(1+handbrakeYawBoost*drift),
+                -turnSpeed*Mathf.Deg2Rad, turnSpeed*Mathf.Deg2Rad);
+            float yawAccel = Mathf.Clamp((wanted-yaw)*yawResponse, -Mathf.PI*5, Mathf.PI*5);
+            body.AddTorque(up*yawAccel*support, ForceMode.Acceleration);
         }
 
-        void KeepUpright(float dt)
+        public bool RecoverUpright()
         {
-            upsideDown = Vector3.Dot(transform.up, Vector3.up) < 0.3f ? upsideDown + dt : 0;
-            if (upsideDown < 2.5f) return;
-            upsideDown = 0;
-            PlaceAt(body.position + Vector3.up * length * 0.5f, Quaternion.LookRotation(Heading) * Quaternion.Inverse(Quaternion.LookRotation(localForward)));
+            if(!CanRecover || !TryRecoveryPose(out var position,out var rotation))return false;
+            PlaceAt(position,rotation);
+            return true;
+        }
+
+        bool TryRecoveryPose(out Vector3 position,out Quaternion rotation)
+        {
+            position=Vector3.zero;
+            rotation=Quaternion.LookRotation(Heading,Vector3.up)*Quaternion.Inverse(Quaternion.LookRotation(localForward,Vector3.up));
+            var origin=body.worldCenterOfMass+Vector3.up*length*0.1f;
+            int count=Physics.RaycastNonAlloc(origin,Vector3.down,hits,length,~0,QueryTriggerInteraction.Ignore);
+            float nearest=float.MaxValue;
+            for(int i=0;i<count;i++)
+            {
+                var hit=hits[i];
+                if(hit.collider.attachedRigidbody==body || hit.transform.IsChildOf(transform) || hit.normal.y<0.45f)continue;
+                if(hit.distance<nearest) { nearest=hit.distance;position=hit.point; }
+            }
+            if(nearest==float.MaxValue)return false;
+            position=new Vector3(body.position.x,position.y+restClearance+length*0.08f,body.position.z);
+            var scale=transform.lossyScale;
+            var center=position+rotation*Vector3.Scale(hull.center,scale);
+            var half=Vector3.Scale(hull.size,new Vector3(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z)))*0.48f;
+            count=Physics.OverlapBoxNonAlloc(center,half,recoveryOverlaps,rotation,~0,QueryTriggerInteraction.Ignore);
+            if(count==recoveryOverlaps.Length)return false;
+            for(int i=0;i<count;i++)
+                if(recoveryOverlaps[i].attachedRigidbody!=body && !recoveryOverlaps[i].transform.IsChildOf(transform))return false;
+            return true;
         }
 
         void LateUpdate()
@@ -266,9 +377,10 @@ namespace MoonThemedGame.Scavenger
                 var parent = wheel.transform.parent;
                 wheel.spin += speed / Mathf.Max(0.01f, wheel.radius) * Mathf.Rad2Deg * Time.deltaTime;
                 var spin = Quaternion.AngleAxis(wheel.spin, wheel.axleInParent);
+                var turn = Quaternion.AngleAxis(wheel.frontAxle ? CurrentSteeringAngle : 0, parent.InverseTransformDirection(up));
                 var offset = parent.InverseTransformVector(up * wheel.visualLift);
-                wheel.transform.localPosition = wheel.centerInParent + offset + spin * wheel.pivotInParent;
-                wheel.transform.localRotation = spin * wheel.restRotation;
+                wheel.transform.localPosition = wheel.centerInParent + offset + turn * spin * wheel.pivotInParent;
+                wheel.transform.localRotation = turn * spin * wheel.restRotation;
             }
         }
 
@@ -277,11 +389,21 @@ namespace MoonThemedGame.Scavenger
             var input = Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
             var keys = Keyboard.current;
-            if (keys == null) return input;
-            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Forward)) input.y += 1;
-            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Backward)) input.y -= 1;
-            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Right)) input.x += 1;
-            if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Left)) input.x -= 1;
+            if (keys != null)
+            {
+                if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Forward)) input.y += 1;
+                if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Backward)) input.y -= 1;
+                if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Right)) input.x += 1;
+                if (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Left)) input.x -= 1;
+            }
+            if (Gamepad.current != null)
+            {
+                var stick=Gamepad.current.leftStick.ReadValue();
+                float triggers=Gamepad.current.rightTrigger.ReadValue()-Gamepad.current.leftTrigger.ReadValue();
+                if(Mathf.Abs(triggers)>Mathf.Abs(stick.y))stick.y=triggers;
+                if(Mathf.Abs(stick.x)>Mathf.Abs(input.x))input.x=stick.x;
+                if(Mathf.Abs(stick.y)>Mathf.Abs(input.y))input.y=stick.y;
+            }
 #elif ENABLE_LEGACY_INPUT_MANAGER
             if (Input.GetKey(KeyCode.W)) input.y += 1;
             if (Input.GetKey(KeyCode.S)) input.y -= 1;
@@ -289,6 +411,18 @@ namespace MoonThemedGame.Scavenger
             if (Input.GetKey(KeyCode.A)) input.x -= 1;
 #endif
             return input;
+        }
+
+        static bool ReadHandbrake()
+        {
+#if ENABLE_INPUT_SYSTEM
+            return MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.RobotHandbrake) ||
+                (Gamepad.current!=null && Gamepad.current.buttonSouth.isPressed);
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            return Input.GetKey(KeyCode.Space);
+#else
+            return false;
+#endif
         }
     }
 }

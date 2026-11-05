@@ -72,8 +72,9 @@ namespace MoonThemedGame.Scavenger
         public SalvageField Salvage { get; private set; }
         Collider[] robotColliders;
         Vector3 antenna;
-        float cameraSize, cameraYaw;
-        Vector3 cameraTarget, cameraVelocity;
+        float cameraSize;
+        Vector3 cameraTarget;
+        ScavengerOrbitCamera orbitCamera;
         Vector3 homePosition;
         Quaternion homeRotation;
         RobotStatus lastStatus;
@@ -168,11 +169,13 @@ namespace MoonThemedGame.Scavenger
             if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
             if (!chargeBuilding) Debug.LogWarning($"[Scavenger] Charge building '{chargeBuildingName}' not found; the robot cannot charge.", this);
             var location = ScavengerStartLocation.Find();
-            if (!location) location = ScavengerStartLocation.BuildFor(robot, chargeBuilding).transform;
+            if (!location) location = ScavengerStartLocation.CreateMarkerFor(robot, chargeBuilding).transform;
             if (chargeBuilding) AddBuildingCollider(chargeBuilding);
             var marker = ScavengerStartLocation.Marker(location);
             float rideHeight = robot.position.y - bounds.min.y;
             Drive.Setup(forward);
+            if (!robotCamera.TryGetComponent(out orbitCamera)) orbitCamera=robotCamera.gameObject.AddComponent<ScavengerOrbitCamera>();
+            orbitCamera.Initialize(robot,Drive,cameraTarget,cameraSize);
             if (marker)
             {
                 var facing = Vector3.ProjectOnPlane(marker.forward, Vector3.up);
@@ -254,6 +257,16 @@ namespace MoonThemedGame.Scavenger
 
         public bool ArmBusy => robotArm && robotArm.Busy;
         public bool ArmCanReach(RobotLever lever) => robotArm && robotArm.CanReach(lever);
+        public bool CanRecoverRobot => Phase==LinkPhase.Live && Powered && Uplink==UplinkStatus.Ok &&
+            !patch.IsOpen && !ArmBusy && !MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput && Drive && Drive.CanRecover;
+
+        public bool RecoverRobot()
+        {
+            if(!CanRecoverRobot || !Drive.RecoverUpright())return false;
+            if(orbitCamera)orbitCamera.ResetView(false);
+            hud.Notify(Loc.T("ROBOT BACK ON WHEELS"));
+            return true;
+        }
 
         void PullLever()
         {
@@ -311,25 +324,13 @@ namespace MoonThemedGame.Scavenger
             return camera;
         }
 
-        // Chase view: follows the robot's heading with a little lag, ignores its tilt.
+        // Camera look is independent of throttle/steering and pauses while terminal UI is open.
         void LateUpdate()
         {
-            if (!Connected || !robot || !Drive) return;
-            var target = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
-            cameraYaw = Mathf.LerpAngle(cameraYaw, target, 1 - Mathf.Exp(-4 * Time.deltaTime));
-            PlaceCamera(false);
-        }
-
-        // Follows a fixed point of the robot (not its bounds, which move with the wheels) and damps it.
-        void PlaceCamera(bool snap)
-        {
-            var center = robot.TransformPoint(cameraTarget);
-            var wanted = center + Quaternion.Euler(0, cameraYaw, 0) * new Vector3(0, cameraSize * 1.2f, -cameraSize * 3);
-            wanted.y = Mathf.Max(wanted.y, center.y);
-            var t = robotCamera.transform;
-            if (snap) { t.position = wanted; cameraVelocity = Vector3.zero; }
-            else t.position = Vector3.SmoothDamp(t.position, wanted, ref cameraVelocity, 0.18f);
-            t.rotation = Quaternion.LookRotation(center + Vector3.up * cameraSize * 0.3f - t.position, Vector3.up);
+            if (!Connected || !orbitCamera) return;
+            bool look=Phase==LinkPhase.Live && HasPicture && !patch.IsOpen &&
+                !MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput && Cursor.lockState==CursorLockMode.Locked;
+            orbitCamera.Tick(look);
         }
 
         static Renderer FindBuilding(string name)
@@ -411,22 +412,25 @@ namespace MoonThemedGame.Scavenger
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;
-            bool panelKey = false;
+            bool panelKey = false, recoverKey = false;
 #if ENABLE_INPUT_SYSTEM
             if (Keyboard.current != null)
             {
                 interact = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Interact);
                 escape = Keyboard.current.escapeKey.wasPressedThisFrame;
                 panelKey = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.RobotPanel);
+                recoverKey = MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.RobotRecover);
                 if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteOne)) satelliteKey = 0;
                 else if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteTwo)) satelliteKey = 1;
                 else if (MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.SatelliteThree)) satelliteKey = 2;
             }
             if (Mouse.current != null) click = Mouse.current.leftButton.wasPressedThisFrame;
+            if (Gamepad.current != null) recoverKey |= Gamepad.current.buttonNorth.wasPressedThisFrame;
 #elif ENABLE_LEGACY_INPUT_MANAGER
             interact = Input.GetKeyDown(KeyCode.E);
             escape = Input.GetKeyDown(KeyCode.Escape);
             panelKey = Input.GetKeyDown(KeyCode.H);
+            recoverKey = Input.GetKeyDown(KeyCode.R);
             if (Input.GetKeyDown(KeyCode.Alpha1)) satelliteKey = 0;
             else if (Input.GetKeyDown(KeyCode.Alpha2)) satelliteKey = 1;
             else if (Input.GetKeyDown(KeyCode.Alpha3)) satelliteKey = 2;
@@ -453,6 +457,7 @@ namespace MoonThemedGame.Scavenger
                     if (escape && patch.IsOpen) patch.Close();
                     else if (escape) Terminate();
                     else if (panelKey) patch.Toggle();
+                    else if (recoverKey && CanRecoverRobot) RecoverRobot();
                     else if (interact && state && state.Status == RobotStatus.Offline) TryEvacuate();
                     else if (interact && NearLever && Powered && state && state.Status == RobotStatus.Online) PullLever();
                     else if (interact && Salvage && Salvage.Near && Powered && state && state.Status == RobotStatus.Online && !ArmBusy) Salvage.PickUp(hud);
@@ -571,8 +576,7 @@ namespace MoonThemedGame.Scavenger
                 playerController = controller && controller.enabled ? controller : null;
                 if (playerController) playerController.enabled = false;
             }
-            if (Drive) cameraYaw = Quaternion.LookRotation(Drive.Heading).eulerAngles.y;
-            PlaceCamera(true);
+            if(orbitCamera) orbitCamera.ResetView(true);
             robotCamera.enabled = true;
             robotCamera.GetComponent<AudioListener>().enabled = true;
             stationStyle = VisualStyleSwitcher.CurrentStyle;
