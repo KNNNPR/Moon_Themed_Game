@@ -49,7 +49,10 @@ namespace MoonThemedGame.Scavenger
             center = weather ? weather.shelterCenter : home;
             kinds = FindKinds();
             if (kinds.Length == 0) { Debug.LogWarning("[Scavenger] No part prefabs for salvage.", this); return; }
-            for (int i = 0; i < startPieces; i++) TrySpawn();
+            if (SalvageSpawnPoint.All.Count > 0)
+                foreach (var point in SalvageSpawnPoint.All) SpawnAt(point);
+            else
+                for (int i = 0; i < startPieces; i++) TrySpawn();
             nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
         }
 
@@ -71,6 +74,28 @@ namespace MoonThemedGame.Scavenger
             return list.ToArray();
         }
 
+        void SpawnAt(SalvageSpawnPoint point)
+        {
+            var position = point.transform.position;
+            var normal = point.transform.up;
+            if (Ground(position + Vector3.up, 100, out var ground, out var groundNormal))
+            {
+                position = ground;
+                normal = groundNormal;
+            }
+            var prefab = point.part ? point.part : kinds[Random.Range(0, kinds.Length)];
+            point.Piece = SalvagePiece.Create(prefab, position, normal, link.robotScale * 0.5f);
+        }
+
+        // Refills one empty point the robot isn't standing on.
+        void RespawnAtPoint()
+        {
+            var free = new List<SalvageSpawnPoint>();
+            foreach (var point in SalvageSpawnPoint.All)
+                if (point.Free && (!link.robot || Flat(link.robot.position - point.transform.position).magnitude >= 4)) free.Add(point);
+            if (free.Count > 0) SpawnAt(free[Random.Range(0, free.Count)]);
+        }
+
         bool TrySpawn()
         {
             if (kinds == null || kinds.Length == 0 || SalvagePiece.All.Count >= maxPieces) return false;
@@ -87,7 +112,7 @@ namespace MoonThemedGame.Scavenger
                     if (building.Contains(new Vector3(candidate.x, building.center.y, candidate.z))) continue;
                 }
                 if (TooClose(candidate)) continue;
-                if (!Ground(candidate, out var point, out var normal)) continue;
+                if (!Ground(candidate + Vector3.up * 100, 200, out var point, out var normal)) continue;
                 SalvagePiece.Create(kinds[Random.Range(0, kinds.Length)], point, normal, link.robotScale * 0.5f);
                 return true;
             }
@@ -103,10 +128,10 @@ namespace MoonThemedGame.Scavenger
             return link.robot && Flat(link.robot.position - candidate).magnitude < 4;
         }
 
-        bool Ground(Vector3 candidate, out Vector3 point, out Vector3 normal)
+        bool Ground(Vector3 origin, float distance, out Vector3 point, out Vector3 normal)
         {
             point = normal = default;
-            int count = Physics.RaycastNonAlloc(candidate + Vector3.up * 100, Vector3.down, hits, 200, groundLayers, QueryTriggerInteraction.Ignore);
+            int count = Physics.RaycastNonAlloc(origin, Vector3.down, hits, distance, groundLayers, QueryTriggerInteraction.Ignore);
             float nearest = float.MaxValue;
             for (int i = 0; i < count; i++)
             {
@@ -128,7 +153,8 @@ namespace MoonThemedGame.Scavenger
             if (Time.time >= nextSpawn)
             {
                 nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
-                TrySpawn();
+                if (SalvageSpawnPoint.All.Count > 0) RespawnAtPoint();
+                else TrySpawn();
             }
             float reach = link.Drive ? link.Drive.Length * 1.1f + 1.5f : 3;
             Near = Closest = null;
