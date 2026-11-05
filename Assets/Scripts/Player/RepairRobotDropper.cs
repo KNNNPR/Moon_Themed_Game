@@ -32,10 +32,22 @@ namespace MoonThemedGame.Repair
         static void ResetActiveDropper() => activeDropper = null;
 
         GameObject spawned;
+        RepairRobotTarget orderRobot;
+        internal static RepairRobotDropper Active => activeDropper;
+        internal bool CanDropOrder => isActiveAndEnabled && activeDropper == this && !orderRobot &&
+            (!CurrentRobot || !CurrentRobot.IsBeingCollected);
+
+        internal RepairRobotTarget TryDropOrder(int[] missingSlots)
+        {
+            if (!CanDropOrder || missingSlots == null || missingSlots.Length == 0) return null;
+            orderRobot = SpawnRobot(missingSlots);
+            return orderRobot;
+        }
         public RepairRobotTarget CurrentRobot => spawned ? spawned.GetComponent<RepairRobotTarget>() : null;
         public void ForgetCollectedRobot(RepairRobotTarget robot)
         {
             if (spawned && robot && spawned == robot.gameObject) spawned = null;
+            if (orderRobot == robot) orderRobot = null;
         }
         FirstPersonController player;
         System.Random random;
@@ -76,32 +88,61 @@ namespace MoonThemedGame.Repair
 
         public void DropRobot()
         {
-            if (!isActiveAndEnabled || activeDropper != this || lastDropFrame == Time.frameCount) return;
-            if (CurrentRobot && CurrentRobot.IsBeingCollected) return;
+            if (!orderRobot) SpawnRobot(null);
+        }
+
+        RepairRobotTarget SpawnRobot(int[] missingSlots)
+        {
+            if (!isActiveAndEnabled || activeDropper != this || lastDropFrame == Time.frameCount) return null;
+            if (CurrentRobot && CurrentRobot.IsBeingCollected) return null;
             if (!robotPrefab || parts == null || parts.Length == 0)
             {
                 Debug.LogError("Configure the robot prefab and parts on the drop point.", this);
-                return;
+                return null;
             }
             lastDropFrame = Time.frameCount;
-            if (spawned) { spawned.SetActive(false); Destroy(spawned); }
             Transform anchor = landingPoint ? landingPoint : transform;
-            spawned = Instantiate(robotPrefab, anchor.position, anchor.rotation);
-            spawned.transform.localScale = Vector3.one * 0.5f;
-            SceneManager.MoveGameObjectToScene(spawned, gameObject.scene);
-            spawned.name = "Repair robot / current delivery";
-            var target = spawned.GetComponent<RepairRobotTarget>();
-            if (!target) target = spawned.AddComponent<RepairRobotTarget>();
+            var replacement = Instantiate(robotPrefab, anchor.position, anchor.rotation);
+            replacement.transform.localScale = Vector3.one * 0.5f;
+            SceneManager.MoveGameObjectToScene(replacement, gameObject.scene);
+            replacement.name = "Repair robot / current delivery";
+            var target = replacement.GetComponent<RepairRobotTarget>();
+            if (!target) target = replacement.AddComponent<RepairRobotTarget>();
             try
             {
                 target.Initialize(parts, minimumMissingParts, maximumMissingParts,
-                    fixedSeed != 0 ? fixedSeed : random.Next());
+                    fixedSeed != 0 ? fixedSeed : random.Next(), missingSlots);
+                // Land the remaining geometry on the chosen delivery surface.
+                var renderers = replacement.GetComponentsInChildren<MeshRenderer>();
+                if (renderers.Length == 0) { Destroy(replacement); return null; }
+                Bounds bounds = renderers[0].bounds;
+                foreach (var renderer in renderers) bounds.Encapsulate(renderer.bounds);
+                // Surviving geometry must never finish below the landing surface.
+                Vector3 restPosition = replacement.transform.position;
+                restPosition.x += anchor.position.x - bounds.center.x;
+                restPosition.y += anchor.position.y - bounds.min.y + 0.02f;
+                restPosition.z += anchor.position.z - bounds.center.z;
+                replacement.transform.position = restPosition + Vector3.up * dropHeight;
+                // Initialize only AFTER damage, scaling and positioning: missing wheels
+                // must not contribute springs, and wheel radii must be in world metres.
+                var drive = replacement.AddComponent<ScavengerDrive>();
+                drive.controllable = false;
+                drive.mass = robotMass;
+                drive.gravity = gravity;
+                drive.travel = suspensionTravel;
+                drive.dampingRatio = suspensionDamping;
+                drive.Setup(Vector3.forward);
+                drive.SetFallbackGround(anchor.position.y);
+                drive.PlaceAt(replacement.transform.position, replacement.transform.rotation);
+                var stabilizer = replacement.AddComponent<RepairLandingStabilizer>();
+                stabilizer.Initialize(drive, restPosition.y, bounds.size.y * 0.35f);
             }
             catch (Exception exception)
             {
                 Debug.LogException(exception, this);
-                Destroy(spawned);
-                return;
+                replacement.SetActive(false);
+                Destroy(replacement);
+                return null;
             }
 
             // Land the remaining geometry on the chosen delivery surface.
