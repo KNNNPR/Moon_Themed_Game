@@ -88,7 +88,7 @@ namespace MoonThemedGame.Editor
                 feature.passMaterial = settings.CurrentMaterial;
                 feature.injectionPoint = FullScreenPassRendererFeature.InjectionPoint.AfterRenderingPostProcessing;
                 feature.fetchColorBuffer = true;
-                feature.requirements = ScriptableRenderPassInput.None;
+                feature.requirements = ScriptableRenderPassInput.Depth;
                 feature.passIndex = 0;
                 feature.bindDepthStencilAttachment = true;
                 feature.SetActive(true);

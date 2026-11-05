@@ -5,9 +5,11 @@ Shader "Moon Game/Exterior Weather Atmosphere"
     {
         Tags { "RenderPipeline"="UniversalPipeline" }
         ZTest Always ZWrite Off Cull Off
+        Stencil { Ref 1 ReadMask 1 Comp NotEqual Pass Keep }
         Pass
         {
             HLSLPROGRAM
+            #pragma target 3.5
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -17,12 +19,42 @@ Shader "Moon Game/Exterior Weather Atmosphere"
             int _ShelterCount;
             float _Density, _OpacityLimit;
             half4 _FogTint;
+            float4 _Haze, _HeightHaze, _Palette;
+            half4 _HazeColor;
+
+            void AddExteriorSegment(float start, float end, float3 origin, float3 direction,
+                inout float outside, inout float opticalDepth)
+            {
+                outside += max(0, end - start);
+                start = max(start, _Haze.x);
+                float span = max(0, end - start);
+                if (span <= 0 || _Haze.y + _Haze.z <= 0) return;
+                // Simpson integration makes low-lying dust denser without a flat fog ceiling.
+                float3 heights = origin.y + direction.y * float3(start, (start + end) * 0.5, end);
+                float3 density = exp(-max(0, heights - _HeightHaze.x) * _HeightHaze.y);
+                opticalDepth += span * (_Haze.y + _Haze.z * dot(density, float3(1, 4, 1)) / 6.0);
+            }
+
+            float3 LightHalo(float2 uv)
+            {
+                float2 radius = 3.0 * _BlitTexture_TexelSize.xy;
+                float3 a = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(radius.x, 0)).rgb;
+                float3 b = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - float2(radius.x, 0)).rgb;
+                float3 c = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0, radius.y)).rgb;
+                float3 d = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - float2(0, radius.y)).rgb;
+                return (max(0, a - 0.55) + max(0, b - 0.55) + max(0, c - 0.55) + max(0, d - 0.55)) * 0.25;
+            }
             half4 Frag(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
                 float2 uv = GetNormalizedScreenSpaceUV(input.positionCS);
                 float depth = SampleSceneDepth(uv);
+                #if UNITY_REVERSED_Z
+                    bool sky = depth < 0.00001;
+                #else
+                    bool sky = depth > 0.99999;
+                #endif
                 #if !UNITY_REVERSED_Z
                     depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, depth);
                 #endif
@@ -32,19 +64,47 @@ Shader "Moon Game/Exterior Weather Atmosphere"
                 float distance = min(length(delta), 180.0);
                 float3 direction = normalize(delta + 0.000001);
                 float3 safe = (step(0, direction) * 2 - 1) * max(abs(direction), 0.00001);
-                float indoor = 0;
+                float2 intervals[4];
                 [unroll] for (int i = 0; i < 4; i++)
                 {
-                    if (i >= _ShelterCount) break;
+                    intervals[i] = distance.xx;
+                    if (i >= _ShelterCount) continue;
                     float3 a = (_ShelterMins[i].xyz - origin) / safe;
                     float3 b = (_ShelterMaxs[i].xyz - origin) / safe;
                     float3 lo = min(a,b), hi = max(a,b);
                     float enter = max(max(lo.x,lo.y),lo.z), leave = min(min(hi.x,hi.y),hi.z);
-                    indoor += max(0, min(distance,leave) - max(0,enter));
+                    enter = max(0, enter); leave = min(distance, leave);
+                    if (leave > enter) intervals[i] = float2(enter, leave);
                 }
-                float outside = max(0, distance - indoor);
-                float fog = min(_OpacityLimit, 1 - exp(-outside * _Density));
-                return half4(lerp(source.rgb, _FogTint.rgb, fog), source.a);
+                // Sort and merge shelter intervals: overlapping rooms are only removed once.
+                [unroll] for (int a = 0; a < 3; a++)
+                    [unroll] for (int b = a + 1; b < 4; b++)
+                        if (intervals[b].x < intervals[a].x)
+                        { float2 swap = intervals[a]; intervals[a] = intervals[b]; intervals[b] = swap; }
+                float cursor = 0, outside = 0, opticalDepth = 0;
+                [unroll] for (int room = 0; room < 4; room++)
+                {
+                    AddExteriorSegment(cursor, max(cursor, intervals[room].x), origin, direction, outside, opticalDepth);
+                    cursor = max(cursor, intervals[room].y);
+                }
+                AddExteriorSegment(cursor, distance, origin, direction, outside, opticalDepth);
+                float baseFog = min(_Haze.w, 1 - exp(-opticalDepth));
+                float weatherFog = min(_OpacityLimit, 1 - exp(-outside * _Density));
+                if (sky)
+                {
+                    float horizon = 1 - smoothstep(0.02, 0.2, direction.y);
+                    baseFog *= horizon; weatherFog *= horizon;
+                }
+                float luma = dot(source.rgb, float3(0.2126, 0.7152, 0.0722));
+                float bright = smoothstep(0.25, 1.2, luma);
+                float saturation = lerp(_Palette.x, 1, bright * 0.65);
+                float3 color = lerp(luma.xxx, source.rgb, saturation);
+                color *= lerp(_Palette.y, 1, smoothstep(0.015, 0.18, luma));
+                color = lerp(color, _FogTint.rgb, weatherFog);
+                // Small bright emitters remain useful landmarks through the haze.
+                color = lerp(color, _HazeColor.rgb, baseFog * (1 - bright * 0.22));
+                if (_Palette.z > 0) color += LightHalo(input.texcoord) * _Palette.z;
+                return half4(color, source.a);
             }
             ENDHLSL
         }

@@ -3,6 +3,10 @@
 
 #include "RetroCelInput.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+// Global art direction; material textures, emission and per-material settings remain editable.
+float _LunarLookEnabled, _LunarBandPixelSize;
+float4 _LunarCel;
+half4 _LunarShadowTint;
 #if defined(OLD_TECH_CRT_SCREEN)
     #include "CRTScreenEffect.hlsl"
 #endif
@@ -47,13 +51,21 @@ CelVaryings CelVertex(CelAttributes input)
 
 half BandNoise(float2 pixel)
 {
-    // Static screen-space pattern: no time seed and no flickering grain.
+    if (_LunarLookEnabled > 0.5)
+    {
+        uint2 p = uint2(floor(pixel / max(1, _LunarBandPixelSize)));
+        uint2 low = p & 1u, high = (p >> 1u) & 1u;
+        uint a = ((low.x ^ low.y) << 1u) | low.y;
+        uint b = ((high.x ^ high.y) << 1u) | high.y;
+        return (float(a * 4u + b) + 0.5) / 16.0;
+    }
+    // Legacy static grain is retained when the lunar look is disabled.
     return frac(52.9829189 * frac(dot(floor(pixel), float2(0.06711056, 0.00583715))));
 }
 
 half3 CelLight(Light light, half3 normalWS, half noise)
 {
-    half steps = max(2.0h, floor(_ShadeSteps)) - 1.0h;
+    half steps = max(2.0h, floor(_LunarLookEnabled > 0.5 ? _LunarCel.x : _ShadeSteps)) - 1.0h;
     half ndotl = saturate(dot(normalWS, light.direction));
     half shadow = light.shadowAttenuation;
     // Include light intensity BEFORE quantizing attenuation. Otherwise a bright
@@ -80,6 +92,13 @@ half4 CelFragment(CelVaryings input) : SV_Target
     half4 texel = SampleAlbedoAlpha(input.uv, TEXTURE2D_ARGS(_BaseMap, sampler_BaseMap));
     half alpha = Alpha(texel.a, _BaseColor, _Cutoff);
     half3 albedo = texel.rgb * _BaseColor.rgb;
+    if (_LunarLookEnabled > 0.5)
+    {
+        half brightness = max(0.0001h, Luminance(albedo));
+        half levels = max(2, _LunarCel.w) - 1;
+        half band = floor(sqrt(brightness) * levels + 0.5h) / levels;
+        albedo *= lerp(1, band * band / brightness, _LunarCel.z);
+    }
     half3 normalWS = NormalizeNormalPerPixel(input.normalWS);
     half noise = BandNoise(input.positionCS.xy) - 0.5h;
 
@@ -112,10 +131,12 @@ half4 CelFragment(CelVaryings input) : SV_Target
     #endif
 
     AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV);
-    half3 ambient = SAMPLE_GI(input.lightmapUV, input.vertexSH, normalWS) * _AmbientStrength;
-    ambient = max(ambient, _ShadowFloor * _ShadowTint.rgb);
+    half3 shadowTint = _LunarLookEnabled > 0.5 ? lerp(_ShadowTint.rgb, _LunarShadowTint.rgb, 0.7h) : _ShadowTint.rgb;
+    half ambientScale = _LunarLookEnabled > 0.5 ? _LunarCel.y : 1;
+    half3 ambient = SAMPLE_GI(input.lightmapUV, input.vertexSH, normalWS) * _AmbientStrength * ambientScale;
+    ambient = max(ambient, _ShadowFloor * shadowTint * ambientScale);
     half lightAmount = saturate(Luminance(direct));
-    half3 tint = lerp(_ShadowTint.rgb, half3(1, 1, 1), lightAmount);
+    half3 tint = lerp(shadowTint, half3(1, 1, 1), lightAmount);
     half3 color = albedo * tint * (ambient * ao.indirectAmbientOcclusion + direct * ao.directAmbientOcclusion);
     #if defined(OLD_TECH_CEL_GLOSS)
         // Keep the same cel diffuse bands; add only a narrow wet highlight.

@@ -25,16 +25,19 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BackgroundStrength: 0.156
-    - _CharacterHeight: 8
-    - _ColorDetail: 0.864
-    - _Density: 1.44
-    - _Exposure: 0.52
-    - _GlyphBrightness: 1.88
+    - _BackgroundStrength: 0.025
+    - _CharacterHeight: 10
+    - _ColorDetail: 0.35
+    - _Density: 0.95
+    - _Exposure: 0
+    - _GlyphBrightness: 1.6
     - _Intensity: 1
-    - _Saturation: 1.17
-    - _ShadowCutoff: 0.08
-    - _Vignette: 0.034
+    - _Saturation: 0.8
+    - _ShadowCutoff: 0.03
+    - _Vignette: 0.17
+    - _DistanceEnd: 75
+    - _DistanceStart: 18
+    - _DistanceFade: 0.85
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

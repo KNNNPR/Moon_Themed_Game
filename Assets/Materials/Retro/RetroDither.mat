@@ -25,19 +25,22 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BlackPoint: 0.025
-    - _ColorLevels: 16
-    - _Contrast: 1.18
-    - _DitherStrength: 0.9
-    - _Exposure: 0
+    - _BlackPoint: 0.002
+    - _ColorLevels: 10
+    - _Contrast: 1.03
+    - _DitherStrength: 0.95
+    - _Exposure: 0.1
     - _Intensity: 1
-    - _NoiseMix: 0.85
-    - _PaletteTint: 0.16
+    - _NoiseMix: 0.08
+    - _PaletteTint: 0.25
     - _PixelHeight: 480
-    - _Saturation: 0.62
-    - _Vignette: 0.2
+    - _Saturation: 0.7
+    - _Vignette: 0.23
+    - _DitherScale: 2
+    - _LumaDither: 1
+    - _DitherShadowFade: 1
     m_Colors:
-    - _HighlightTint: {r: 0.85, g: 0.87, b: 0.68, a: 1}
-    - _ShadowTint: {r: 0.65, g: 0.42999998, b: 0.45, a: 1}
+    - _HighlightTint: {r: 0.96, g: 0.99, b: 1, a: 1}
+    - _ShadowTint: {r: 0.7, g: 0.78, b: 0.86, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -4,6 +4,9 @@ Shader "Old Tech/Retro Dither"
     {
         _Intensity("Effect Intensity", Range(0, 1)) = 1
         _PixelHeight("Virtual Screen Height (0 = Native)", Float) = 480
+        [IntRange] _DitherScale("Ordered Pattern Cell Size", Range(1, 4)) = 2
+        _LumaDither("Dither Brightness Instead of RGB", Range(0, 1)) = 0
+        _DitherShadowFade("Quiet Deep Shadows", Range(0, 1)) = 0
         [IntRange] _ColorLevels("Color Levels per Channel", Range(4, 32)) = 16
         _DitherStrength("Dither Strength", Range(0, 1)) = 0.9
         _NoiseMix("Grain / Ordered Pattern", Range(0, 1)) = 0.85
@@ -12,8 +15,8 @@ Shader "Old Tech/Retro Dither"
         _Saturation("Saturation", Range(0, 1.5)) = 0.62
         _BlackPoint("Black Crush", Range(0, 0.15)) = 0.025
         _PaletteTint("Palette Tint", Range(0, 1)) = 0.16
-        _ShadowTint("Rust Shadow Tint", Color) = (0.65, 0.43, 0.45, 1)
-        _HighlightTint("Olive Highlight Tint", Color) = (0.85, 0.87, 0.68, 1)
+        _ShadowTint("Shadow Tint", Color) = (0.7, 0.78, 0.86, 1)
+        _HighlightTint("Highlight Tint", Color) = (0.96, 0.99, 1, 1)
         _Vignette("Vignette", Range(0, 1)) = 0.2
     }
     SubShader
@@ -34,7 +37,8 @@ Shader "Old Tech/Retro Dither"
             CBUFFER_START(UnityPerMaterial)
                 float _Intensity, _PixelHeight, _ColorLevels, _DitherStrength;
                 float _NoiseMix, _Exposure, _Contrast, _Saturation;
-                float _BlackPoint, _PaletteTint, _Vignette;
+                float _BlackPoint, _PaletteTint, _Vignette, _DitherScale;
+                float _LumaDither, _DitherShadowFade;
                 half4 _ShadowTint, _HighlightTint;
             CBUFFER_END
 
@@ -80,10 +84,17 @@ Shader "Old Tech/Retro Dither"
                 float2 centered = input.texcoord * 2.0 - 1.0;
                 color *= 1.0 - _Vignette * smoothstep(0.25, 1.5, dot(centered, centered));
 
-                float threshold = lerp(OrderedThreshold(uint2(pixel)), GrainThreshold(pixel), _NoiseMix);
+                float2 patternPixel = floor(pixel / max(1.0, _DitherScale));
+                float threshold = lerp(OrderedThreshold(uint2(patternPixel)), GrainThreshold(patternPixel), _NoiseMix);
                 float levels = max(2.0, floor(_ColorLevels)) - 1.0;
                 // Stochastic rounding between adjacent palette entries (true dithering).
-                color = floor(saturate(color) * levels + lerp(0.5, threshold, _DitherStrength)) / levels;
+                float brightness = max(0.0001, dot(color, float3(0.2126, 0.7152, 0.0722)));
+                float quietShadows = lerp(1, lerp(0.15, 1, smoothstep(0.025, 0.16, brightness)), _DitherShadowFade);
+                float rounding = lerp(0.5, threshold, _DitherStrength * quietShadows);
+                float3 rgbPalette = floor(saturate(color) * levels + rounding) / levels;
+                float tone = floor(saturate(brightness) * levels + rounding) / levels;
+                float3 tonalPalette = saturate(color * (tone / brightness));
+                color = lerp(rgbPalette, tonalPalette, _LumaDither);
                 #if !defined(UNITY_COLORSPACE_GAMMA)
                     color = SRGBToLinear(color);
                 #endif

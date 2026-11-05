@@ -14,6 +14,7 @@ namespace MoonThemedGame.Rendering
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             if (settings) passMaterial = settings.CurrentMaterial;
+            requirements = settings && settings.CurrentStyle == VisualStyle.ColorAscii ? ScriptableRenderPassInput.Depth : ScriptableRenderPassInput.None;
             base.AddRenderPasses(renderer, ref renderingData);
         }
     }

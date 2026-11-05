@@ -12,6 +12,9 @@ Shader "Moon Game/Color ASCII"
         _Density("Character Density", Range(0.25, 2)) = 1.15
         _ShadowCutoff("Empty Dark Cells", Range(0, 0.2)) = 0.012
         _Vignette("Vignette", Range(0, 1)) = 0.12
+        _DistanceFade("Distant Cell Thinning", Range(0, 1)) = 0.85
+        _DistanceStart("Cell Thinning Starts (Metres)", Float) = 18
+        _DistanceEnd("Cell Thinning Ends (Metres)", Float) = 75
     }
     SubShader
     {
@@ -27,11 +30,13 @@ Shader "Moon Game/Color ASCII"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float _Intensity, _CharacterHeight, _GlyphBrightness, _BackgroundStrength;
                 float _ColorDetail, _Saturation, _Exposure, _Density;
                 float _ShadowCutoff, _Vignette;
+                float _DistanceFade, _DistanceStart, _DistanceEnd;
             CBUFFER_END
 
             // Each character is a real 5x7 bitmap, packed into two integers.
@@ -72,8 +77,15 @@ Shader "Moon Game/Color ASCII"
                 float3 d = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, SourceUV(center + float2(-offset.x, offset.y))).rgb;
                 float3 color = DisplayColor((a + b + c + d) * 0.25);
                 float luma = dot(color, float3(0.2126, 0.7152, 0.0722));
+                float depth = SampleSceneDepth(saturate(center));
+                #if !UNITY_REVERSED_Z
+                    depth = lerp(UNITY_NEAR_CLIP_VALUE, 1, depth);
+                #endif
+                float3 world = ComputeWorldSpacePosition(saturate(center), depth, UNITY_MATRIX_I_VP);
+                float distanceFade = smoothstep(_DistanceStart, max(_DistanceStart + 1, _DistanceEnd), length(world - GetCameraPositionWS())) * _DistanceFade;
                 float grain = frac(52.9829189 * frac(dot(cell, float2(0.06711056, 0.00583715)))) - 0.5;
-                uint glyph = (uint)clamp(floor(pow(saturate(luma * _Density), 0.72) * 15.0 + 0.5 + grain * 0.4), 0.0, 15.0);
+                float density = _Density * lerp(1, 0.4, distanceFade);
+                uint glyph = (uint)clamp(floor(pow(saturate(luma * density), 0.72) * 15.0 + 0.5 + grain * 0.4), 0.0, 15.0);
 
                 float2 local = frac(screenUV * screenSize / cellSize);
                 #if !UNITY_UV_STARTS_AT_TOP
@@ -91,7 +103,10 @@ Shader "Moon Game/Color ASCII"
 
                 float3 localColor = DisplayColor(original.rgb);
                 float3 inkColor = lerp(color, localColor, _ColorDetail);
-                float3 result = lerp(localColor * _BackgroundStrength, saturate(inkColor * _GlyphBrightness), ink);
+                float keep = step(grain + 0.5, lerp(1, 0.22, distanceFade));
+                keep = max(keep, smoothstep(0.45, 0.9, luma));
+                ink *= keep;
+                float3 result = lerp(localColor * _BackgroundStrength * lerp(1, 0.1, distanceFade), saturate(inkColor * _GlyphBrightness), ink);
                 float2 centered = screenUV * 2.0 - 1.0;
                 result *= 1.0 - _Vignette * smoothstep(0.3, 1.6, dot(centered, centered));
                 #if !defined(UNITY_COLORSPACE_GAMMA)

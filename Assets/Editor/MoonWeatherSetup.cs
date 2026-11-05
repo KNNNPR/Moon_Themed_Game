@@ -60,7 +60,7 @@ namespace MoonThemedGame.Editor
                 }
                 feature.injectionPoint = FullScreenPassRendererFeature.InjectionPoint.BeforeRenderingTransparents;
                 feature.fetchColorBuffer = true; feature.requirements = ScriptableRenderPassInput.Depth;
-                feature.passMaterial = assets.atmosphereMaterial; feature.passIndex = 0; feature.bindDepthStencilAttachment = false; feature.SetActive(true);
+                feature.passMaterial = assets.atmosphereMaterial; feature.passIndex = 0; feature.bindDepthStencilAttachment = true; feature.SetActive(true);
                 var serialized = new SerializedObject(renderer); var map = serialized.FindProperty("m_RendererFeatureMap"); map.arraySize = renderer.rendererFeatures.Count;
                 for (int i = 0; i < map.arraySize; i++)
                 {
