@@ -14,11 +14,11 @@ namespace MoonThemedGame.Scavenger
     {
         const string ShopIcon = "shop";
 
-        static readonly Color Text = new Color(0.94f, 0.96f, 0.97f);
-        static readonly Color Muted = new Color(0.5f, 0.56f, 0.6f);
+        internal static readonly Color Text = new Color(0.94f, 0.96f, 0.97f);
+        internal static readonly Color Muted = new Color(0.5f, 0.56f, 0.6f);
         static readonly Color Good = new Color(0.55f, 1f, 0.6f);
         static readonly Color Alarm = new Color(1f, 0.38f, 0.3f);
-        static readonly Color Edge = new Color(1, 1, 1, 0.12f);
+        internal static readonly Color Edge = new Color(1, 1, 1, 0.12f);
 
         sealed class Card
         {
@@ -29,7 +29,7 @@ namespace MoonThemedGame.Scavenger
             public float yaw;
         }
 
-        sealed class Wireframe
+        internal sealed class Wireframe
         {
             public Vector3[] from, to;
         }
@@ -78,7 +78,7 @@ namespace MoonThemedGame.Scavenger
             if (Time.time > statusUntil) status.text = "";
         }
 
-        static bool Clicked()
+        internal static bool Clicked()
         {
 #if ENABLE_INPUT_SYSTEM
             return Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
@@ -127,6 +127,7 @@ namespace MoonThemedGame.Scavenger
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
             if (!open) return;
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
+            if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
             Refresh();
@@ -278,14 +279,16 @@ namespace MoonThemedGame.Scavenger
         }
 
         // Feature edges only (silhouette creases and open borders), normalised to a unit sphere.
-        static Wireframe BuildWireframe(GameObject model)
+        internal static Wireframe BuildWireframe(GameObject model, System.Predicate<Transform> include = null)
         {
             var from = new List<Vector3>();
             var to = new List<Vector3>();
             var root = model.transform.worldToLocalMatrix;
             var sources = new List<(Mesh mesh, Transform transform)>();
-            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true)) sources.Add((filter.sharedMesh, filter.transform));
-            foreach (var skinned in model.GetComponentsInChildren<SkinnedMeshRenderer>(true)) sources.Add((skinned.sharedMesh, skinned.transform));
+            foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
+                if (include == null || include(filter.transform)) sources.Add((filter.sharedMesh, filter.transform));
+            foreach (var skinned in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                if (include == null || include(skinned.transform)) sources.Add((skinned.sharedMesh, skinned.transform));
             foreach (var (mesh, transform) in sources)
             {
                 if (!mesh || !mesh.isReadable) continue;
@@ -357,11 +360,18 @@ namespace MoonThemedGame.Scavenger
 
         static void DrawWireframe(MeshGenerationContext context, Card card)
         {
+            bool installed = RobotUpgrades.Level(card.upgrade) > 0;
+            DrawWireframe(context, card.wireframe, card.yaw,
+                installed ? new Color(Good.r, Good.g, Good.b, 0.85f) : new Color(Text.r, Text.g, Text.b, 0.75f));
+        }
+
+        internal static void DrawWireframe(MeshGenerationContext context, Wireframe frame, float yaw, Color color)
+        {
             var rect = context.visualElement.contentRect;
             var p = context.painter2D;
             var center = rect.center;
             float size = Mathf.Min(rect.width, rect.height) * 0.45f;
-            if (card.wireframe == null)
+            if (frame == null)
             {
                 p.strokeColor = Muted;
                 p.lineWidth = 1;
@@ -373,12 +383,10 @@ namespace MoonThemedGame.Scavenger
                 p.Stroke();
                 return;
             }
-            var rotation = Quaternion.Euler(22, card.yaw, 0);
-            bool installed = RobotUpgrades.Level(card.upgrade) > 0;
-            p.strokeColor = installed ? new Color(Good.r, Good.g, Good.b, 0.85f) : new Color(Text.r, Text.g, Text.b, 0.75f);
+            var rotation = Quaternion.Euler(22, yaw, 0);
+            p.strokeColor = color;
             p.lineWidth = 1;
             p.BeginPath();
-            var frame = card.wireframe;
             for (int i = 0; i < frame.from.Length; i++)
             {
                 var a = rotation * frame.from[i];
@@ -389,16 +397,16 @@ namespace MoonThemedGame.Scavenger
             p.Stroke();
         }
 
-        static VisualElement Box() => new VisualElement { pickingMode = PickingMode.Ignore };
+        internal static VisualElement Box() => new VisualElement { pickingMode = PickingMode.Ignore };
 
-        static void Border(VisualElement element, Color color)
+        internal static void Border(VisualElement element, Color color)
         {
             var s = element.style;
             s.borderTopWidth = s.borderBottomWidth = s.borderLeftWidth = s.borderRightWidth = 1;
             s.borderTopColor = s.borderBottomColor = s.borderLeftColor = s.borderRightColor = color;
         }
 
-        static Label MakeLabel(string value, int size, Color color)
+        internal static Label MakeLabel(string value, int size, Color color)
         {
             var label = new Label(value) { pickingMode = PickingMode.Ignore };
             label.style.fontSize = size;

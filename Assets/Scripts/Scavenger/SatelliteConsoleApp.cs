@@ -60,6 +60,7 @@ namespace MoonThemedGame.Scavenger
             if (icon == null) return;
 
             bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
+            if (TryGetComponent(out RepairMessagesApp messages) && messages.IsOpen) pointer = false;
             var point = terminal.PointerPosition;
             icon.EnableInClassList("pointer-over", pointer && icon.worldBound.Contains(point));
             if (IsOpen)
@@ -104,6 +105,7 @@ namespace MoonThemedGame.Scavenger
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
             if (!open) return;
             if (TryGetComponent(out ShopApp shop)) shop.Close();
+            if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
             Refresh();
