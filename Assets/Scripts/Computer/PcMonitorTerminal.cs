@@ -114,6 +114,7 @@ namespace MoonThemedGame.Computer
             icons = new[] { root.Q("shop"), root.Q("scavenger"), root.Q("messages") };
             ApplyLanguage();
             SetCredits(credits);
+            if(!TryGetComponent<MoonFinderApp>(out _))gameObject.AddComponent<MoonFinderApp>();
         }
 
         public void SetCredits(int amount)
@@ -150,6 +151,7 @@ namespace MoonThemedGame.Computer
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!Application.isPlaying || root == null) return;
             bool interact = false, escape = false;
             var center = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);

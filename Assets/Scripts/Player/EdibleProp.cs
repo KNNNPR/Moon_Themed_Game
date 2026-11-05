@@ -7,6 +7,7 @@ namespace MoonThemedGame.Interactions
     public sealed class EdibleProp : MonoBehaviour
     {
         [Min(0.1f)] public float eatDuration=0.45f;
+        [Min(0)] public float intoxicationDose;
         HeldProp prop;
         Vector3 originalScale;
         float elapsed;
@@ -44,6 +45,7 @@ namespace MoonThemedGame.Interactions
             transform.localScale=originalScale*Mathf.Lerp(1,0.3f,t);
             if(elapsed<eatDuration)return;
             IsEating=false;IsConsumed=true;
+            OperatorIntoxication.Consume(prop.HoldingCamera,intoxicationDose);
             prop.Drop(false);
             gameObject.SetActive(false);
             Destroy(gameObject);

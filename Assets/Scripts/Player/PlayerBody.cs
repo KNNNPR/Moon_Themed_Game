@@ -220,7 +220,9 @@ namespace MoonThemedGame.Repair
             {
                 var model = Instantiate(prefab);
                 model.name = "Toolbox model";
-                foreach (var t in model.GetComponentsInChildren<Transform>()) if (t.name == "Lid") lid = t;
+                foreach (var t in model.GetComponentsInChildren<Transform>())
+                    if(t.name.Equals("Lid",System.StringComparison.OrdinalIgnoreCase) ||
+                        t.name.Equals("TOOLBOX_LID",System.StringComparison.OrdinalIgnoreCase))lid=t;
                 var back = lid ? lid.position - model.transform.position : Vector3.forward;
                 back.y = 0;
                 back = back.sqrMagnitude > 1e-8f ? back.normalized : Vector3.forward;
@@ -230,12 +232,10 @@ namespace MoonThemedGame.Repair
                 bounds = Bounds(model);
                 kit.SetPositionAndRotation(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z), Quaternion.LookRotation(back, Vector3.up));
                 model.transform.SetParent(kit, true);
-                foreach (var renderer in model.GetComponentsInChildren<Renderer>())
-                {
-                    var materials = renderer.sharedMaterials;
-                    for (int i = 0; i < materials.Length; i++) materials[i] = Paint(materials[i] ? materials[i].color : Color.gray);
-                    renderer.sharedMaterials = materials;
-                }
+                // Keep the authored textures; this hand-held visual must not collide with the player.
+                foreach(var collider in model.GetComponentsInChildren<Collider>())collider.enabled=false;
+                foreach(var body in model.GetComponentsInChildren<Rigidbody>())
+                {body.isKinematic=true;body.detectCollisions=false;}
                 if (lid)
                 {
                     lidShut = lid.localRotation;
@@ -340,6 +340,7 @@ namespace MoonThemedGame.Repair
 
         void Update()
         {
+            if(DeveloperConsole.BlockGameplayInput)return;
             if (!root) return;
             AnimateLegs();
             var mouse = Mouse.current;

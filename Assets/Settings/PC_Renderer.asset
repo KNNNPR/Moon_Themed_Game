@@ -1,5 +1,25 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5645481758326460433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d49d9563faf45c5ba82c590e9dbe284, type: 3}
+  m_Name: Operator Intoxication
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Rendering.OperatorIntoxicationFeature
+  m_Active: 1
+  injectionPoint: 600
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: bffabac576614bb8aa968b24b565de21, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &-3202284998835210874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -48,7 +68,8 @@ MonoBehaviour:
   - {fileID: 7833122117494664109}
   - {fileID: 5734790513248894353}
   - {fileID: -3202284998835210874}
-  m_RendererFeatureMap: ad6b866f10d7b46c91fd7a6b9611964f8675dd8ec2328fd3
+  - {fileID: -5645481758326460433}
+  m_RendererFeatureMap: ad6b866f10d7b46c91fd7a6b9611964f8675dd8ec2328fd3efef00794038a7b1
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}

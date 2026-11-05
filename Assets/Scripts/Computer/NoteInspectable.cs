@@ -103,6 +103,7 @@ namespace MoonThemedGame.Computer
 
         void Update()
         {
+            if(DeveloperConsole.BlockGameplayInput)return;
             if (!viewing || !viewCamera) return;
             bool close = false;
             Vector2 mouse = Vector2.zero;

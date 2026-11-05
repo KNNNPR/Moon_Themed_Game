@@ -156,11 +156,16 @@ namespace MoonThemedGame.Scavenger
 
         void Unload()
         {
-            int count = cargo.Count;
+            int count = 0;
             var bay = RepairBay.Active;
-            foreach (var prefab in cargo) if (bay) bay.Deliver(prefab);
-            cargo.Clear();
-            if (link.state) link.state.Cargo = 0;
+            if(!bay)return;
+            for(int i=0;i<cargo.Count;)
+            {
+                if(bay.Deliver(cargo[i])){cargo.RemoveAt(i);count++;}
+                else i++;
+            }
+            if(count==0)return;
+            if (link.state) link.state.Cargo = cargo.Count;
             int credits = count * creditsPerPart;
             if (link.terminal && credits > 0) link.terminal.SetCredits(link.terminal.Credits + credits);
             var hud = link.GetComponent<ScavengerFeedHud>();

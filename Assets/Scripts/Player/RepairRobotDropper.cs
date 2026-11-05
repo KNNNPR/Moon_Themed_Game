@@ -56,6 +56,7 @@ namespace MoonThemedGame.Repair
                 return;
             }
             activeDropper = this;
+            if(gameObject.scene.isLoaded)MoonThemedGame.Scavenger.RepairBayFogVolume.EnsureFor(this);
             RepairCranePickup.ConnectScene(this);
         }
 
@@ -63,6 +64,8 @@ namespace MoonThemedGame.Repair
         {
             if (activeDropper == this) activeDropper = null;
         }
+
+        void Start()=>MoonThemedGame.Scavenger.RepairBayFogVolume.EnsureFor(this);
 
         void Update()
         {

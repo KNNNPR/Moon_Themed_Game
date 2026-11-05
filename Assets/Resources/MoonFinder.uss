@@ -1,0 +1,26 @@
+.mf-window { position: absolute; left: 196px; top: 8px; width: 756px; height: 496px; background-color: rgb(9, 10, 16); color: rgb(235, 230, 235); border-width: 1px; border-color: rgb(145, 126, 139); padding: 10px; }
+.mf-header { height: 33px; flex-direction: row; align-items: center; border-bottom-width: 1px; border-bottom-color: rgb(65, 56, 65); margin-bottom: 8px; }
+.mf-heading { font-size: 22px; color: rgb(250, 213, 225); }
+.mf-muted { font-size: 11px; color: rgb(155, 145, 158); white-space: normal; }
+.mf-close { font-size: 17px; padding: 4px; }
+.mf-body { flex-grow: 1; flex-direction: row; min-height: 0; }
+.mf-people { width: 174px; flex-shrink: 0; border-right-width: 1px; border-right-color: rgb(65, 56, 65); padding-right: 10px; }
+.mf-person { height: 132px; padding: 7px; margin-bottom: 5px; align-items: center; border-width: 1px; border-color: rgba(145, 126, 139, 0.15); }
+.mf-selected { border-color: rgb(173, 137, 154); background-color: rgb(25, 20, 29); }
+.mf-small-avatar { width: 62px; height: 62px; margin-bottom: 5px; }
+.mf-person-name { font-size: 16px; margin-bottom: 3px; }
+.mf-chat { flex-grow: 1; flex-shrink: 1; min-width: 0; padding-left: 14px; }
+.mf-identity { height: 86px; flex-direction: row; border-bottom-width: 1px; border-bottom-color: rgb(65, 56, 65); padding-bottom: 8px; flex-shrink: 0; }
+.mf-avatar { width: 72px; height: 72px; flex-shrink: 0; margin-right: 12px; }
+.mf-about { flex-shrink: 1; flex-grow: 1; min-width: 0; }
+.mf-name { font-size: 20px; color: rgb(250, 213, 225); }
+.mf-description { font-size: 13px; white-space: normal; margin-top: 4px; }
+.mf-transcript { flex-grow: 1; flex-shrink: 1; min-height: 70px; margin-top: 6px; margin-bottom: 7px; }
+.mf-message { white-space: normal; font-size: 14px; margin-bottom: 8px; color: rgb(237, 228, 236); flex-shrink: 0; }
+.mf-outgoing { color: rgb(162, 157, 178); }
+.mf-choices { flex-shrink: 0; }
+.mf-option { white-space: normal; font-size: 13px; border-left-width: 1px; border-left-color: rgb(126, 101, 116); padding: 6px; margin-bottom: 3px; background-color: rgb(22, 19, 27); }
+.mf-state { font-size: 10px; color: rgb(172, 146, 163); margin-top: 5px; flex-shrink: 0; }
+.mf-apple { align-items: center; height: 130px; padding: 4px; }
+.mf-apple Image { width: 100px; height: 100px; }
+.mf-hover { background-color: rgb(49, 35, 47); color: white; }

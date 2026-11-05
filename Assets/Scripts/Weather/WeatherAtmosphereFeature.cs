@@ -21,7 +21,8 @@ namespace MoonThemedGame.Weather
                 weather = editorWeather ? editorWeather : editorWeather = UnityEngine.Object.FindFirstObjectByType<MoonWeatherSystem>();
             var assets = weather && weather.assets ? weather.assets : Resources.Load<MoonWeatherAssets>("MoonWeatherAssets");
             if (assets && assets.atmosphereMaterial) passMaterial = assets.atmosphereMaterial;
-            if (!passMaterial || (!(look && look.lookEnabled) && (!weather || weather.Density < 0.00001f))) return;
+            bool repairFog=Shader.GetGlobalVector("_RepairBayFogMin").w>0;
+            if (!passMaterial || (!repairFog && !(look && look.lookEnabled) && (!weather || weather.Density < 0.00001f))) return;
             int count = weather ? weather.ShelterCount : 0;
             for (int i = 0; i < count; i++)
             {

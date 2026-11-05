@@ -377,6 +377,7 @@ namespace MoonThemedGame.Scavenger
 
         static Vector2 ReadInput()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return Vector2.zero;
             var input = Vector2.zero;
 #if ENABLE_INPUT_SYSTEM
             var keys = Keyboard.current;
@@ -406,6 +407,7 @@ namespace MoonThemedGame.Scavenger
 
         static bool ReadHandbrake()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return false;
 #if ENABLE_INPUT_SYSTEM
             return MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.RobotHandbrake) ||
                 (Gamepad.current!=null && Gamepad.current.buttonSouth.isPressed);

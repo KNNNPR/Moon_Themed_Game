@@ -25,6 +25,7 @@ namespace MoonThemedGame.Interactions
 
         public static Rect Prompt(float centerX,float top,string text,int size=17,float opacity=1)
         {
+            if(DeveloperConsole.IsOpen)return default;
             if(string.IsNullOrWhiteSpace(text) || opacity<=0)return default;
             text=GameControls.FormatHint(text);
             float scale=Mathf.Clamp(Screen.height/900f,1,1.3f);

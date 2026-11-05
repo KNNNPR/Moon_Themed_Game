@@ -198,7 +198,6 @@ namespace MoonThemedGame.Scavenger
             baseAcceleration = Drive.acceleration;
             RobotUpgrades.Changed += ApplyUpgrades;
             ApplyUpgrades();
-            if (RobotLever.All.Count == 0) PlaceTestLever(homePosition - Vector3.up * rideHeight);
             if (!TryGetComponent(out SalvageField salvage)) salvage = gameObject.AddComponent<SalvageField>();
             Salvage = salvage;
             Salvage.Setup(this, homePosition);
@@ -242,16 +241,6 @@ namespace MoonThemedGame.Scavenger
             instance.transform.SetParent(robot, true);
             robotArm = instance.AddComponent<RobotArm>();
             return instance.transform;
-        }
-
-        void PlaceTestLever(Vector3 ground)
-        {
-            var forward = Drive.Forward;
-            forward.y = 0;
-            forward.Normalize();
-            var right = Vector3.Cross(Vector3.up, forward);
-            var position = ground + right * (Drive.Length * 1.8f) + forward * (Drive.Length * 1.2f);
-            RobotLever.CreateTest(position, Quaternion.LookRotation(-right, Vector3.up), Drive.Length * 0.6f);
         }
 
         public bool ArmBusy => robotArm && robotArm.Busy;
@@ -408,6 +397,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;

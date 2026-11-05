@@ -173,9 +173,24 @@ namespace MoonThemedGame.Repair
         static RepairBolt Create(RepairRobotTarget robot, GameObject part, Vector3 surface, Vector3 normal, float size, Fastener kind)
         {
             var root = new GameObject(kind == Fastener.Bolt ? "Bolt" : "Screw");
-            root.transform.SetPositionAndRotation(surface + normal * size * 1.8f, Quaternion.FromToRotation(Vector3.up, normal));
             var pieces = new List<Renderer>();
-            if (kind == Fastener.Bolt)
+            var catalog=Resources.Load<MoonThemedGame.Scavenger.ShopCatalog>("ShopCatalog");
+            var prefab=catalog?(kind==Fastener.Bolt?catalog.bolt:catalog.screw):null;
+            if(prefab)
+            {
+                var visual=Instantiate(prefab,root.transform,false);
+                visual.name=prefab.name+" visual";visual.transform.localPosition=Vector3.zero;
+                foreach(var collider in visual.GetComponentsInChildren<Collider>())collider.enabled=false;
+                pieces.AddRange(visual.GetComponentsInChildren<Renderer>());
+                if(pieces.Count>0)
+                {
+                    var bounds=pieces[0].bounds;foreach(var r in pieces)bounds.Encapsulate(r.bounds);
+                    visual.transform.localScale*=size*2.2f/Mathf.Max(0.0001f,bounds.size.y);
+                    bounds=pieces[0].bounds;foreach(var r in pieces)bounds.Encapsulate(r.bounds);
+                    visual.transform.localPosition-=new Vector3(bounds.center.x,bounds.max.y,bounds.center.z);
+                }
+            }
+            else if (kind == Fastener.Bolt)
             {
                 pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 1.6f, size * 0.35f, size * 1.6f), 0));
                 pieces.Add(Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 0.7f, size * 1.0f, size * 0.7f), -size * 1.2f));
@@ -187,6 +202,7 @@ namespace MoonThemedGame.Repair
                 var slot = Piece(PrimitiveType.Cylinder, root.transform, new Vector3(size * 1.2f, size * 0.05f, size * 0.22f), size * 0.13f);
                 slot.material.color = new Color(0.12f, 0.1f, 0.08f);
             }
+            root.transform.SetPositionAndRotation(surface + normal * size * 1.8f, Quaternion.FromToRotation(Vector3.up, normal));
             var trigger = root.AddComponent<SphereCollider>();
             trigger.isTrigger = true;
             trigger.radius = size * 2.2f;

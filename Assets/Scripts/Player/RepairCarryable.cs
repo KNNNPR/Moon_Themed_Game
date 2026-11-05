@@ -68,6 +68,18 @@ namespace MoonThemedGame.Repair
             body.isKinematic = !solid;
         }
 
+        public void ReleaseFromDelivery(Vector3 velocity)
+        {
+            Init();homePosition=transform.position;homeFloor=RendererBounds().min.y;
+            float nearest=float.PositiveInfinity;
+            foreach(var hit in Physics.RaycastAll(transform.position+Vector3.up*.1f,Vector3.down,20,~0,QueryTriggerInteraction.Ignore))
+                if(hit.rigidbody!=body && !hit.transform.IsChildOf(transform) && hit.normal.y>.5f && hit.distance<nearest)
+                {nearest=hit.distance;homeFloor=hit.point.y;}
+            body.isKinematic=false;body.useGravity=true;
+            body.interpolation=RigidbodyInterpolation.Interpolate;
+            body.linearVelocity=velocity;body.angularVelocity=Random.insideUnitSphere*.5f;body.WakeUp();
+        }
+
         public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !Current && !HeldProp.Holding;
 
         public override void Interact()

@@ -21,6 +21,34 @@ Shader "Moon Game/Exterior Weather Atmosphere"
             half4 _FogTint;
             float4 _Haze, _HeightHaze, _Palette;
             half4 _HazeColor;
+            float4 _RepairBayFogMin,_RepairBayFogMax;
+            half4 _RepairBayFogTint;
+            float4x4 _RepairBayFogWorldToLocal;
+            float3 _RepairBayFogSize;
+
+            float RepairFog(float3 origin,float3 direction,float distance)
+            {
+                if(_RepairBayFogMin.w<=0)return 0;
+                float3 localOrigin=mul(_RepairBayFogWorldToLocal,float4(origin,1)).xyz;
+                float3 localDirection=mul((float3x3)_RepairBayFogWorldToLocal,direction);
+                float3 safe=(step(0,localDirection)*2-1)*max(abs(localDirection),0.000001);
+                float3 a=(-0.5-localOrigin)/safe,b=(0.5-localOrigin)/safe;
+                float3 lo=min(a,b),hi=max(a,b);
+                float enter=max(0,max(lo.x,max(lo.y,lo.z)));
+                float leave=min(distance,min(hi.x,min(hi.y,hi.z)));
+                float span=max(0,leave-enter),density=0;
+                if(span<=0)return 0;
+                [unroll] for(int i=0;i<6;i++)
+                {
+                    float3 p=origin+direction*(enter+span*(i+0.5)/6.0);
+                    float3 localPoint=localOrigin+localDirection*(enter+span*(i+0.5)/6.0);
+                    float3 edge=min(localPoint+0.5,0.5-localPoint)*_RepairBayFogSize;
+                    float fade=smoothstep(0,max(0.01,_RepairBayFogMax.w),min(edge.x,min(edge.y,edge.z)));
+                    float billow=0.85+0.15*sin(p.x*1.3+sin(p.z*1.1+_Time.y*0.18)+p.y*1.5-_Time.y*0.12);
+                    density+=fade*billow;
+                }
+                return 1-exp(-span*_RepairBayFogMin.w*density/6.0);
+            }
 
             void AddExteriorSegment(float start, float end, float3 origin, float3 direction,
                 inout float outside, inout float opticalDepth)
@@ -105,6 +133,7 @@ Shader "Moon Game/Exterior Weather Atmosphere"
                 // Weather must remain visible over the permanent lunar haze, including distant terrain.
                 color = lerp(color, _FogTint.rgb, weatherFog);
                 if (_Palette.z > 0) color += LightHalo(input.texcoord) * _Palette.z;
+                color=lerp(color,_RepairBayFogTint.rgb,RepairFog(origin,direction,distance));
                 return half4(color, source.a);
             }
             ENDHLSL
