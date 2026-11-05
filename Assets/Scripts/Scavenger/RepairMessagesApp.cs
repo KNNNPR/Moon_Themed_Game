@@ -58,6 +58,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             TrackDelivery();
             if (!terminal || terminal.Root == null) return;
             if (desktopRoot != terminal.Root) Build();
@@ -105,6 +106,7 @@ namespace MoonThemedGame.Scavenger
 
         void Open()
         {
+            GetComponent<MoonFinderApp>()?.Close();
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             if (orders.Count == 0)

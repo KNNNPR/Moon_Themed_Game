@@ -55,6 +55,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!terminal) return;
             if (icon == null && terminal.Root != null) Build();
             if (icon == null) return;
@@ -88,7 +89,8 @@ namespace MoonThemedGame.Scavenger
 
         void HandleClick(Vector2 point)
         {
-            if (icon.worldBound.Contains(point)) { SetOpen(!IsOpen); return; }
+            bool covered=(GetComponent<ShopApp>()?.IsOpen??false) || (GetComponent<MoonFinderApp>()?.IsOpen??false);
+            if (!covered && icon.worldBound.Contains(point)) { SetOpen(!IsOpen); return; }
             if (!IsOpen) return;
             if (close.worldBound.Contains(point)) { SetOpen(false); return; }
             for (int i = 0; i < cards.Length; i++)
@@ -105,6 +107,7 @@ namespace MoonThemedGame.Scavenger
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
             if (!open) return;
             if (TryGetComponent(out ShopApp shop)) shop.Close();
+            GetComponent<MoonFinderApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();

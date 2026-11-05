@@ -96,6 +96,15 @@ namespace MoonThemedGame.Scavenger
         public int CarrierChannel { get; private set; }
         public bool[] Jammed { get; private set; } = new bool[0];
         float rivalTimer = -1;
+        public bool RivalPacified { get; private set; }
+
+        public void PacifyRival()
+        {
+            RivalPacified=true;
+            HopTimeLeft=0;
+            Array.Clear(Jammed,0,Jammed.Length);
+            EndRival();
+        }
 
         public bool IsJammed(int channel) => Rival != RivalPhase.None && channel >= 0 && channel < Jammed.Length && Jammed[channel];
 
@@ -103,6 +112,7 @@ namespace MoonThemedGame.Scavenger
         {
             float dt = Time.deltaTime;
             if (HopTimeLeft > 0) HopTimeLeft = Mathf.Max(0, HopTimeLeft - dt);
+            if(RivalPacified)return;
             if (rivalTimer < 0) rivalTimer = UnityEngine.Random.Range(rivalFirstAttack.x, rivalFirstAttack.y);
             switch (Rival)
             {

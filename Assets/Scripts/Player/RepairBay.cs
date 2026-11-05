@@ -5,17 +5,15 @@ using UnityEngine.SceneManagement;
 
 namespace MoonThemedGame.Repair
 {
-    // Next to the repair landing point: salvage unloaded by SCAVENGER appears here.
+    // SCAVENGER salvage is queued into the pneumatic pipe above the repair room floor.
     [DisallowMultipleComponent, RequireComponent(typeof(RepairRobotDropper))]
     public sealed class RepairBay : MonoBehaviour
     {
-        [Tooltip("Where delivered parts appear, relative to the landing point (x right, z forward).")]
-        public Vector3 deliveryOffset = new Vector3(2.4f, 0.5f, 0);
+        public ScrapTubeDelivery deliveryTube;
         public Vector3 wrenchOffset = new Vector3(2.4f, 0.5f, 1.3f);
 
         public static RepairBay Active { get; private set; }
         RepairRobotDropper dropper;
-        int delivered;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void InstallOnLoad()
@@ -63,12 +61,11 @@ namespace MoonThemedGame.Repair
             }
         }
 
-        public void Deliver(GameObject prefab)
+        public bool Deliver(GameObject prefab)
         {
-            if (!prefab) return;
-            var scatter = new Vector3(Random.Range(-0.4f, 0.4f), 0.35f * (delivered % 3), Random.Range(-0.7f, 0.7f));
-            delivered++;
-            RepairPartProp.Create(prefab, Point(deliveryOffset + scatter), Anchor.position.y);
+            if(!prefab)return false;
+            if(!deliveryTube)deliveryTube=ScrapTubeDelivery.EnsureInScene(gameObject.scene);
+            return deliveryTube && deliveryTube.Enqueue(prefab);
         }
 
         void OnDestroy() { if (Active == this) Active = null; }

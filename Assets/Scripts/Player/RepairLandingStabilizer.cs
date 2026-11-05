@@ -11,6 +11,9 @@ namespace MoonThemedGame.Repair
         ScavengerDrive drive;
         float restingHeight, contactBand, landingTime, quietTime, originalDamping;
         bool landed;
+        Vector3 dropStart,dropEnd;
+        float dropElapsed,dropDuration;
+        public bool IsDescending { get; private set; }
 
         public void Initialize(ScavengerDrive suspension, float height, float band)
         {
@@ -23,12 +26,41 @@ namespace MoonThemedGame.Repair
             body.constraints = RigidbodyConstraints.FreezePositionX |
                 RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotation;
             body.angularVelocity = Vector3.zero;
+            dropStart=body.position;
+            dropEnd=new Vector3(dropStart.x,restingHeight+0.12f,dropStart.z);
+            dropDuration=Mathf.Clamp((dropStart.y-dropEnd.y)/4.2f,0.35f,1.6f);
+            IsDescending=dropStart.y>dropEnd.y+0.05f;
+            if(IsDescending)
+            {
+                drive.enabled=false;
+                body.isKinematic=true;
+                body.collisionDetectionMode=CollisionDetectionMode.ContinuousSpeculative;
+            }
         }
 
         void FixedUpdate()
         {
             if (!body || !drive) return;
             float dt = Time.fixedDeltaTime;
+            if(IsDescending)
+            {
+                dropElapsed+=dt;
+                float t=Mathf.Clamp01(dropElapsed/dropDuration);
+                // Nonzero entry/exit speeds prevent the visible pause of a smoothstep drop.
+                float t2=t*t,t3=t2*t;
+                float distance=(-2*t3+3*t2)+(t3-2*t2+t)*0.3f+(t3-t2)*0.15f;
+                body.MovePosition(Vector3.LerpUnclamped(dropStart,dropEnd,distance));
+                if(t>=1)
+                {
+                    body.position=dropEnd;
+                    body.isKinematic=false;
+                    body.collisionDetectionMode=CollisionDetectionMode.ContinuousDynamic;
+                    body.linearVelocity=Vector3.down*((dropStart.y-dropEnd.y)*0.15f/dropDuration);
+                    drive.enabled=true;
+                    IsDescending=false;
+                }
+                return;
+            }
             if (!landed)
             {
                 landed = body.position.y <= restingHeight + contactBand &&

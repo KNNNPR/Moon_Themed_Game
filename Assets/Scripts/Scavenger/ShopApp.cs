@@ -13,6 +13,8 @@ namespace MoonThemedGame.Scavenger
     public sealed class ShopApp : MonoBehaviour
     {
         const string ShopIcon = "shop";
+        [Tooltip("Shop list pixels per mouse-wheel notch.")]
+        [Min(1f)] public float scrollPixelsPerStep = 120f;
 
         internal static readonly Color Text = new Color(0.94f, 0.96f, 0.97f);
         internal static readonly Color Muted = new Color(0.5f, 0.56f, 0.6f);
@@ -27,6 +29,7 @@ namespace MoonThemedGame.Scavenger
             public Label title, description, level, value, next, buyLabel;
             public Wireframe wireframe;
             public float yaw;
+            public bool moonFinder, installed;
         }
 
         internal sealed class Wireframe
@@ -39,6 +42,9 @@ namespace MoonThemedGame.Scavenger
         Label heading, balance, status;
         readonly List<Card> cards = new List<Card>();
         ShopCatalog catalog;
+        MoonFinderContent moonFinder;
+        MoonFinderApp moonFinderApp;
+        ScrollView listings;
         float statusUntil;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
@@ -51,6 +57,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!terminal) return;
             if (window == null && terminal.Root != null) Build();
             if (window == null) return;
@@ -64,12 +71,25 @@ namespace MoonThemedGame.Scavenger
             }
             if (!IsOpen) return;
 
+#if ENABLE_INPUT_SYSTEM
+            if(pointer && Mouse.current!=null && listings.worldBound.Contains(point))
+            {
+                float wheel=Mouse.current.scroll.ReadValue().y;
+#if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
+                if(InputSystem.settings.scrollDeltaBehavior!=InputSettings.ScrollDeltaBehavior.UniformAcrossAllPlatforms)
+                    wheel/=120f;
+#endif
+                float offset=Mathf.Clamp(listings.scrollOffset.y-wheel*scrollPixelsPerStep,0,Mathf.Max(0,listings.verticalScroller.highValue));
+                listings.scrollOffset=new Vector2(0,offset);
+            }
+#endif
+
             close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
             foreach (var card in cards)
             {
                 bool hover = pointer && card.root.worldBound.Contains(point);
                 card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor = hover ? Text : Edge;
-                bool canBuy = !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
+                bool canBuy = card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
                 card.buy.style.backgroundColor = hover && canBuy && card.buy.worldBound.Contains(point) ? new Color(1, 1, 1, 0.18f) : Color.clear;
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
@@ -92,6 +112,7 @@ namespace MoonThemedGame.Scavenger
         void HandleClick(Vector2 point)
         {
             if (close.worldBound.Contains(point)) { SetOpen(false); return; }
+            if(!listings.contentViewport.worldBound.Contains(point))return;
             foreach (var card in cards)
             {
                 if (!card.buy.worldBound.Contains(point)) continue;
@@ -102,6 +123,12 @@ namespace MoonThemedGame.Scavenger
 
         void Buy(Card card)
         {
+            if(card.moonFinder)
+            {
+                if(moonFinderApp && moonFinderApp.Purchased){Say(Loc.T("[INSTALLED]"),Muted);return;}
+                if(!moonFinder || !moonFinderApp || !moonFinderApp.Purchase()){Say(Loc.F("NOT ENOUGH CREDITS - NEED {0} CR",moonFinder?moonFinder.price:40),Alarm);return;}
+                Say(Loc.Russian?"MoonFinder установлен на рабочем столе.":"MoonFinder installed on your desktop.",Good);Refresh();return;
+            }
             var upgrade = card.upgrade;
             if (RobotUpgrades.IsMax(upgrade)) { Say(Loc.F("{0} ALREADY AT MAX", RobotUpgrades.Title(upgrade)), Muted); return; }
             int price = RobotUpgrades.Price(upgrade);
@@ -127,6 +154,7 @@ namespace MoonThemedGame.Scavenger
             window.style.display = open ? DisplayStyle.Flex : DisplayStyle.None;
             if (!open) return;
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
+            GetComponent<MoonFinderApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
@@ -137,6 +165,8 @@ namespace MoonThemedGame.Scavenger
         void Build()
         {
             catalog = Resources.Load<ShopCatalog>("ShopCatalog");
+            moonFinder=Resources.Load<MoonFinderContent>("MoonFinderContent");
+            moonFinderApp=GetComponent<MoonFinderApp>();
             var cursor = terminal.Root.Q("screen-cursor");
             var desktop = cursor != null ? cursor.parent : terminal.Root;
             int index = cursor != null ? desktop.IndexOf(cursor) : desktop.childCount;
@@ -174,7 +204,9 @@ namespace MoonThemedGame.Scavenger
             grid.style.flexWrap = Wrap.Wrap;
             grid.style.justifyContent = Justify.SpaceBetween;
             foreach (var upgrade in RobotUpgrades.All) grid.Add(BuildCard(upgrade));
-            window.Add(grid);
+            grid.Add(BuildCard(default,true));
+            listings=new ScrollView(ScrollViewMode.Vertical){name="shop-listings",pickingMode=PickingMode.Ignore,verticalScrollerVisibility=ScrollerVisibility.Hidden};
+            listings.style.height=418;listings.Add(grid);window.Add(listings);
 
             status = MakeLabel("", 14, Text);
             status.style.height = 18;
@@ -182,11 +214,12 @@ namespace MoonThemedGame.Scavenger
             desktop.Insert(index, window);
         }
 
-        VisualElement BuildCard(Upgrade upgrade)
+        VisualElement BuildCard(Upgrade upgrade,bool moonFinderCard=false)
         {
-            var card = new Card { upgrade = upgrade, root = Box(), yaw = 30 + cards.Count * 47 };
+            var card = new Card { upgrade = upgrade, moonFinder=moonFinderCard, root = Box(), yaw = 30 + cards.Count * 47 };
+            card.root.name=moonFinderCard?"shop-moonfinder":"shop-"+upgrade;
             cards.Add(card);
-            var model = catalog ? catalog.Model(upgrade) : null;
+            var model = moonFinderCard ? (moonFinder?moonFinder.shopModel:null) : catalog ? catalog.Model(upgrade) : null;
             card.wireframe = model ? BuildWireframe(model) : null;
 
             var root = card.root;
@@ -253,12 +286,22 @@ namespace MoonThemedGame.Scavenger
         void Refresh()
         {
             if (heading == null) return;
-            heading.text = Loc.T("PARTS DEPOT // ROBOT UPGRADES");
+            heading.text = Loc.Russian?"СКЛАД // ДЕТАЛИ И ПРОГРАММЫ":"DEPOT // PARTS & SOFTWARE";
             foreach (var card in cards)
             {
+                if(card.moonFinder)
+                {
+                    card.installed=moonFinderApp && moonFinderApp.Purchased;
+                    card.title.text="MoonFinder";card.description.text=moonFinder?moonFinder.shopDescription.Value:"";
+                    card.level.text=Loc.Russian?"ПРИЛОЖЕНИЕ ДЛЯ ПК":"DESKTOP APPLICATION";card.value.text=Loc.Russian?"Одна покупка":"One-time purchase";card.next.text="";
+                    card.buyLabel.text=card.installed?Loc.T("[INSTALLED]"):Loc.F("[BUY  {0} CR]",moonFinder?moonFinder.price:40);
+                    card.buyLabel.style.color=card.installed?Good:terminal.Credits>=(moonFinder?moonFinder.price:40)?Text:Alarm;
+                    continue;
+                }
                 var upgrade = card.upgrade;
                 int level = RobotUpgrades.Level(upgrade), max = RobotUpgrades.MaxLevel(upgrade);
                 bool full = RobotUpgrades.IsMax(upgrade);
+                card.installed=level>0;
                 card.title.text = RobotUpgrades.Title(upgrade);
                 card.description.text = RobotUpgrades.Description(upgrade);
                 card.level.text = Loc.F("LVL {0}  {1}/{2}", new string('#', level) + new string('.', max - level), level, max);
@@ -360,7 +403,7 @@ namespace MoonThemedGame.Scavenger
 
         static void DrawWireframe(MeshGenerationContext context, Card card)
         {
-            bool installed = RobotUpgrades.Level(card.upgrade) > 0;
+            bool installed = card.moonFinder ? card.installed : RobotUpgrades.Level(card.upgrade) > 0;
             DrawWireframe(context, card.wireframe, card.yaw,
                 installed ? new Color(Good.r, Good.g, Good.b, 0.85f) : new Color(Text.r, Text.g, Text.b, 0.75f));
         }

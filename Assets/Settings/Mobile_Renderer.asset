@@ -47,7 +47,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: 5650355402389114281}
   - {fileID: -1212495058379081255}
-  m_RendererFeatureMap: a9cd1c364d186a4ed9f965212b5a2cef
+  - {fileID: 2281874576724675348}
+  m_RendererFeatureMap: a9cd1c364d186a4ed9f965212b5a2cef144bab6fd6d8aa1f
   m_UseNativeRenderPass: 1
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
@@ -76,6 +77,26 @@ MonoBehaviour:
   m_DepthTextureFormat: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+--- !u!114 &2281874576724675348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d49d9563faf45c5ba82c590e9dbe284, type: 3}
+  m_Name: Operator Intoxication
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Rendering.OperatorIntoxicationFeature
+  m_Active: 1
+  injectionPoint: 600
+  fetchColorBuffer: 1
+  requirements: 0
+  passMaterial: {fileID: 2100000, guid: bffabac576614bb8aa968b24b565de21, type: 2}
+  passIndex: 0
+  bindDepthStencilAttachment: 0
+  m_Version: 1
 --- !u!114 &5650355402389114281
 MonoBehaviour:
   m_ObjectHideFlags: 0

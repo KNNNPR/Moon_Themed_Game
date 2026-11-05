@@ -9,6 +9,7 @@ namespace MoonThemedGame.Interactions
     {
         public AudioClip radioTrack;
         public float throwSpeed = 5;
+        public string displayName="Apple";
         Rigidbody body;
         AudioSource audioSource;
         Camera hand;
@@ -22,7 +23,7 @@ namespace MoonThemedGame.Interactions
         Coroutine collisionRestore;
         public override string Prompt => radioTrack
             ? Loc.F("[{0}] Take radio",GameControls.Label(GameCommand.Interact))+"\n"+Loc.F("[{0} / {1}] radio11\n[{2}] Play   [{3}] Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
-            : "E — Take apple";
+            : displayName=="Apple"?"E — Take apple":Loc.F("E — Take {0}",Loc.T(displayName));
         public bool IsHeld => hand;
         public Camera HoldingCamera=>hand;
         public static bool Holding => held;

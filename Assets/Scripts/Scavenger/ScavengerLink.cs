@@ -414,6 +414,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;

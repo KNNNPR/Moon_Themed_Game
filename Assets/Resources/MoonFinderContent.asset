@@ -1,0 +1,556 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d70238706d2569549a51fbeaf6cd16ef, type: 3}
+  m_Name: MoonFinderContent
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.MoonFinderContent
+  price: 40
+  shopDescription:
+    english: You can find your love even on the moon
+    russian: "\u0414\u0430\u0436\u0435 \u043D\u0430 \u043B\u0443\u043D\u0435 \u0442\u044B
+      \u043C\u043E\u0436\u0435\u0448\u044C \u043D\u0430\u0439\u0442\u0438 \u043B\u044E\u0431\u043E\u0432\u044C"
+  shopModel: {fileID: 919132149155446097, guid: 84c3fcbe7a98d5b4e82e1e8b43c6e038, type: 3}
+  appleModel: {fileID: 4564191211039260815, guid: fe63411d4ed4ead4c8cc74e1b2f65017, type: 3}
+  moonIcon: {fileID: 7388822144124034973, guid: 0f30f57d303b483ba8e802edc4beea42, type: 3}
+  appleIcon: {fileID: 7388822144124034973, guid: fdd0ea49b93f44c6943f5a41ef94fbba, type: 3}
+  profiles:
+  - id: katherine
+    name:
+      english: Katherine
+      russian: "\u041A\u0430\u0442\u0435\u0440\u0438\u043D\u0430"
+    description:
+      english: Love PunchCards Hate Text
+      russian: "\u041E\u0431\u043E\u0436\u0430\u044E \u041F\u0435\u0440\u0444\u043E\u043A\u0430\u0440\u0442\u044B,
+        \u043D\u0435\u043D\u0430\u0432\u0438\u0436\u0443 \u0442\u0435\u043A\u0441\u0442"
+    portrait: {fileID: 2800000, guid: 9c5fed11ecbfa6040becb969c8e18659, type: 3}
+    blink: {fileID: 2800000, guid: ffefe76980e333449b00e1e54039af7e, type: 3}
+    angry: {fileID: 2800000, guid: b71ad5ab0e44baa4caa3437ebfd424ce, type: 3}
+    love: {fileID: 2800000, guid: 0f3447c7fafd3c345abcbffd25cab65c, type: 3}
+    apple: 0
+    reward: 0
+    firstNode: hello
+    nodes:
+    - id: hello
+      reply:
+        english: A text message. How primitive. Can you at least imagine punching
+          it into a card?
+        russian: "\u0422\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
+          \u041A\u0430\u043A \u043F\u0440\u0438\u043C\u0438\u0442\u0438\u0432\u043D\u043E.
+          \u0422\u044B \u0445\u043E\u0442\u044F \u0431\u044B \u043C\u043E\u0436\u0435\u0448\u044C
+          \u043F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0435\u0433\u043E
+          \u043D\u0430 \u043F\u0435\u0440\u0444\u043E\u043A\u0430\u0440\u0442\u0435?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: One hole at a time. I'm listening.
+          russian: "\u041F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u043E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u044E.
+            \u042F \u0441\u043B\u0443\u0448\u0430\u044E."
+        next: cards
+      - text:
+          english: What happened back on Earth?
+          russian: "\u0427\u0442\u043E \u0441\u043B\u0443\u0447\u0438\u043B\u043E\u0441\u044C
+            \u043D\u0430 \u0417\u0435\u043C\u043B\u0435?"
+        next: earth
+      - text:
+          english: You're pretty. Forget the cards.
+          russian: "\u0422\u044B \u043A\u0440\u0430\u0441\u0438\u0432\u0430\u044F.
+            \u0417\u0430\u0431\u0443\u0434\u044C \u043F\u0440\u043E \u043A\u0430\u0440\u0442\u044B."
+        next: rude
+    - id: cards
+      reply:
+        english: A hole cannot pretend it isn't there. Words can. That used to be
+          reassuring, before the Earth batches.
+        russian: "\u041E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u0435 \u043D\u0435
+          \u043F\u0440\u0438\u0442\u0432\u043E\u0440\u044F\u0435\u0442\u0441\u044F,
+          \u0447\u0442\u043E \u0435\u0433\u043E \u043D\u0435\u0442. \u0421\u043B\u043E\u0432\u0430
+          \u043C\u043E\u0433\u0443\u0442. \u0420\u0430\u043D\u044C\u0448\u0435 \u044D\u0442\u043E
+          \u0443\u0441\u043F\u043E\u043A\u0430\u0438\u0432\u0430\u043B\u043E. \u0414\u043E
+          \u0437\u0435\u043C\u043D\u044B\u0445 \u043F\u0430\u0440\u0442\u0438\u0439."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: The Earth batches?
+          russian: "\u0417\u0435\u043C\u043D\u044B\u0445 \u043F\u0430\u0440\u0442\u0438\u0439?"
+        next: earth
+      - text:
+          english: So why work with them?
+          russian: "\u0417\u0430\u0447\u0435\u043C \u0442\u043E\u0433\u0434\u0430
+            \u0441 \u043D\u0438\u043C\u0438 \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C?"
+        next: sorters
+    - id: earth
+      reply:
+        english: The readers on Earth received the same punched-card batch. Then
+          the factories stopped answering. People handling those cards started changing.
+          They called it an infection. They never agreed on what was spreading.
+        russian: "\u0421\u0447\u0438\u0442\u044B\u0432\u0430\u0442\u0435\u043B\u0438
+          \u043D\u0430 \u0417\u0435\u043C\u043B\u0435 \u043F\u043E\u043B\u0443\u0447\u0438\u043B\u0438
+          \u043E\u0434\u043D\u0443 \u0438 \u0442\u0443 \u0436\u0435 \u043F\u0430\u0440\u0442\u0438\u044E
+          \u043F\u0435\u0440\u0444\u043E\u043A\u0430\u0440\u0442. \u041F\u043E\u0442\u043E\u043C
+          \u0437\u0430\u0432\u043E\u0434\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0438
+          \u043E\u0442\u0432\u0435\u0447\u0430\u0442\u044C. \u041B\u044E\u0434\u0438,
+          \u0440\u0430\u0431\u043E\u0442\u0430\u0432\u0448\u0438\u0435 \u0441 \u043A\u0430\u0440\u0442\u0430\u043C\u0438,
+          \u043D\u0430\u0447\u0430\u043B\u0438 \u043C\u0435\u043D\u044F\u0442\u044C\u0441\u044F.
+          \u042D\u0442\u043E \u043D\u0430\u0437\u0432\u0430\u043B\u0438 \u0437\u0430\u0440\u0430\u0436\u0435\u043D\u0438\u0435\u043C.
+          \u041D\u043E \u0442\u0430\u043A \u0438 \u043D\u0435 \u0434\u043E\u0433\u043E\u0432\u043E\u0440\u0438\u043B\u0438\u0441\u044C,
+          \u0447\u0442\u043E \u0438\u043C\u0435\u043D\u043D\u043E \u0440\u0430\u0441\u043F\u0440\u043E\u0441\u0442\u0440\u0430\u043D\u044F\u043B\u043E\u0441\u044C."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: And the people sorting the cards?
+          russian: "\u0410 \u043B\u044E\u0434\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435
+            \u0441\u043E\u0440\u0442\u0438\u0440\u0443\u044E\u0442 \u043A\u0430\u0440\u0442\u044B?"
+        next: sorters
+      - text:
+          english: Sounds like a good ghost story.
+          russian: "\u0417\u0432\u0443\u0447\u0438\u0442 \u043A\u0430\u043A \u043D\u0435\u043F\u043B\u043E\u0445\u0430\u044F
+            \u0441\u0442\u0440\u0430\u0448\u0438\u043B\u043A\u0430."
+        next: rude
+    - id: sorters
+      reply:
+        english: The worst job now? Sorter in a PunchCard hall. You inspect every
+          hole, every shift. A wrong pattern passes through your hands before anyone
+          notices. The machines get replacement parts. Sorters don't.
+        russian: "\u0421\u0430\u043C\u0430\u044F \u0441\u0442\u0440\u0430\u0448\u043D\u0430\u044F
+          \u043F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u044F \u0442\u0435\u043F\u0435\u0440\u044C?
+          \u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0449\u0438\u043A \u0432
+          \u0446\u0435\u0445\u0443 \u041F\u0435\u0440\u0444\u043E\u043A\u0430\u0440\u0442.
+          \u041A\u0430\u0436\u0434\u0443\u044E \u0441\u043C\u0435\u043D\u0443 \u043F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u0448\u044C
+          \u043A\u0430\u0436\u0434\u043E\u0435 \u043E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u0435.
+          \u041D\u0435\u0432\u0435\u0440\u043D\u044B\u0439 \u0443\u0437\u043E\u0440
+          \u043F\u0440\u043E\u0445\u043E\u0434\u0438\u0442 \u0447\u0435\u0440\u0435\u0437
+          \u0442\u0432\u043E\u0438 \u0440\u0443\u043A\u0438 \u0440\u0430\u043D\u044C\u0448\u0435,
+          \u0447\u0435\u043C \u0435\u0433\u043E \u0437\u0430\u043C\u0435\u0442\u044F\u0442.
+          \u041C\u0430\u0448\u0438\u043D\u0430\u043C \u0434\u0430\u044E\u0442 \u0437\u0430\u043F\u0447\u0430\u0441\u0442\u0438.
+          \u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0449\u0438\u043A\u0430\u043C
+          \u2014 \u043D\u0435\u0442."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: You shouldn't have to carry that alone.
+          russian: "\u0422\u0435\u0431\u0435 \u043D\u0435 \u043D\u0443\u0436\u043D\u043E
+            \u043D\u0435\u0441\u0442\u0438 \u044D\u0442\u043E \u0432 \u043E\u0434\u0438\u043D\u043E\u0447\u043A\u0443."
+        next: stay
+      - text:
+          english: I'd like to hear more about the cards.
+          russian: "\u042F \u0445\u043E\u0447\u0443 \u0431\u043E\u043B\u044C\u0448\u0435
+            \u0443\u0437\u043D\u0430\u0442\u044C \u043E \u043A\u0430\u0440\u0442\u0430\u0445."
+        next: cards
+      - text:
+          english: Then just quit.
+          russian: "\u0422\u043E\u0433\u0434\u0430 \u043F\u0440\u043E\u0441\u0442\u043E
+            \u0443\u0432\u043E\u043B\u044C\u0441\u044F."
+        next: rude
+    - id: stay
+      reply:
+        english: I don't need a hero. Just someone who won't disconnect when the
+          night shift starts. Can you do that without making it a promise you can't
+          keep?
+        russian: "\u041C\u043D\u0435 \u043D\u0435 \u043D\u0443\u0436\u0435\u043D
+          \u0433\u0435\u0440\u043E\u0439. \u0422\u043E\u043B\u044C\u043A\u043E \u0442\u043E\u0442,
+          \u043A\u0442\u043E \u043D\u0435 \u043E\u0442\u043A\u043B\u044E\u0447\u0438\u0442\u0441\u044F,
+          \u043A\u043E\u0433\u0434\u0430 \u043D\u0430\u0447\u043D\u0451\u0442\u0441\u044F
+          \u043D\u043E\u0447\u043D\u0430\u044F \u0441\u043C\u0435\u043D\u0430. \u0422\u044B
+          \u043C\u043E\u0436\u0435\u0448\u044C \u043F\u0440\u043E\u0441\u0442\u043E
+          \u043F\u043E\u0431\u044B\u0442\u044C \u0440\u044F\u0434\u043E\u043C, \u043D\u0435
+          \u0440\u0430\u0437\u0434\u0430\u0432\u0430\u044F \u043D\u0435\u0432\u043E\u0437\u043C\u043E\u0436\u043D\u044B\u0445
+          \u043E\u0431\u0435\u0449\u0430\u043D\u0438\u0439?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: I'll stay and listen. One shift at a time.
+          russian: "\u042F \u043E\u0441\u0442\u0430\u043D\u0443\u0441\u044C \u0438
+            \u043F\u043E\u0441\u043B\u0443\u0448\u0430\u044E. \u041F\u043E \u043E\u0434\u043D\u043E\u0439
+            \u0441\u043C\u0435\u043D\u0435 \u0437\u0430 \u0440\u0430\u0437."
+        next: love
+      - text:
+          english: First, what do I get out of this?
+          russian: "\u0410 \u0447\u0442\u043E \u044F \u0437\u0430 \u044D\u0442\u043E
+            \u043F\u043E\u043B\u0443\u0447\u0443?"
+        next: rude
+    - id: rude
+      reply:
+        english: You're reading the words. Try reading the person behind them.
+        russian: "\u0422\u044B \u0447\u0438\u0442\u0430\u0435\u0448\u044C \u0441\u043B\u043E\u0432\u0430.
+          \u041F\u043E\u043F\u0440\u043E\u0431\u0443\u0439 \u0443\u0432\u0438\u0434\u0435\u0442\u044C
+          \u0437\u0430 \u043D\u0438\u043C\u0438 \u0447\u0435\u043B\u043E\u0432\u0435\u043A\u0430."
+      emotion: 1
+      romance: 0
+      choices:
+      - text:
+          english: Understood. Let me start again.
+          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
+            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+        next: hello
+    - id: love
+      reply:
+        english: Then stay. I kept the spare keys to your garage. They're yours now.
+          And... I don't hate every text message anymore.
+        russian: "\u0422\u043E\u0433\u0434\u0430 \u043E\u0441\u0442\u0430\u043D\u044C\u0441\u044F.
+          \u0423 \u043C\u0435\u043D\u044F \u0431\u044B\u043B\u0438 \u0437\u0430\u043F\u0430\u0441\u043D\u044B\u0435
+          \u043A\u043B\u044E\u0447\u0438 \u043E\u0442 \u0442\u0432\u043E\u0435\u0433\u043E
+          \u0433\u0430\u0440\u0430\u0436\u0430. \u0422\u0435\u043F\u0435\u0440\u044C
+          \u043E\u043D\u0438 \u0442\u0432\u043E\u0438. \u0418... \u043A\u0430\u0436\u0435\u0442\u0441\u044F,
+          \u044F \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435 \u043D\u0435\u043D\u0430\u0432\u0438\u0436\u0443
+          \u0432\u0441\u0435 \u0442\u0435\u043A\u0441\u0442\u043E\u0432\u044B\u0435
+          \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u044F."
+      emotion: 2
+      romance: 1
+      choices: []
+  - id: lovein
+    name:
+      english: Lovein
+      russian: "\u041B\u043E\u0432\u0435\u0439\u043D"
+    description:
+      english: DON'T EVEN TEXT ME. Your sincere, Cerberus-9 hacker.
+      russian: "\u041D\u0415 \u041F\u0418\u0428\u0418\u0422\u0415 \u041C\u041D\u0415.
+        \u0421 \u0443\u0432\u0430\u0436\u0435\u043D\u0438\u0435\u043C, \u0445\u0430\u043A\u0435\u0440
+        \u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9"
+    portrait: {fileID: 2800000, guid: 3175422eaf5590d4f9e309aecc73be99, type: 3}
+    blink: {fileID: 2800000, guid: c6f3ac5e61920fc4888f909284a1b308, type: 3}
+    angry: {fileID: 2800000, guid: adbfde2a663322547bf857eec1b3c9dc, type: 3}
+    love: {fileID: 2800000, guid: 9aae2bd00e2f5924ab55d9a847afb920, type: 3}
+    apple: 0
+    shuffleChoices: 1
+    reward: 1
+    firstNode: hello
+    nodes:
+    - id: hello
+      reply:
+        english: You read the profile and wrote anyway. Ten seconds. Don't waste
+          them on a compliment.
+        russian: "\u0422\u044B \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043B \u043F\u0440\u043E\u0444\u0438\u043B\u044C
+          \u0438 \u0432\u0441\u0451 \u0440\u0430\u0432\u043D\u043E \u043D\u0430\u043F\u0438\u0441\u0430\u043B.
+          \u0414\u0435\u0441\u044F\u0442\u044C \u0441\u0435\u043A\u0443\u043D\u0434.
+          \u041D\u0435 \u0442\u0440\u0430\u0442\u044C \u0438\u0445 \u043D\u0430 \u043A\u043E\u043C\u043F\u043B\u0438\u043C\u0435\u043D\u0442."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: One message. You decide whether there's another.
+          russian: "\u041E\u0434\u043D\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
+            \u0411\u0443\u0434\u0435\u0442 \u043B\u0438 \u0432\u0442\u043E\u0440\u043E\u0435
+            \u2014 \u0440\u0435\u0448\u0438\u0448\u044C \u0442\u044B."
+        next: terms
+      - text:
+          english: I can fix your loneliness.
+          russian: "\u042F \u0438\u0437\u0431\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
+            \u043E\u0442 \u043E\u0434\u0438\u043D\u043E\u0447\u0435\u0441\u0442\u0432\u0430."
+        next: fixer
+      - text:
+          english: I know who you are.
+          russian: "\u042F \u0437\u043D\u0430\u044E, \u043A\u0442\u043E \u0442\u044B."
+        next: intrusion
+    - id: terms
+      reply:
+        english: I set the channel rules. No repeated pings. No tracing. No trying
+          to turn me into someone easier. Still here?
+        russian: "\u041F\u0440\u0430\u0432\u0438\u043B\u0430 \u043A\u0430\u043D\u0430\u043B\u0430
+          \u0443\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u044E
+          \u044F. \u041D\u0435 \u043F\u0438\u043D\u0433\u043E\u0432\u0430\u0442\u044C
+          \u043F\u043E\u0432\u0442\u043E\u0440\u043D\u043E. \u041D\u0435 \u0432\u044B\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u0442\u044C.
+          \u041D\u0435 \u043F\u044B\u0442\u0430\u0442\u044C\u0441\u044F \u043F\u0435\u0440\u0435\u0434\u0435\u043B\u0430\u0442\u044C
+          \u043C\u0435\u043D\u044F \u0432 \u043A\u043E\u0433\u043E-\u0442\u043E \u0443\u0434\u043E\u0431\u043D\u043E\u0433\u043E.
+          \u0415\u0449\u0451 \u0437\u0434\u0435\u0441\u044C?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: Here. Those rules are clear.
+          russian: "\u0417\u0434\u0435\u0441\u044C. \u041F\u0440\u0430\u0432\u0438\u043B\u0430
+            \u043F\u043E\u043D\u044F\u0442\u043D\u044B."
+        next: silence
+      - text:
+          english: Sure, but you need to open up.
+          russian: "\u0414\u0430, \u043D\u043E \u0442\u0435\u0431\u0435 \u043D\u0430\u0434\u043E
+            \u0431\u044B\u0442\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u0435\u0435."
+        next: fixer
+    - id: silence
+      reply:
+        english: I leave your next message unread. An hour. A day. What's your next
+          packet?
+        russian: "\u042F \u043D\u0435 \u0447\u0438\u0442\u0430\u044E \u0442\u0432\u043E\u0451
+          \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
+          \u0427\u0430\u0441. \u0414\u0435\u043D\u044C. \u041A\u0430\u043A\u043E\u0439
+          \u043F\u0430\u043A\u0435\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0448\u044C
+          \u043F\u043E\u0442\u043E\u043C?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: Nothing. I wait for your answer.
+          russian: "\u041D\u0438\u043A\u0430\u043A\u043E\u0439. \u041F\u043E\u0434\u043E\u0436\u0434\u0443
+            \u0442\u0432\u043E\u0435\u0433\u043E \u043E\u0442\u0432\u0435\u0442\u0430."
+        next: signal
+      - text:
+          english: Just checking if you're there.
+          russian: "\u041F\u0440\u043E\u0441\u0442\u043E \u043F\u0440\u043E\u0432\u0435\u0440\u044E,
+            \u043D\u0430 \u043C\u0435\u0441\u0442\u0435 \u043B\u0438 \u0442\u044B."
+        next: intrusion
+      - text:
+          english: An apology for bothering you.
+          russian: "\u0418\u0437\u0432\u0438\u043D\u044E\u0441\u044C \u0437\u0430
+            \u0431\u0435\u0441\u043F\u043E\u043A\u043E\u0439\u0441\u0442\u0432\u043E."
+        next: intrusion
+    - id: signal
+      reply:
+        english: My station drops off the map. You could run a trace. Nobody would
+          know.
+        russian: "\u041C\u043E\u044F \u0441\u0442\u0430\u043D\u0446\u0438\u044F \u0438\u0441\u0447\u0435\u0437\u0430\u0435\u0442
+          \u0441 \u043A\u0430\u0440\u0442\u044B. \u0422\u044B \u043C\u043E\u0436\u0435\u0448\u044C
+          \u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0442\u0440\u0430\u0441\u0441\u0438\u0440\u043E\u0432\u043A\u0443.
+          \u041D\u0438\u043A\u0442\u043E \u043D\u0435 \u0443\u0437\u043D\u0430\u0435\u0442."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: I'd know. No probes. I wait for your signal.
+          russian: "\u042F \u0431\u0443\u0434\u0443 \u0437\u043D\u0430\u0442\u044C.
+            \u041D\u0438\u043A\u0430\u043A\u0438\u0445 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432.
+            \u0416\u0434\u0443 \u0442\u0432\u043E\u0435\u0433\u043E \u0441\u0438\u0433\u043D\u0430\u043B\u0430."
+        next: boundary
+      - text:
+          english: I'd trace it to keep you safe.
+          russian: "\u042F \u0431\u044B \u043D\u0430\u0448\u0451\u043B \u0442\u0435\u0431\u044F
+            \u0440\u0430\u0434\u0438 \u0442\u0432\u043E\u0435\u0439 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438."
+        next: intrusion
+    - id: boundary
+      reply:
+        english: I take the lead. Not because you're helpless. Because you choose
+          to let me. Say stop, and I stop. Tell me you heard the last part.
+        russian: "\u042F \u0432\u0435\u0434\u0443. \u041D\u0435 \u043F\u043E\u0442\u043E\u043C\u0443,
+          \u0447\u0442\u043E \u0442\u044B \u0431\u0435\u0441\u043F\u043E\u043C\u043E\u0449\u043D\u044B\u0439.
+          \u041F\u043E\u0442\u043E\u043C\u0443, \u0447\u0442\u043E \u0442\u044B \u0441\u0430\u043C
+          \u044D\u0442\u043E \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0448\u044C.
+          \u0421\u043A\u0430\u0436\u0435\u0448\u044C \xAB\u0441\u0442\u043E\u043F\xBB
+          \u2014 \u044F \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u044E\u0441\u044C.
+          \u041F\u043E\u0432\u0442\u043E\u0440\u0438 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E
+          \u0447\u0430\u0441\u0442\u044C."
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: I choose to follow. I can still say stop.
+          russian: "\u042F \u0441\u0430\u043C \u0432\u044B\u0431\u0438\u0440\u0430\u044E
+            \u0438\u0434\u0442\u0438 \u0437\u0430 \u0442\u043E\u0431\u043E\u0439.
+            \u0418 \u043C\u043E\u0433\u0443 \u0441\u043A\u0430\u0437\u0430\u0442\u044C
+            \xAB\u0441\u0442\u043E\u043F\xBB."
+        next: trust
+      - text:
+          english: I'll do anything. No limits.
+          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0447\u0442\u043E
+            \u0443\u0433\u043E\u0434\u043D\u043E. \u0411\u0435\u0437 \u0433\u0440\u0430\u043D\u0438\u0446."
+        next: hollow
+      - text:
+          english: Nobody tells me what to do.
+          russian: "\u041D\u0438\u043A\u0442\u043E \u043D\u0435 \u0431\u0443\u0434\u0435\u0442
+            \u043C\u043D\u043E\u0439 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0432\u0430\u0442\u044C."
+        next: hollow
+    - id: trust
+      reply:
+        english: Cerberus-9 is me. The attacks. The stolen carriers. I'm not a damaged
+          machine for you to repair. What do you do with that information?
+        russian: "\u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9 \u2014 \u044D\u0442\u043E
+          \u044F. \u0410\u0442\u0430\u043A\u0438. \u0423\u043A\u0440\u0430\u0434\u0435\u043D\u043D\u044B\u0435
+          \u043D\u0435\u0441\u0443\u0449\u0438\u0435. \u042F \u043D\u0435 \u0441\u043B\u043E\u043C\u0430\u043D\u043D\u0430\u044F
+          \u043C\u0430\u0448\u0438\u043D\u0430, \u043A\u043E\u0442\u043E\u0440\u0443\u044E
+          \u0442\u0435\u0431\u0435 \u043D\u0430\u0434\u043E \u043F\u043E\u0447\u0438\u043D\u0438\u0442\u044C.
+          \u0427\u0442\u043E \u0442\u044B \u0441\u0434\u0435\u043B\u0430\u0435\u0448\u044C
+          \u0441 \u044D\u0442\u043E\u0439 \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0435\u0439?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: Your secret stays yours. I'm still listening.
+          russian: "\u0422\u0432\u043E\u0439 \u0441\u0435\u043A\u0440\u0435\u0442
+            \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F \u0442\u0432\u043E\u0438\u043C.
+            \u042F \u0432\u0441\u0451 \u0435\u0449\u0451 \u0441\u043B\u0443\u0448\u0430\u044E."
+        next: dark
+      - text:
+          english: Teach me to steal credits.
+          russian: "\u041D\u0430\u0443\u0447\u0438 \u043C\u0435\u043D\u044F \u043A\u0440\u0430\u0441\u0442\u044C
+            \u043A\u0440\u0435\u0434\u0438\u0442\u044B."
+        next: transaction
+      - text:
+          english: I'll make you a better person.
+          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0442\u0435\u0431\u044F
+            \u043B\u0443\u0447\u0448\u0435."
+        next: fixer
+    - id: dark
+      reply:
+        english: Last boundary check. I go dark because I want to. Not a distress
+          signal. Do you come looking?
+        russian: "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u044F\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430
+          \u0433\u0440\u0430\u043D\u0438\u0446. \u042F \u043F\u0440\u043E\u043F\u0430\u0434\u0430\u044E,
+          \u043F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0442\u0430\u043A
+          \u0445\u043E\u0447\u0443. \u042D\u0442\u043E \u043D\u0435 \u0441\u0438\u0433\u043D\u0430\u043B
+          \u0431\u0435\u0434\u0441\u0442\u0432\u0438\u044F. \u041F\u043E\u0439\u0434\u0451\u0448\u044C
+          \u0438\u0441\u043A\u0430\u0442\u044C?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: No. You choose when to come back.
+          russian: "\u041D\u0435\u0442. \u0422\u044B \u0441\u0430\u043C\u0430 \u0440\u0435\u0448\u0438\u0448\u044C,
+            \u043A\u043E\u0433\u0434\u0430 \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F."
+        next: honest
+      - text:
+          english: Of course. That's what love is.
+          russian: "\u041A\u043E\u043D\u0435\u0447\u043D\u043E. \u0412 \u044D\u0442\u043E\u043C
+            \u0438 \u0435\u0441\u0442\u044C \u043B\u044E\u0431\u043E\u0432\u044C."
+        next: intrusion
+    - id: honest
+      reply:
+        english: One honest packet now. Why are you still here?
+        russian: "\u0422\u0435\u043F\u0435\u0440\u044C \u043E\u0434\u0438\u043D \u0447\u0435\u0441\u0442\u043D\u044B\u0439
+          \u043F\u0430\u043A\u0435\u0442. \u041F\u043E\u0447\u0435\u043C\u0443 \u0442\u044B
+          \u0435\u0449\u0451 \u0437\u0434\u0435\u0441\u044C?"
+      emotion: 0
+      romance: 0
+      choices:
+      - text:
+          english: I like you. I don't need to own you.
+          russian: "\u0422\u044B \u043C\u043D\u0435 \u043D\u0440\u0430\u0432\u0438\u0448\u044C\u0441\u044F.
+            \u041C\u043D\u0435 \u043D\u0435 \u043D\u0443\u0436\u043D\u043E \u0442\u043E\u0431\u043E\u0439
+            \u0432\u043B\u0430\u0434\u0435\u0442\u044C."
+        next: love
+      - text:
+          english: So you'll stop hacking my robot.
+          russian: "\u0427\u0442\u043E\u0431\u044B \u0442\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0430
+            \u0432\u0437\u043B\u0430\u043C\u044B\u0432\u0430\u0442\u044C \u043C\u043E\u0435\u0433\u043E
+            \u0431\u043E\u0442\u0430."
+        next: transaction
+      - text:
+          english: Because you told me to stay.
+          russian: "\u041F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0442\u044B
+            \u0432\u0435\u043B\u0435\u043B\u0430 \u043E\u0441\u0442\u0430\u0442\u044C\u0441\u044F."
+        next: hollow
+    - id: intrusion
+      reply:
+        english: A boundary is not a puzzle for you to bypass. Channel closed. Think
+          before trying again.
+        russian: "\u0413\u0440\u0430\u043D\u0438\u0446\u0430 \u2014 \u043D\u0435
+          \u0437\u0430\u0433\u0430\u0434\u043A\u0430, \u043A\u043E\u0442\u043E\u0440\u0443\u044E
+          \u043D\u0430\u0434\u043E \u043E\u0431\u043E\u0439\u0442\u0438. \u041A\u0430\u043D\u0430\u043B
+          \u0437\u0430\u043A\u0440\u044B\u0442. \u041F\u043E\u0434\u0443\u043C\u0430\u0439,
+          \u043F\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043C \u043F\u0440\u043E\u0431\u043E\u0432\u0430\u0442\u044C
+          \u0441\u043D\u043E\u0432\u0430."
+      emotion: 1
+      romance: 0
+      choices:
+      - text:
+          english: Understood. Let me start again.
+          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
+            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+        next: hello
+    - id: fixer
+      reply:
+        english: I'm not your rescue project. You don't get points for tolerating
+          the version of me you invented.
+        russian: "\u042F \u043D\u0435 \u0442\u0432\u043E\u0439 \u043F\u0440\u043E\u0435\u043A\u0442
+          \u043F\u043E \u0441\u043F\u0430\u0441\u0435\u043D\u0438\u044E. \u0417\u0430
+          \u0442\u0435\u0440\u043F\u0438\u043C\u043E\u0441\u0442\u044C \u043A \u0432\u044B\u0434\u0443\u043C\u0430\u043D\u043D\u043E\u0439
+          \u0442\u043E\u0431\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 \u043C\u0435\u043D\u044F
+          \u043E\u0447\u043A\u043E\u0432 \u043D\u0435 \u0434\u0430\u044E\u0442."
+      emotion: 1
+      romance: 0
+      choices:
+      - text:
+          english: Understood. Let me start again.
+          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
+            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+        next: hello
+    - id: hollow
+      reply:
+        english: I asked for a choice, not an empty puppet or a power contest. Try
+          having a self first.
+        russian: "\u041C\u043D\u0435 \u043D\u0443\u0436\u0435\u043D \u0432\u044B\u0431\u043E\u0440,
+          \u0430 \u043D\u0435 \u043F\u0443\u0441\u0442\u0430\u044F \u043A\u0443\u043A\u043B\u0430
+          \u0438\u043B\u0438 \u0431\u043E\u0440\u044C\u0431\u0430 \u0437\u0430 \u0432\u043B\u0430\u0441\u0442\u044C.
+          \u0414\u043B\u044F \u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439
+          \u0431\u044B\u0442\u044C \u0441\u043E\u0431\u043E\u0439."
+      emotion: 1
+      romance: 0
+      choices:
+      - text:
+          english: Understood. Let me start again.
+          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
+            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+        next: hello
+    - id: transaction
+      reply:
+        english: So this was a service request. Wrong application.
+        russian: "\u0417\u043D\u0430\u0447\u0438\u0442, \u044D\u0442\u043E \u0431\u044B\u043B\u0430
+          \u0437\u0430\u044F\u0432\u043A\u0430 \u0432 \u0442\u0435\u0445\u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.
+          \u041D\u0435 \u0442\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435."
+      emotion: 1
+      romance: 0
+      choices:
+      - text:
+          english: Understood. Let me start again.
+          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
+            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+        next: hello
+    - id: love
+      reply:
+        english: ...Fine. Private channel. You stay on my frequency. Cerberus-9 won't
+          touch your carrier again. Don't make a ceremony out of this. Just stay.
+        russian: "...\u041B\u0430\u0434\u043D\u043E. \u041B\u0438\u0447\u043D\u044B\u0439
+          \u043A\u0430\u043D\u0430\u043B. \u041E\u0441\u0442\u0430\u0432\u0430\u0439\u0441\u044F
+          \u043D\u0430 \u043C\u043E\u0435\u0439 \u0447\u0430\u0441\u0442\u043E\u0442\u0435.
+          \u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9 \u0431\u043E\u043B\u044C\u0448\u0435
+          \u043D\u0435 \u0442\u0440\u043E\u043D\u0435\u0442 \u0442\u0432\u043E\u044E
+          \u043D\u0435\u0441\u0443\u0449\u0443\u044E. \u0422\u043E\u043B\u044C\u043A\u043E
+          \u043D\u0435 \u0443\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0439 \u0438\u0437
+          \u044D\u0442\u043E\u0433\u043E \u0446\u0435\u0440\u0435\u043C\u043E\u043D\u0438\u044E.
+          \u041F\u0440\u043E\u0441\u0442\u043E \u043E\u0441\u0442\u0430\u043D\u044C\u0441\u044F."
+      emotion: 2
+      romance: 1
+      choices: []
+  - id: apple
+    name:
+      english: Apple
+      russian: "\u042F\u0431\u043B\u043E\u043A\u043E"
+    description:
+      english: Hi, I'm Apple
+      russian: "\u041F\u0440\u0438\u0432\u0435\u0442, \u044F \u042F\u0431\u043B\u043E\u043A\u043E"
+    portrait: {fileID: 0}
+    blink: {fileID: 0}
+    angry: {fileID: 0}
+    love: {fileID: 0}
+    apple: 1
+    reward: 2
+    firstNode: hello
+    nodes:
+    - id: hello
+      reply:
+        english: Hi, I'm Apple
+        russian: "\u041F\u0440\u0438\u0432\u0435\u0442, \u044F \u042F\u0431\u043B\u043E\u043A\u043E"
+      emotion: 0
+      romance: 0
+      choices: []
+  appleClicksRequired: 12
+  appleMessage:
+    english: Apple.
+    russian: "\u042F\u0431\u043B\u043E\u043A\u043E."
+  appleReply:
+    english: Apple!
+    russian: "\u042F\u0431\u043B\u043E\u043A\u043E!"
+  appleEnding:
+    english: A very large apple is waiting outside. Love grows.
+    russian: "\u0421\u043D\u0430\u0440\u0443\u0436\u0438 \u0442\u0435\u0431\u044F
+      \u0436\u0434\u0451\u0442 \u043E\u0447\u0435\u043D\u044C \u0431\u043E\u043B\u044C\u0448\u043E\u0435
+      \u044F\u0431\u043B\u043E\u043A\u043E. \u041B\u044E\u0431\u043E\u0432\u044C
+      \u0440\u0430\u0441\u0442\u0451\u0442."

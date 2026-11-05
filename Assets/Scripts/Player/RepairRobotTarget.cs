@@ -39,6 +39,8 @@ namespace MoonThemedGame.Repair
         {
             get
             {
+                var landing=GetComponent<RepairLandingStabilizer>();
+                if(landing && landing.IsDescending)return false;
                 var body = GetComponent<Rigidbody>();
                 return !body || body.isKinematic;
             }
