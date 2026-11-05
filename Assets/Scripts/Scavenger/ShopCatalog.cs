@@ -14,6 +14,7 @@ namespace MoonThemedGame.Scavenger
         public GameObject wrench;
         public GameObject screwdriver;
         public GameObject hammer;
+        public GameObject toolbox;
         public Material suitMaterial;
         public Font hudFont;
 
