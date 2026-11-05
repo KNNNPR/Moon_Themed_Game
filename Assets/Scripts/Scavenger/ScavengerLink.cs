@@ -127,6 +127,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
             if (!terminal.GetComponent<SatelliteConsoleApp>()) terminal.gameObject.AddComponent<SatelliteConsoleApp>();
             if (!terminal.GetComponent<ShopApp>()) terminal.gameObject.AddComponent<ShopApp>();
+            if (!terminal.GetComponent<RepairMessagesApp>()) terminal.gameObject.AddComponent<RepairMessagesApp>();
         }
 
         void Awake()
