@@ -379,6 +379,7 @@ namespace MoonThemedGame
             { "SALVAGE {0}M  {1}", "ДЕТАЛЬ {0}М  {1}" },
             { "WARN WEATHER FRONT - {0} IN {1}s", "ВНИМ ПОГОДНЫЙ ФРОНТ - {0} ЧЕРЕЗ {1}с" },
             { "E — Take {0}", "E — Взять: {0}" },
+            { "Hold mouse wheel — toolbox", "Зажми колёсико — чемоданчик" },
             { "E — Take wrench", "E — Взять гаечный ключ" },
             { "WRENCH", "ГАЕЧНЫЙ КЛЮЧ" },
             { "SCREWDRIVER", "ОТВЁРТКА" },

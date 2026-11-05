@@ -20,5 +20,6 @@ MonoBehaviour:
   wrench: {fileID: 6858108260079773056, guid: c9bf670db3a2cd94db3fa6df359ceb90, type: 3}
   screwdriver: {fileID: 3856742736215436920, guid: 1758714a0e9c0e249954e95ac2343240, type: 3}
   hammer: {fileID: 2826576278376346682, guid: 77a6c1c9e8a372f4fb89712627ae7bee, type: 3}
+  toolbox: {fileID: 919132149155446097, guid: d8286ffbb2da4c82bcbb0a2a7511d9d0, type: 3}
   suitMaterial: {fileID: 2100000, guid: 1a5088020898ac6479593604cef48efb, type: 2}
   hudFont: {fileID: 12800000, guid: f2c3b0d3542244afb35e4d6914801d2a, type: 3}

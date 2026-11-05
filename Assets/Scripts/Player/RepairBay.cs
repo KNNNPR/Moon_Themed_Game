@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 
 namespace MoonThemedGame.Repair
 {
-    // Next to the repair landing point: salvage unloaded by SCAVENGER appears here, and the wrench lives here.
+    // Next to the repair landing point: salvage unloaded by SCAVENGER appears here.
     [DisallowMultipleComponent, RequireComponent(typeof(RepairRobotDropper))]
     public sealed class RepairBay : MonoBehaviour
     {
