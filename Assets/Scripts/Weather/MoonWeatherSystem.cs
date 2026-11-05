@@ -53,7 +53,9 @@ namespace MoonThemedGame.Weather
         public int ShelterCount => Mathf.Min(4, 1 + (additionalShelters?.Length ?? 0));
         public Bounds GetShelter(int index) => index == 0 ? Shelter : additionalShelters[index - 1];
         public float Density { get; private set; }
-        public Color AtmosphereTint { get; private set; } = new Color(0.22f, 0.2f, 0.17f);
+        static readonly Color DustTint = new Color(0.045f, 0.052f, 0.06f);
+        static readonly Color RadiationTint = new Color(0.13f, 0.32f, 0.065f);
+        public Color AtmosphereTint { get; private set; } = DustTint;
         public float OpacityLimit { get; private set; } = 0.96f;
         public int PendingStrikes { get; private set; }
         public int Impacts { get; private set; }
@@ -90,6 +92,7 @@ namespace MoonThemedGame.Weather
             nextTwo = (WeatherKind)(((int)Current + 2) % 4);
             nextMeteor = UnityEngine.Random.Range(meteorInterval.x, meteorInterval.y);
             CreateParticles();
+            SnapAtmosphere();
         }
 
         public float Duration(WeatherKind kind) => Mathf.Max(1, kind switch
@@ -130,7 +133,7 @@ namespace MoonThemedGame.Weather
         public void SnapAtmosphere()
         {
             Density = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
-            AtmosphereTint = Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f);
+            AtmosphereTint = Current == WeatherKind.Radiation ? RadiationTint : DustTint;
             OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
         }
 
@@ -160,7 +163,7 @@ namespace MoonThemedGame.Weather
             float target = Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
-            AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? new Color(0.13f, 0.32f, 0.065f) : new Color(0.22f, 0.2f, 0.17f), blend);
+            AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? RadiationTint : DustTint, blend);
             OpacityLimit = Mathf.Lerp(OpacityLimit, Current == WeatherKind.Radiation ? toxicOpacity : 0.96f, blend);
             UpdateParticles();
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)

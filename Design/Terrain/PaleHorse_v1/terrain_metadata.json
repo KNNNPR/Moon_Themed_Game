@@ -1,0 +1,350 @@
+{
+  "name": "PALE HORSE — Подкова, terrain only",
+  "resolution": [
+    2048,
+    2048
+  ],
+  "world_size_m": [
+    512,
+    512
+  ],
+  "encoding": "z_m = (uint16 / 65535 - 0.5) * 64",
+  "black_z_m": -32,
+  "white_z_m": 32,
+  "neutral_z_m": 0,
+  "actual_height_range_m": [
+    -29.3613,
+    24.8392
+  ],
+  "levels_m": [
+    0,
+    -12,
+    -28
+  ],
+  "png_top_edge": "+Y / north",
+  "png_right_edge": "+X / east",
+  "seed": 17017,
+  "blender_main_displace": {
+    "strength": 64,
+    "midlevel": 0.5,
+    "direction": "Z",
+    "coordinates": "UV",
+    "color_space": "Non-Color"
+  },
+  "blender_noise_displace": {
+    "strength": 1,
+    "midlevel": 0.5,
+    "direction": "Z",
+    "coordinates": "UV",
+    "color_space": "Non-Color"
+  },
+  "structures_present": false,
+  "pads": [
+    {
+      "id": 1,
+      "name": "Станция: площадка",
+      "center_xyz_m": [
+        -155,
+        -150,
+        0
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Приёмная площадка",
+      "center_xyz_m": [
+        145,
+        -142,
+        0
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Контейнерный каньон: грунт",
+      "center_xyz_m": [
+        -145,
+        50,
+        -12
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Сортировочная зона: площадка",
+      "center_xyz_m": [
+        138,
+        48,
+        -12
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Нижняя площадка",
+      "center_xyz_m": [
+        0,
+        23,
+        -28
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Дальний могильник: площадка",
+      "center_xyz_m": [
+        6,
+        129,
+        -28
+      ]
+    }
+  ],
+  "routes": {
+    "south_access": {
+      "length_m": 312.69,
+      "max_centerline_grade_deg": 0.03,
+      "height_error_max_m": 0.0003,
+      "control_points_xyz_m": [
+        [
+          -155,
+          -150,
+          0
+        ],
+        [
+          -110,
+          -170,
+          0
+        ],
+        [
+          -45,
+          -180,
+          0
+        ],
+        [
+          25,
+          -180,
+          0
+        ],
+        [
+          90,
+          -169,
+          0
+        ],
+        [
+          145,
+          -142,
+          0
+        ]
+      ]
+    },
+    "west_serpentine": {
+      "length_m": 560.29,
+      "max_centerline_grade_deg": 6.41,
+      "height_error_max_m": 0.0024,
+      "control_points_xyz_m": [
+        [
+          -155,
+          -150,
+          0
+        ],
+        [
+          -181,
+          -119,
+          -0.5
+        ],
+        [
+          -184,
+          -88,
+          -2
+        ],
+        [
+          -160,
+          -70,
+          -3.5
+        ],
+        [
+          -130,
+          -53,
+          -5.5
+        ],
+        [
+          -123,
+          -29,
+          -7
+        ],
+        [
+          -147,
+          -9,
+          -9.5
+        ],
+        [
+          -162,
+          16,
+          -11
+        ],
+        [
+          -145,
+          50,
+          -12
+        ],
+        [
+          -112,
+          60,
+          -12
+        ],
+        [
+          -93,
+          42,
+          -13
+        ],
+        [
+          -89,
+          15,
+          -15
+        ],
+        [
+          -108,
+          -4,
+          -17
+        ],
+        [
+          -108,
+          -30,
+          -20
+        ],
+        [
+          -85,
+          -46,
+          -23
+        ],
+        [
+          -57,
+          -32,
+          -25
+        ],
+        [
+          -50,
+          -5,
+          -27
+        ],
+        [
+          -33,
+          18,
+          -28
+        ],
+        [
+          0,
+          23,
+          -28
+        ]
+      ]
+    },
+    "east_ramp": {
+      "length_m": 235.14,
+      "max_centerline_grade_deg": 6.38,
+      "height_error_max_m": 0.0046,
+      "control_points_xyz_m": [
+        [
+          145,
+          -142,
+          0
+        ],
+        [
+          178,
+          -115,
+          0
+        ],
+        [
+          186,
+          -80,
+          -1
+        ],
+        [
+          165,
+          -50,
+          -3
+        ],
+        [
+          140,
+          -30,
+          -5
+        ],
+        [
+          132,
+          -5,
+          -8
+        ],
+        [
+          147,
+          18,
+          -11
+        ],
+        [
+          138,
+          48,
+          -12
+        ]
+      ]
+    },
+    "floor_access": {
+      "length_m": 111.43,
+      "max_centerline_grade_deg": 0.0,
+      "height_error_max_m": 0.0,
+      "control_points_xyz_m": [
+        [
+          0,
+          23,
+          -28
+        ],
+        [
+          18,
+          65,
+          -28
+        ],
+        [
+          6,
+          129,
+          -28
+        ]
+      ]
+    },
+    "steep_upgrade_slope": {
+      "length_m": 231.36,
+      "max_centerline_grade_deg": 19.03,
+      "height_error_max_m": 0.0174,
+      "control_points_xyz_m": [
+        [
+          90,
+          -169,
+          0
+        ],
+        [
+          106,
+          -134,
+          0
+        ],
+        [
+          102,
+          -112,
+          0
+        ],
+        [
+          78,
+          -82,
+          -12
+        ],
+        [
+          50,
+          -45,
+          -28
+        ],
+        [
+          25,
+          -18,
+          -28
+        ],
+        [
+          0,
+          23,
+          -28
+        ]
+      ]
+    }
+  }
+}
