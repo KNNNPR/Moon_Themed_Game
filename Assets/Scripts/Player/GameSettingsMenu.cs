@@ -16,7 +16,7 @@ namespace MoonThemedGame.Interactions
     {
         public static bool IsOpen { get; private set; }
         static int consumedFrame = -1;
-        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount;
+        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying;
         FirstPersonController player;
         bool restorePlayer, visible;
         CursorLockMode cursorLock;
@@ -53,6 +53,8 @@ namespace MoonThemedGame.Interactions
         }
         void Update()
         {
+            if(OperatorWakeUp.IsPlaying)return;
+            if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue)
             {
                 if(Time.frameCount<=captureFrame || Keyboard.current==null) return;
@@ -69,6 +71,8 @@ namespace MoonThemedGame.Interactions
         }
         public void HandleBack()
         {
+            if(OperatorWakeUp.IsPlaying)return;
+            if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue) { CancelRebind(); return; }
             if (IsOpen)
             {
@@ -77,6 +81,7 @@ namespace MoonThemedGame.Interactions
                 return;
             }
             // Screen controllers receive Escape first; pausing never also happens on that press.
+            if(MainMenuController.Active && MainMenuController.Active.IsFocused)return;
             foreach (var pc in FindObjectsByType<PcMonitorTerminal>(FindObjectsSortMode.None)) if (pc.IsFocused) return;
             foreach (var screen in FindObjectsByType<WeatherMonitorDisplay>(FindObjectsSortMode.None)) if (screen.IsFocused) return;
             foreach (var note in FindObjectsByType<NoteInspectable>(FindObjectsSortMode.None)) if (note.Viewing) return;
@@ -85,6 +90,8 @@ namespace MoonThemedGame.Interactions
         }
         public void Open()
         {
+            if(OperatorWakeUp.IsPlaying)return;
+            if(DeveloperConsole.BlockGameplayInput)return;
             if (IsOpen) return;
             player = FindFirstObjectByType<FirstPersonController>(); restorePlayer = player && player.enabled;
             cursorLock = Cursor.lockState; visible = Cursor.visible; timeScale = Time.timeScale;
@@ -127,7 +134,10 @@ namespace MoonThemedGame.Interactions
             panel.referenceResolution=new Vector2Int(1280,800); panel.match=1f;
             var host=new GameObject("Station terminal / settings UI"); host.transform.SetParent(transform,false);
             document=host.AddComponent<UIDocument>(); document.panelSettings=panel; document.sortingOrder=1000;
-            root=document.rootVisualElement; root.style.flexGrow=1;
+            root=document.rootVisualElement;
+            // Stay hidden even if a UI dependency throws during construction.
+            root.style.display=DisplayStyle.None;
+            root.style.flexGrow=1;
             root.style.unityFontDefinition=FontDefinition.FromFont(assets.font); root.styleSheets.Add(assets.style);
             var scrim=Box("settings-scrim"); root.Add(scrim);
             var shell=Box("settings-shell"); scrim.Add(shell);

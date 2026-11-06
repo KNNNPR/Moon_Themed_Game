@@ -45,11 +45,15 @@ the high-speed load on the suspension. Camera speed effects are controlled by
 The start location contains only the `Robot Start` transform. Startup does not generate
 a test floor, base pad, ramps or rocks. Existing authored terrain supplies the geometry;
 the saved marker still controls spawning and evacuation.
+Wheel suspension never substitutes a virtual plane when a cast misses. Driving
+beside or off a bridge falls to the real collider below; the spawn marker controls
+position only and cannot support the bot in mid-air.
 
 `ScavengerHandlingValidation.Run` uses the actual bot mesh and PhysX in an isolated
 project copy. It checks progressive acceleration, coast, reversing, drift initiation,
 handbrake yaw/speed retention, a sustained U-turn, countersteer, grip recovery,
-a low kerb, 50/100 Hz simulation, manual-only recovery,
+a low kerb, real bridge contact, falling beside/off its deck onto lower terrain,
+50/100 Hz simulation, manual-only recovery,
 camera orbit and drift tracking, 30/120 fps input, UI handoff and obstruction recovery.
 It also checks speed-based FOV/distance/pitch, bounded banking and return to the rest view.
 The live Operator scene checks connection, tuner, resume and disconnection.
@@ -74,4 +78,18 @@ properties, fence/cargo boxes, migration from MeshColliders, case-sensitive mate
 selection, terrain exclusion, duplicate prevention and scene save/reload in an
 isolated copy. Report: `Logs/LandscapeColliders/validation.txt`.
 
-Location buttons: the five `Buttons`-material cylinders in LandScape.fbx are wired by `LocationMechanisms` at scene load as push-button `RobotLever`s, pressed with the manipulator arm ([E], arm from the SHOP required). `Cylinder.045`/`.046`/`.049` knock the `DOOR_LOCK` off its gate and swing the `FENCE_DOOR` leaves open away from the robot (`LocationGate`; later presses close/reopen). `Cylinder.043` (top) and `Cylinder.042` (shaft bottom) send `Platform` up to the `Cube.072` ground level or back down (`LocationPlatform`). The test lever is no longer spawned.
+Weather particles and meteor target searches follow the active rover feed, then return
+to the operator camera on disconnect. Meteor ground searches span terrain at different
+heights. Weather fog is composed after the permanent lunar haze so dust and radiation
+stay visible. Automatic forecasts retain their gradual buildup and fade; manual Weather
+context-menu selection / `SetWeather` takes effect immediately. Pass `immediate: false`
+to start a manual period with the same gradual buildup. Pausing freezes the weather clock.
+
+An in-range satellite gives 85-100% signal in open sky across the entire map. Local
+roof cover reduces it by up to 45%; vertical walls and cliffs beside the rover do not
+count as a roof. Satellite windows, 1/2/3 selection, rival interception and retuning remain
+active. Sky checks ignore the rover's generated hull as well as its original colliders.
+`WeatherAndUplinkValidation.Run` checks rendering in both styles and quality tiers,
+camera handoff, particles at the map edge, forecast timing, radiation energy drain,
+meteor warnings/automatic impacts, open-sky coverage and roof/wall behavior.
+Report and GPU captures: `Logs/WeatherAndUplink`.

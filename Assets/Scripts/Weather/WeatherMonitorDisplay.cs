@@ -60,6 +60,7 @@ namespace MoonThemedGame.Weather
         }
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (root != null && Time.time >= refreshAt) Refresh();
             if (IsTransitioning)
             {

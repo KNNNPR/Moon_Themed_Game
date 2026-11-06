@@ -93,6 +93,7 @@ namespace MoonThemedGame.Computer
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (stage == Stage.Done || !terminal) return;
             if (overlay == null && terminal.Root != null) Build();
             if (overlay == null) return;

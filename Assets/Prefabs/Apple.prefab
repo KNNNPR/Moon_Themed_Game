@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 8364557182466643874}
   - component: {fileID: 100100001}
   - component: {fileID: 100100002}
+  - component: {fileID: 100100003}
   m_Layer: 0
   m_Name: Apple
   m_TagString: Untagged
@@ -146,3 +147,16 @@ MonoBehaviour:
   outline: {fileID: 0}
   radioTrack: {fileID: 0}
   throwSpeed: 5
+--- !u!114 &100100003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4564191211039260815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22f6c6110afc4f56b1abc381e710e86c, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.EdibleProp
+  eatDuration: 0.45

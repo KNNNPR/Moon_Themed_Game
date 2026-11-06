@@ -37,6 +37,8 @@ namespace MoonThemedGame.Scavenger
         [Range(6, 24)] public int robotCharacterHeight = 16;
         [Range(0, 0.5f)] public float robotSceneBehindCharacters = 0.4f;
         [Range(0.25f, 2)] public float robotCharacterDensity = 0.9f;
+        [Tooltip("Fixed feed saturation, independent of distance and relay/satellite signal.")]
+        [Range(0, 1)] public float robotColorSaturation = 0.4f;
         [Min(0)] public float handshakeDuration = 1.6f;
         [Min(0)] public float connectDuration = 2.4f;
         [Min(0.01f)] public float terminateDuration = 1.3f;
@@ -122,6 +124,7 @@ namespace MoonThemedGame.Scavenger
 
         static void Install()
         {
+            if(MainMenuController.IsMenuScene)return;
             var terminal = FindAnyObjectByType<PcMonitorTerminal>();
             if (!terminal) return;
             if (!terminal.GetComponent<ScavengerLink>()) terminal.gameObject.AddComponent<ScavengerLink>();
@@ -159,7 +162,6 @@ namespace MoonThemedGame.Scavenger
             robotCamera.backgroundColor = Color.black;
             if (!state && !robot.TryGetComponent(out state)) state = robot.gameObject.AddComponent<ScavengerRobotState>();
             state.StatusChanged += OnStatusChanged;
-            robotColliders = robot.GetComponentsInChildren<Collider>(true);
             antenna = robot.InverseTransformPoint(bounds.center + Vector3.up * (bounds.extents.y + 0.05f));
             Network = SatelliteNetwork.Instance;
             Network.RivalChanged += OnRivalChanged;
@@ -175,6 +177,7 @@ namespace MoonThemedGame.Scavenger
             var marker = ScavengerStartLocation.Marker(location);
             float rideHeight = robot.position.y - bounds.min.y;
             Drive.Setup(forward);
+            robotColliders = robot.GetComponentsInChildren<Collider>(true);
             if (!robotCamera.TryGetComponent(out orbitCamera)) orbitCamera=robotCamera.gameObject.AddComponent<ScavengerOrbitCamera>();
             orbitCamera.Initialize(robot,Drive,cameraTarget,cameraSize);
             if (marker)
@@ -183,7 +186,6 @@ namespace MoonThemedGame.Scavenger
                 if (facing.sqrMagnitude < 1e-4f) facing = Vector3.forward;
                 homePosition = marker.position + Vector3.up * rideHeight;
                 homeRotation = Quaternion.LookRotation(facing) * Quaternion.Inverse(Quaternion.LookRotation(forward));
-                Drive.SetFallbackGround(marker.position.y);
             }
             else
             {
@@ -363,7 +365,7 @@ namespace MoonThemedGame.Scavenger
 
         public bool InChargeBuilding => chargeBuilding && robot && chargeBuilding.bounds.Contains(RobotBounds(robot).center);
 
-        public bool AtCharger => InChargeBuilding;
+        public bool AtCharger => InChargeBuilding || (robot && ChargeStationZone.AtStation(RobotBounds(robot).center));
 
         void OnStatusChanged(RobotStatus status)
         {
@@ -415,6 +417,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;
             int satelliteKey = -1;
@@ -497,6 +500,7 @@ namespace MoonThemedGame.Scavenger
             robotAscii.SetFloat("_CharacterHeight", robotCharacterHeight);
             robotAscii.SetFloat("_BackgroundStrength", robotSceneBehindCharacters);
             robotAscii.SetFloat("_Density", robotCharacterDensity);
+            robotAscii.SetFloat("_Saturation", robotColorSaturation);
             return robotAscii;
         }
 

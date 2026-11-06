@@ -18,7 +18,7 @@ namespace MoonThemedGame.Interactions
         FirstPersonController movement;
         Interactable target;
         Texture2D dot;
-        GUIStyle promptStyle;
+        float promptOpacity;
 
         public static bool Manages(Camera camera)
         {
@@ -38,12 +38,13 @@ namespace MoonThemedGame.Interactions
         void LateUpdate()
         {
             SetTarget(FindTarget());
+            promptOpacity=Mathf.MoveTowards(promptOpacity,target?1:0,Time.unscaledDeltaTime*10);
             if (target is HeldProp prop) prop.RadioInput();
             if (target && Keyboard.current != null &&
                 GameControls.Pressed(GameCommand.Interact))
             {
                 target.Interact();
-                if (!CanUseInput()) SetTarget(null);
+                if (!CanUseInput() || !target || !target.CanInteract(viewCamera)) SetTarget(null);
             }
         }
 
@@ -79,6 +80,7 @@ namespace MoonThemedGame.Interactions
             if (target == value) return;
             if (target) target.SetHighlighted(false);
             target = value;
+            promptOpacity=0;
             if (target) target.SetHighlighted(true);
         }
 
@@ -102,16 +104,9 @@ namespace MoonThemedGame.Interactions
             GUI.color = Color.white;
             GUI.DrawTexture(new Rect((Screen.width - dotSize) / 2f,
                 (Screen.height - dotSize) / 2f, dotSize, dotSize), dot);
-            if (showPrompt)
+            if (showPrompt && !MoonThemedGame.Repair.RepairCarryable.Current)
             {
-                if (promptStyle == null)
-                    promptStyle = new GUIStyle(GUI.skin.label)
-                        { alignment = TextAnchor.MiddleCenter, fontSize = 16, wordWrap = true };
-                string prompt = GameControls.FormatPrompt(Loc.T(target.Prompt));
-                float width = Mathf.Max(1f, Mathf.Min(380f, Screen.width - 32f));
-                float height = promptStyle.CalcHeight(new GUIContent(prompt), width);
-                GUI.Label(new Rect((Screen.width - width) / 2f, Screen.height / 2f + 18f,
-                    width, height), prompt, promptStyle);
+                InteractionHud.Prompt(Screen.width/2f,Screen.height/2f+24,Loc.T(target.Prompt),17,promptOpacity);
             }
             GUI.color = previous;
         }

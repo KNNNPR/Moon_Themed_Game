@@ -68,6 +68,7 @@ namespace MoonThemedGame.Repair
                 return;
             }
             activeDropper = this;
+            if(gameObject.scene.isLoaded)MoonThemedGame.Scavenger.RepairBayFogVolume.EnsureFor(this);
             RepairCranePickup.ConnectScene(this);
         }
 
@@ -75,6 +76,8 @@ namespace MoonThemedGame.Repair
         {
             if (activeDropper == this) activeDropper = null;
         }
+
+        void Start()=>MoonThemedGame.Scavenger.RepairBayFogVolume.EnsureFor(this);
 
         void Update()
         {
@@ -132,7 +135,6 @@ namespace MoonThemedGame.Repair
                 drive.travel = suspensionTravel;
                 drive.dampingRatio = suspensionDamping;
                 drive.Setup(Vector3.forward);
-                drive.SetFallbackGround(anchor.position.y);
                 drive.PlaceAt(replacement.transform.position, replacement.transform.rotation);
                 var stabilizer = replacement.AddComponent<RepairLandingStabilizer>();
                 stabilizer.Initialize(drive, restPosition.y, bounds.size.y * 0.35f);
@@ -144,6 +146,7 @@ namespace MoonThemedGame.Repair
                 Destroy(replacement);
                 return null;
             }
+
             if (spawned) { spawned.SetActive(false); Destroy(spawned); }
             spawned = replacement;
             return target;

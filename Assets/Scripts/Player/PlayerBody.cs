@@ -10,7 +10,7 @@ namespace MoonThemedGame.Repair
     // A faceted, cel-shaded suit under the first-person camera. The arms reach for whatever is carried.
     // Holding the mouse wheel freezes the view, the player brings the toolbox up and opens it; moving
     // the mouse picks a tool, releasing the wheel takes it (or puts back the one that was in hand).
-    [DisallowMultipleComponent, RequireComponent(typeof(FirstPersonController))]
+    [DefaultExecutionOrder(5000),DisallowMultipleComponent, RequireComponent(typeof(FirstPersonController))]
     public sealed class PlayerBody : MonoBehaviour
     {
         sealed class Slot
@@ -50,6 +50,8 @@ namespace MoonThemedGame.Repair
         FirstPersonController controller;
         Transform root, leftLeg, rightLeg;
         Arm left, right;
+        CosmonautBodyRig cosmonaut;
+        public CosmonautBodyRig Rig=>cosmonaut;
         Slot[] slots = new Slot[0];
         Slot returned;
         Transform kit, lid;
@@ -62,6 +64,7 @@ namespace MoonThemedGame.Repair
         int selected = 1, startIndex = 1;
         float selectX, stride, walk, messageUntil;
         Vector3 lastPosition;
+        Vector3 bodyVelocity;
         string message;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -76,6 +79,7 @@ namespace MoonThemedGame.Repair
 
         static void Install()
         {
+            if(MoonThemedGame.Computer.MainMenuController.IsMenuScene)return;
             foreach (var player in FindObjectsByType<FirstPersonController>(FindObjectsSortMode.None))
                 if (!player.GetComponent<PlayerBody>()) player.gameObject.AddComponent<PlayerBody>();
         }
@@ -110,10 +114,16 @@ namespace MoonThemedGame.Repair
 
             var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
             baseMaterial = catalog ? catalog.suitMaterial : null;
-            Build(catalog);
+            var bodyAssets=Resources.Load<CosmonautBodyAssets>("CosmonautBodyAssets");
+            if(bodyAssets && bodyAssets.model && bodyAssets.firstPersonMesh)
+            {
+                cosmonaut=new CosmonautBodyRig(root,bodyAssets);
+                BuildEquipment(catalog);
+            }
+            else Build(catalog);
             lastPosition = transform.position;
             Application.onBeforeRender -= PoseArms;
-            Application.onBeforeRender += PoseArms;
+            if(cosmonaut==null)Application.onBeforeRender += PoseArms;
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0; return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.forward; }
@@ -148,6 +158,11 @@ namespace MoonThemedGame.Repair
             left = MakeArm(-1);
             right = MakeArm(1);
 
+            BuildEquipment(catalog);
+        }
+
+        void BuildEquipment(ShopCatalog catalog)
+        {
             BuildKit(catalog);
             slots = new[]
             {
@@ -220,7 +235,9 @@ namespace MoonThemedGame.Repair
             {
                 var model = Instantiate(prefab);
                 model.name = "Toolbox model";
-                foreach (var t in model.GetComponentsInChildren<Transform>()) if (t.name == "Lid") lid = t;
+                foreach (var t in model.GetComponentsInChildren<Transform>())
+                    if(t.name.Equals("Lid",System.StringComparison.OrdinalIgnoreCase) ||
+                        t.name.Equals("TOOLBOX_LID",System.StringComparison.OrdinalIgnoreCase))lid=t;
                 var back = lid ? lid.position - model.transform.position : Vector3.forward;
                 back.y = 0;
                 back = back.sqrMagnitude > 1e-8f ? back.normalized : Vector3.forward;
@@ -230,12 +247,10 @@ namespace MoonThemedGame.Repair
                 bounds = Bounds(model);
                 kit.SetPositionAndRotation(new Vector3(bounds.center.x, bounds.min.y, bounds.center.z), Quaternion.LookRotation(back, Vector3.up));
                 model.transform.SetParent(kit, true);
-                foreach (var renderer in model.GetComponentsInChildren<Renderer>())
-                {
-                    var materials = renderer.sharedMaterials;
-                    for (int i = 0; i < materials.Length; i++) materials[i] = Paint(materials[i] ? materials[i].color : Color.gray);
-                    renderer.sharedMaterials = materials;
-                }
+                // Keep the authored textures; this hand-held visual must not collide with the player.
+                foreach(var collider in model.GetComponentsInChildren<Collider>())collider.enabled=false;
+                foreach(var body in model.GetComponentsInChildren<Rigidbody>())
+                {body.isKinematic=true;body.detectCollisions=false;}
                 if (lid)
                 {
                     lidShut = lid.localRotation;
@@ -340,6 +355,7 @@ namespace MoonThemedGame.Repair
 
         void Update()
         {
+            if(DeveloperConsole.BlockGameplayInput)return;
             if (!root) return;
             AnimateLegs();
             var mouse = Mouse.current;
@@ -391,7 +407,7 @@ namespace MoonThemedGame.Repair
             var up = camera.up * Mathf.Cos(tilt) - camera.forward * Mathf.Sin(tilt);
             var back = camera.forward * Mathf.Cos(tilt) + camera.up * Mathf.Sin(tilt);
             var heldRotation = Quaternion.LookRotation(back, up);
-            var heldPosition = camera.position + camera.rotation * (new Vector3(0, -0.2f, 0.48f) * Scale) - up * (0.09f * unit);
+            var heldPosition = camera.position + camera.rotation * (new Vector3(0, -0.16f, 0.68f) * Scale) - up * (0.09f * unit);
             var hipRotation = root.rotation * Quaternion.Euler(0, 90, 0);
             var hipPosition = root.TransformPoint(new Vector3(-0.3f, 0.55f, 0.1f));
             float move = Ease(Mathf.Clamp01(kitShow / 0.6f));
@@ -422,7 +438,7 @@ namespace MoonThemedGame.Repair
         // Runs after every LateUpdate, so the hands land on the carried item where it is drawn.
         void PoseArms()
         {
-            if (!root || left == null || !left.shoulder) return;
+            if (!root || (cosmonaut==null && (left == null || !left.shoulder))) return;
             if (view) { PoseKit(); PoseTools(); }
             var carried = RepairCarryable.Current;
             Vector3? leftTarget = null, rightTarget = null;
@@ -440,16 +456,35 @@ namespace MoonThemedGame.Repair
                 }
                 else rightTarget = Grip(carried, bounds);
             }
+            else if(HeldProp.Current && view)
+            {
+                var renderer=HeldProp.Current.GetComponent<Renderer>();
+                if(renderer){var bounds=renderer.bounds;float spread=Mathf.Min(bounds.extents.magnitude*.55f,.2f*Scale);leftTarget=bounds.center-view.transform.right*spread;rightTarget=bounds.center+view.transform.right*spread;}
+            }
             // The off hand holds the case by its near left corner.
             if (kitVisible && kit) leftTarget = kit.TransformPoint(new Vector3(-0.24f, 0.06f, -0.1f) * unit);
-            Solve(left, leftTarget);
-            Solve(right, rightTarget);
+            if(cosmonaut!=null)
+            {
+                cosmonaut.PoseHands(leftTarget,rightTarget,stride,walk,Time.deltaTime);
+                if(carried && (carried is RepairWrench || carried is RepairTool) && !open)
+                    carried.transform.position+=cosmonaut.RightPalm-Grip(carried,carried.RendererBounds());
+            }
+            else {Solve(left, leftTarget);Solve(right, rightTarget);}
         }
 
         static Vector3 Abs(Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
 
         Vector3 Grip(RepairCarryable tool, Bounds bounds)
         {
+            var filter=tool.GetComponent<MeshFilter>();
+            if(filter && filter.sharedMesh)
+            {
+                var mesh=filter.sharedMesh;var localAxis=tool.LongAxis();
+                var halfAxis=tool.transform.TransformVector(localAxis*Vector3.Dot(mesh.bounds.extents,localAxis));
+                var center=tool.transform.TransformPoint(mesh.bounds.center);
+                if(Vector3.Dot(halfAxis,view.transform.position-center)<0)halfAxis=-halfAxis;
+                return center+halfAxis*.55f;
+            }
             var axis = tool.transform.TransformDirection(tool.LongAxis()).normalized;
             float half = Mathf.Abs(Vector3.Dot(bounds.extents, Abs(axis)));
             if (Vector3.Dot(axis, view.transform.position - bounds.center) < 0) axis = -axis;
@@ -534,14 +569,30 @@ namespace MoonThemedGame.Repair
         void AnimateLegs()
         {
             var delta = transform.position - lastPosition;
+            var velocity=Time.deltaTime>0?delta/Time.deltaTime:Vector3.zero;
             delta.y = 0;
             lastPosition = transform.position;
             float speed = Time.deltaTime > 0 ? delta.magnitude / Time.deltaTime / Scale : 0;
             walk = Mathf.MoveTowards(walk, Mathf.Clamp01(speed / 3), Time.deltaTime * 4);
             stride += Time.deltaTime * speed * 2.8f;
+            if(cosmonaut!=null)
+            {
+                bodyVelocity=velocity;
+                return;
+            }
             float swing = Mathf.Sin(stride) * 26 * walk;
             leftLeg.localRotation = Quaternion.Euler(swing, 0, 0);
             rightLeg.localRotation = Quaternion.Euler(-swing, 0, 0);
+        }
+
+        void LateUpdate()
+        {
+            if(cosmonaut==null || DeveloperConsole.BlockGameplayInput)return;
+            if(view)view.nearClipPlane=Mathf.Min(view.nearClipPlane,.025f);
+            var capsule=GetComponent<CharacterController>();
+            cosmonaut.SetViewPitch(controller.Pitch,controller.CrouchAmount);
+            cosmonaut.Animate(stride,walk,bodyVelocity,controller.CrouchAmount,capsule.isGrounded,capsule.velocity.y,Time.deltaTime);
+            PoseArms();
         }
 
         void OnGUI()
@@ -557,7 +608,7 @@ namespace MoonThemedGame.Repair
         {
             if (!root) return;
             Application.onBeforeRender -= PoseArms;
-            Application.onBeforeRender += PoseArms;
+            if(cosmonaut==null)Application.onBeforeRender += PoseArms;
         }
 
         void OnDisable()

@@ -9,6 +9,7 @@ namespace MoonThemedGame.Interactions
     {
         public AudioClip radioTrack;
         public float throwSpeed = 5;
+        public string displayName="Apple";
         Rigidbody body;
         AudioSource audioSource;
         Camera hand;
@@ -18,14 +19,18 @@ namespace MoonThemedGame.Interactions
         float radius;
         static HeldProp held;
         bool radioOn;
+        EdibleProp edible;
         Coroutine collisionRestore;
         public override string Prompt => radioTrack
-            ? Loc.F("E — Take radio\n{0} / {1} — radio11   {2} — Play   {3} — Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
-            : "E — Take apple";
+            ? Loc.F("[{0}] Take radio",GameControls.Label(GameCommand.Interact))+"\n"+Loc.F("[{0} / {1}] radio11\n[{2}] Play   [{3}] Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
+            : displayName=="Apple"?"E — Take apple":Loc.F("E — Take {0}",Loc.T(displayName));
         public bool IsHeld => hand;
+        public Camera HoldingCamera=>hand;
         public static bool Holding => held;
+        public static HeldProp Current=>held;
         void Awake()
         {
+            edible=GetComponent<EdibleProp>();
             body = GetComponent<Rigidbody>(); body.interpolation = RigidbodyInterpolation.Interpolate;
             body.useGravity = false;
             body.linearDamping = 0.05f; body.angularDamping = 0.05f;
@@ -127,7 +132,12 @@ namespace MoonThemedGame.Interactions
         protected override void OnDisable() { Drop(false); base.OnDisable(); }
         void OnGUI()
         {
-            if (hand && !GameSettingsMenu.IsOpen) GUI.Label(new Rect(Screen.width/2f-230,Screen.height-70,460,50), Loc.F("{0} — Throw", GameControls.Label(GameCommand.Throw)) + (radioTrack ? Loc.F("    {0} Play / {1} Off", GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff)) : ""));
+            if(!hand || GameSettingsMenu.BlockGameplayInput)return;
+            string hint=Loc.F("[{0}] Throw",GameControls.Label(GameCommand.Throw));
+            if(edible)hint=(edible.IsEating?Loc.T("Eating..."):Loc.T("[LMB] Eat"))+"   "+hint;
+            if(radioTrack)hint+="\n"+Loc.F("[{0}] Play   [{1}] Off",GameControls.Label(GameCommand.RadioPlay),GameControls.Label(GameCommand.RadioOff));
+            InteractionHud.Footer(hint);
         }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState()=>held=null;
     }
 }

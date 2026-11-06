@@ -42,6 +42,7 @@ Shader "Moon Game/Color ASCII"
             // Each character is a real 5x7 bitmap, packed into two integers.
             // No font texture, time seed, scrolling text, or external dependency.
             #include "ColorAsciiGlyphs.hlsl"
+            #include "VisibleWeatherFog.hlsl"
 
             float3 DisplayColor(float3 color)
             {
@@ -109,6 +110,17 @@ Shader "Moon Game/Color ASCII"
                 float3 result = lerp(localColor * _BackgroundStrength * lerp(1, 0.1, distanceFade), saturate(inkColor * _GlyphBrightness), ink);
                 float2 centered = screenUV * 2.0 - 1.0;
                 result *= 1.0 - _Vignette * smoothstep(0.3, 1.6, dot(centered, centered));
+                #if UNITY_REVERSED_Z
+                    bool weatherSky=depth<0.00001;
+                #else
+                    bool weatherSky=depth>0.99999;
+                #endif
+                float3 weatherColor=_VisibleWeatherTint.rgb;
+                #if !defined(UNITY_COLORSPACE_GAMMA)
+                    weatherColor=LinearToSRGB(weatherColor);
+                #endif
+                // Haze is continuous, rather than discarded by distant glyph thinning.
+                result=lerp(result,weatherColor,VisibleWeatherFog(GetCameraPositionWS(),world,weatherSky));
                 #if !defined(UNITY_COLORSPACE_GAMMA)
                     result = SRGBToLinear(result);
                 #endif

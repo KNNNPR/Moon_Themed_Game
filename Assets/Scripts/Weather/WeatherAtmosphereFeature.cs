@@ -21,7 +21,10 @@ namespace MoonThemedGame.Weather
                 weather = editorWeather ? editorWeather : editorWeather = UnityEngine.Object.FindFirstObjectByType<MoonWeatherSystem>();
             var assets = weather && weather.assets ? weather.assets : Resources.Load<MoonWeatherAssets>("MoonWeatherAssets");
             if (assets && assets.atmosphereMaterial) passMaterial = assets.atmosphereMaterial;
-            if (!passMaterial || (!(look && look.lookEnabled) && (!weather || weather.Density < 0.00001f))) return;
+            MoonThemedGame.Scavenger.RepairBayFogVolume.PublishGlobals();
+            bool repairFog=Shader.GetGlobalInt("_RepairBayFogCount")>0;
+            Shader.SetGlobalVector("_VisibleWeather",Vector4.zero);
+            if (!passMaterial || (!repairFog && !(look && look.lookEnabled) && (!weather || weather.Density < 0.00001f))) return;
             int count = weather ? weather.ShelterCount : 0;
             for (int i = 0; i < count; i++)
             {
@@ -31,7 +34,13 @@ namespace MoonThemedGame.Weather
             passMaterial.SetVectorArray("_ShelterMins", minimums);
             passMaterial.SetVectorArray("_ShelterMaxs", maximums);
             float scale = DensityScale != null ? DensityScale(renderingData.cameraData.camera) : 1;
-            passMaterial.SetFloat("_Density", weather ? weather.Density * scale : 0);
+            bool ascii=VisualStyleSwitcher.CurrentStyle==VisualStyle.ColorAscii;
+            float weatherScale=Mathf.Max(0.65f,scale);
+            Shader.SetGlobalVector("_VisibleWeather",ascii && weather?new Vector4(weather.Density*weatherScale,weather.OpacityLimit,0,0):Vector4.zero);
+            Shader.SetGlobalColor("_VisibleWeatherTint",weather?weather.AtmosphereTint:Color.black);
+            Shader.SetGlobalInt("_VisibleWeatherShelters",count);
+            Shader.SetGlobalVectorArray("_VisibleWeatherMins",minimums);Shader.SetGlobalVectorArray("_VisibleWeatherMaxs",maximums);
+            passMaterial.SetFloat("_Density", weather && !ascii ? weather.Density * weatherScale : 0);
             passMaterial.SetFloat("_OpacityLimit", weather ? weather.OpacityLimit : 0);
             passMaterial.SetColor("_FogTint", weather ? weather.AtmosphereTint : Color.black);
             bool enabled = look && look.lookEnabled;

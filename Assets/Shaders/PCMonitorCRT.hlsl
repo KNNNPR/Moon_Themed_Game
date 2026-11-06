@@ -10,11 +10,12 @@ half3 CrtSampleDisplay(float2 uv, float time)
         float phase = frac(time * rate) / rate;
         float duration = min(_LetterFlickerDuration, 0.8 / rate);
         float chance = frac(sin(tick * 12.9898 + 71.17) * 43758.5453);
-        uint chosen = (uint)floor(frac(sin(tick * 78.233 + 19.31) * 19341.137) * 6.0);
+        float letters=max(1,_LetterCount);
+        uint chosen = (uint)floor(frac(sin(tick * 78.233 + 19.31) * 19341.137) * letters);
         float start = frac(sin(tick * 39.346 + 3.71) * 27183.135) * max(0.0, 1.0 / rate - duration);
         float pulse = saturate(min(phase - start, start + duration - phase) / 0.008);
-        float column = (uv.x - _LetterRect.x) / _LetterRect.z * 6.0;
-        float inside = step(0.0, column) * (1.0 - step(6.0, column));
+        float column = (uv.x - _LetterRect.x) / _LetterRect.z * letters;
+        float inside = step(0.0, column) * (1.0 - step(letters, column));
         float selected = 1.0 - step(0.5, abs(floor(column) - (float)chosen));
         // One randomly chosen letter briefly loses brightness. Sampling the
         // same mask for every glow tap keeps its phosphor halo in sync.
@@ -36,7 +37,13 @@ float2 CrtContentUV(float2 uv, float time)
 half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
 {
     float time = _PreviewTime >= 0.0 ? _PreviewTime : _Time.y;
-    float2 uv = CrtContentUV(meshUV, time);
+    float2 contentUV = meshUV;
+    #if defined(MOON_CRT_POWER)
+        float2 powerSize = lerp(float2(1, 1), float2(0.003, 0.004),
+            float2(smoothstep(0.60, 0.90, _PowerOff), smoothstep(0.0, 0.62, _PowerOff)));
+        contentUV = (meshUV - 0.5) / powerSize + 0.5;
+    #endif
+    float2 uv = CrtContentUV(contentUV, time);
     float2 texel = _BaseMap_TexelSize.xy;
     half3 source = CrtSampleDisplay(uv, time);
     #if defined(MOON_CRT_TUBE)
@@ -80,7 +87,16 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
     half fresnel = pow(1.0 - saturate(dot(normalWS, view)), 3.0);
     half sheen = pow(saturate(1.0 - length((meshUV - float2(0.19, 0.93)) * float2(1.0, 1.8))), 6.0);
     half edgeShade = 1.0 - 0.18 * dot(meshUV * 2.0 - 1.0, meshUV * 2.0 - 1.0);
-    color = color * mask * edgeShade + _GlassTint.rgb * (0.12 + fresnel * 0.7 + sheen * 0.6);
+    color = color * mask * edgeShade;
+    #if defined(MOON_CRT_POWER)
+        float fade = 1.0 - smoothstep(0.88, 1.0, _PowerOff);
+        float2 aa = max(fwidth(meshUV), float2(0.001, 0.001));
+        float collapseGlow = exp(-pow((meshUV.y - 0.5) / max(0.0025, aa.y), 2.0));
+        collapseGlow *= 1.0 - smoothstep(powerSize.x * 0.46, powerSize.x * 0.5 + aa.x, abs(meshUV.x - 0.5));
+        float flash = smoothstep(0.25, 0.60, _PowerOff) * fade;
+        color = color * fade + lerp(_Phosphor.rgb, half3(1, 1, 1), 0.7) * collapseGlow * flash * 3.0;
+    #endif
+    color += _GlassTint.rgb * (0.12 + fresnel * 0.7 + sheen * 0.6);
     #if defined(MOON_PC_HOVER)
         half rim = exp(-abs(rounded + 0.02) * 65.0);
         half pulse = 0.88 + 0.12 * sin(time * 2.5);

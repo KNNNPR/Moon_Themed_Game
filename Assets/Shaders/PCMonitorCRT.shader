@@ -20,6 +20,7 @@ Shader "Moon Game/PC Monitor CRT"
         _Monochrome("Monochrome", Range(0, 1)) = 0.85
         [HideInInspector] _HoverHighlight("Interaction Highlight", Range(0, 2)) = 0
         [HideInInspector] _PreviewTime("Preview Time (-1 = Live)", Float) = -1
+        [HideInInspector] _PowerOff("CRT Power Off", Range(0, 1)) = 0
     }
     SubShader
     {
@@ -44,9 +45,11 @@ Shader "Moon Game/PC Monitor CRT"
                 float _Curvature, _WaveStrength, _VerticalDrift, _WaveSpeed;
                 float _Brightness, _Glow, _Scanlines, _Flicker, _PreviewTime, _HoverHighlight;
                 float _Mask, _Vignette, _Bleed, _Monochrome;
+                float _PowerOff;
             CBUFFER_END
             #define MOON_PC_HOVER 1
             #define MOON_CRT_TUBE 1
+            #define MOON_CRT_POWER 1
             #include "PCMonitorCRT.hlsl"
             struct ScreenAttributes { float4 positionOS:POSITION; float3 normalOS:NORMAL; float2 uv:TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct ScreenVaryings { float4 positionCS:SV_POSITION; float2 uv:TEXCOORD0; float3 positionWS:TEXCOORD1; half3 normalWS:TEXCOORD2; half fog:TEXCOORD3; UNITY_VERTEX_OUTPUT_STEREO };

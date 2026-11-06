@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text;
 using MoonThemedGame.Interactions;
 using MoonThemedGame.Weather;
+using MoonThemedGame.Repair;
 using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
@@ -39,6 +40,85 @@ namespace MoonThemedGame.Scavenger
         string notice;
         float noticeUntil;
         bool subscribed, weakSignal, leavingSoon, covered, charging, irradiated, frontWarned;
+        ScavengerDrive stuntDrive;
+        int flipCount;
+        float flipUntil;
+        readonly Dictionary<GameObject,int> neededParts=new Dictionary<GameObject,int>();
+        readonly List<SalvagePiece> markerCandidates=new List<SalvagePiece>(),orderMarkers=new List<SalvagePiece>();
+        readonly List<GameObject> neededKinds=new List<GameObject>();
+        float nextMarkerRefresh;
+        Texture2D markerDot;
+        GUIStyle markerText;
+
+        void RefreshOrderMarkers()
+        {
+            orderMarkers.Clear();
+            if(!link.robot || !TryGetComponent<RepairMessagesApp>(out var messages))return;
+            messages.GetSalvageNeeds(neededParts);
+            if(neededParts.Count==0)return;
+            if(link.Salvage)
+                foreach(var prefab in link.Salvage.Cargo)SubtractSupply(prefab);
+            foreach(var part in FindObjectsByType<RepairPartProp>(FindObjectsSortMode.None))
+                if(part.gameObject.scene==gameObject.scene)SubtractSupply(part.prefab);
+            neededKinds.Clear();neededKinds.AddRange(neededParts.Keys);
+            foreach(var tube in FindObjectsByType<ScrapTubeDelivery>(FindObjectsSortMode.None))
+                if(tube.gameObject.scene==gameObject.scene)
+                    foreach(var prefab in neededKinds)neededParts[prefab]=Mathf.Max(0,neededParts[prefab]-tube.CountPrefab(prefab));
+            markerCandidates.Clear();
+            foreach(var piece in SalvagePiece.All)
+                if(piece && !piece.Collected && piece.gameObject.scene==gameObject.scene && piece.prefab && neededParts.TryGetValue(piece.prefab,out int count) && count>0)
+                    markerCandidates.Add(piece);
+            var origin=link.robot.position;
+            markerCandidates.Sort((a,b)=>(a.transform.position-origin).sqrMagnitude.CompareTo((b.transform.position-origin).sqrMagnitude));
+            foreach(var piece in markerCandidates)
+                if(neededParts[piece.prefab]>0){orderMarkers.Add(piece);SubtractSupply(piece.prefab);}
+        }
+        void SubtractSupply(GameObject prefab)
+        {
+            if(prefab && neededParts.TryGetValue(prefab,out int count))neededParts[prefab]=Mathf.Max(0,count-1);
+        }
+        void DrawOrderMarkers()
+        {
+            var camera=link.robotCamera;if(!camera || !link.robot)return;
+            if(Time.time>=nextMarkerRefresh){nextMarkerRefresh=Time.time+0.2f;RefreshOrderMarkers();}
+            // IMGUI is composited after the camera's ASCII pass. Bypass Draw(), which adds HUD glitches.
+            if(markerText==null)markerText=new GUIStyle(text){richText=false,fontSize=Mathf.Max(16,text.fontSize),alignment=TextAnchor.MiddleLeft};
+            if(!markerDot)
+            {
+                markerDot=new Texture2D(24,24,TextureFormat.RGBA32,false){name="Order target dot",hideFlags=HideFlags.HideAndDontSave,filterMode=FilterMode.Bilinear};
+                for(int y=0;y<24;y++)for(int x=0;x<24;x++)markerDot.SetPixel(x,y,new Color(1,1,1,Mathf.Clamp01(12-Vector2.Distance(new Vector2(x+0.5f,y+0.5f),new Vector2(12,12)))));
+                markerDot.Apply();
+            }
+            float size=Mathf.Clamp(Screen.height/100f,8,12);
+            foreach(var piece in orderMarkers)
+            {
+                if(!piece || piece.Collected)continue;
+                var point=camera.WorldToViewportPoint(piece.transform.position+Vector3.up*Mathf.Max(0.4f,piece.radius*0.5f));
+                Vector2 direction=new Vector2(point.x-0.5f,point.y-0.5f);
+                if(point.z<0)direction=-direction;
+                if(point.z<0 && direction.sqrMagnitude<0.00001f)direction=Vector2.down;
+                if(point.z<0 || Mathf.Abs(direction.x)>0.46f || Mathf.Abs(direction.y)>0.35f)
+                    direction*=Mathf.Min(0.46f/Mathf.Max(0.0001f,Mathf.Abs(direction.x)),0.35f/Mathf.Max(0.0001f,Mathf.Abs(direction.y)));
+                var screen=new Vector2(Mathf.Round((0.5f+direction.x)*Screen.width),Mathf.Round((0.5f-direction.y)*Screen.height));
+                screen.x=Mathf.Clamp(screen.x,24,Screen.width-110);screen.y=Mathf.Clamp(screen.y,100,Screen.height-125);
+                string label=Mathf.CeilToInt(Vector3.Distance(link.robot.position,piece.transform.position)).ToString(CultureInfo.InvariantCulture)+" m";
+                var labelSize=markerText.CalcSize(new GUIContent(label));
+                var rect=new Rect(screen.x+size,Mathf.Round(screen.y-labelSize.y/2),labelSize.x+4,labelSize.y);
+                Color saved=GUI.color;GUI.color=Color.black;
+                GUI.DrawTexture(new Rect(screen.x-size/2-2,screen.y-size/2-2,size+4,size+4),markerDot);
+                GUI.color=new Color(0,0,0,0.65f);GUI.DrawTexture(new Rect(rect.x-3,rect.y-1,rect.width+6,rect.height+2),Texture2D.whiteTexture);
+                GUI.color=Color.white;markerText.normal.textColor=Color.black;
+                GUI.Label(new Rect(rect.x-1,rect.y,rect.width,rect.height),label,markerText);
+                GUI.Label(new Rect(rect.x+1,rect.y,rect.width,rect.height),label,markerText);
+                GUI.Label(new Rect(rect.x,rect.y-1,rect.width,rect.height),label,markerText);
+                GUI.Label(new Rect(rect.x,rect.y+1,rect.width,rect.height),label,markerText);
+                GUI.color=Color.white;GUI.DrawTexture(new Rect(screen.x-size/2,screen.y-size/2,size,size),markerDot);
+                markerText.normal.textColor=Color.white;GUI.Label(rect,label,markerText);GUI.color=saved;
+            }
+        }
+
+        void OnDestroy(){if(markerDot)Destroy(markerDot);if(stuntDrive)stuntDrive.SuccessfulFlip-=OnFlip;}
+        void OnFlip(int count){flipCount=count;flipUntil=Time.time+2.5f;}
 
         ScavengerRobotState State => link ? link.state : null;
         float Interference
@@ -60,6 +140,10 @@ namespace MoonThemedGame.Scavenger
 
         public void OnConnected()
         {
+            if(stuntDrive)stuntDrive.SuccessfulFlip-=OnFlip;
+            stuntDrive=link.Drive;
+            if(stuntDrive)stuntDrive.SuccessfulFlip+=OnFlip;
+            flipUntil=0;
             if (!subscribed && link.Network)
             {
                 link.UplinkChanged += OnUplinkChanged;
@@ -262,31 +346,10 @@ namespace MoonThemedGame.Scavenger
             bool signal = link.HasPicture;
             var inv = CultureInfo.InvariantCulture;
 
-            if (signal)
-            {
-                var position = link.robot ? link.robot.position : Vector3.zero;
-                float heading = link.robot ? link.robot.eulerAngles.y : 0;
-                float volts = state ? Mathf.Lerp(10.2f, 12.6f, state.Normalized) : 12.6f;
-                int up = Mathf.FloorToInt(Uptime);
-                var left = new[]
-                {
-                    Loc.F("{0} // LIVE FEED", ScavengerLink.RobotName),
-                    Loc.F("LINK 0x3F2A  PKT {0}  LOSS {1}%", packets, loss.ToString("0.0", inv)),
-                    Loc.F("LAT {0}ms  RSSI {1}dBm", Mathf.RoundToInt(latency), Mathf.RoundToInt(rssi)),
-                    Loc.F("POS {0} {1} {2}  HDG {3:000}", position.x.ToString("0.00", inv), position.y.ToString("0.00", inv), position.z.ToString("0.00", inv), Mathf.RoundToInt(heading)),
-                    SatLine(),
-                    Loc.F("CELL {0}V  T {1}C  CARGO {2}/{3}{4}", volts.ToString("0.0", inv), cellTemp.ToString("0.0", inv), state ? state.Cargo : 0, state ? state.cargoCapacity : 0, RobotUpgrades.Lamps ? Loc.T("  LAMP HI") : ""),
-                    Loc.F("UPTIME {0:00}:{1:00}:{2:00}", up / 3600, up / 60 % 60, up % 60),
-                    SalvageLine()
-                };
-                for (int i = 0; i < left.Length; i++)
-                    Draw(new Rect(pad, pad + line * i, Screen.width, line), left[i], i == 0 ? phosphor : Dim(phosphor), i, text);
-
-                int row = 0;
-                float logTop = Screen.height - pad - line * (log.Count + 1.5f);
-                foreach (var entry in log)
-                    Draw(new Rect(pad, logTop + line * row, Screen.width, line), entry, Dim(phosphor), 50 + row++, text);
-            }
+            if(signal && (!patch || !patch.IsOpen))DrawOrderMarkers();
+            if(signal && Time.time<flipUntil && (!patch || !patch.IsOpen))
+                Alert(new Rect(0,Screen.height*0.25f,Screen.width,unit*3),
+                    (Loc.Russian?"КРУТОЙ ФЛИП":"NICE FLIP")+(flipCount>1?" x"+flipCount:""),Color.white,110);
 
             if (state)
             {
@@ -347,13 +410,16 @@ namespace MoonThemedGame.Scavenger
             {
                 bool full = salvage.Full;
                 string prompt = full ? Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION") : Loc.F("[E] PICK UP {0}", SalvageField.PartName(salvage.Near.prefab));
-                Draw(new Rect(0, Screen.height * 0.7f, Screen.width, line), prompt, full ? warning : phosphor, 42, Centered(text));
+                InteractionHud.Prompt(Screen.width/2f,Screen.height*0.7f,GameControls.FormatPrompt(prompt),16);
             }
             if (notice != null && Time.time < noticeUntil)
                 Draw(new Rect(0, Screen.height * 0.62f, Screen.width, line), notice, phosphor, 40, Centered(text));
             if(link.CanRecoverRobot)
                 Draw(new Rect(0,Screen.height*0.54f,Screen.width,line),Loc.F("[{0}] RIGHT THE ROBOT",GameControls.Label(GameCommand.RobotRecover)),warning,62,Centered(text));
-            Draw(new Rect(pad, Screen.height - pad - line*2, Screen.width, line), Loc.F("[{0}] HANDBRAKE   MOUSE / RIGHT STICK - LOOK   [{1}] / MMB - RECENTER", GameControls.Label(GameCommand.RobotHandbrake),GameControls.Label(GameCommand.RobotCameraReset)), Dim(phosphor), 61, text);
+            string handlingHint=link.Drive && link.Drive.Airborne
+                ? Loc.F("[UP] FRONT FLIP   [DOWN] BACK FLIP   {0}/{1} - MOVE",GameControls.Label(GameCommand.Forward),GameControls.Label(GameCommand.Backward))
+                : Loc.F("[{0}] HANDBRAKE   MOUSE / RIGHT STICK - LOOK   [{1}] / MMB - RECENTER",GameControls.Label(GameCommand.RobotHandbrake),GameControls.Label(GameCommand.RobotCameraReset));
+            Draw(new Rect(pad, Screen.height - pad - line*2, Screen.width, line), handlingHint, Dim(phosphor), 61, text);
             Draw(new Rect(pad, Screen.height - pad - line, Screen.width, line), Loc.F("{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", DriveKeys, SatelliteKeys, GameControls.Label(GameCommand.RobotPanel)), phosphor, 60, text);
         }
 

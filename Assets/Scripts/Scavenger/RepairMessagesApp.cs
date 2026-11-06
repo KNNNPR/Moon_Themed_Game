@@ -41,6 +41,12 @@ namespace MoonThemedGame.Scavenger
         float yaw = 30f;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
+        internal void GetSalvageNeeds(Dictionary<GameObject,int> counts)
+        {
+            counts.Clear();
+            if(accepted==null || !delivery)return;
+            delivery.FillMissingParts(counts);
+        }
 
         void Awake() => terminal = GetComponent<PcMonitorTerminal>();
         void OnEnable() => Loc.Changed += Refresh;
@@ -58,6 +64,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             TrackDelivery();
             if (!terminal || terminal.Root == null) return;
             if (desktopRoot != terminal.Root) Build();
@@ -105,6 +112,8 @@ namespace MoonThemedGame.Scavenger
 
         void Open()
         {
+            GetComponent<MoonFinderApp>()?.Close();
+            GetComponent<MoneyGetApp>()?.Close();
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             if (orders.Count == 0)
