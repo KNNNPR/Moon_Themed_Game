@@ -51,6 +51,17 @@ namespace MoonThemedGame.Scavenger
         [Range(0, 2)] public float handbrakeYawBoost = 0.9f;
         [Range(0, 2)] public float speedDownforce = 1.25f;
 
+        [Header("Air control")]
+        [Min(0)] public float airAcceleration=2;
+        [Min(0)] public float airPitchSpeed=300;
+        [Min(0)] public float airYawSpeed=150;
+        [Min(0.1f)] public float airRotationResponse=8;
+        public event System.Action<int> SuccessfulFlip;
+        public bool Airborne {get;private set;}
+        float lastHullContact=float.NegativeInfinity,airTime,airPitch;
+        Quaternion previousAirRotation;
+        Vector3 airHeading;
+
         [Header("Stability")]
         [Tooltip("Wheel contacts whose normal points up less than this (world Y) are ignored as walls.")]
         [Range(0, 1)] public float maxGroundSteepness = 0.3f;
@@ -87,6 +98,7 @@ namespace MoonThemedGame.Scavenger
         {
             get
             {
+                if(Airborne && airHeading.sqrMagnitude>0.5f)return airHeading;
                 var flat = Forward;
                 flat.y = 0;
                 return flat.sqrMagnitude > 1e-4f ? flat.normalized : Vector3.forward;
@@ -213,6 +225,7 @@ namespace MoonThemedGame.Scavenger
         {
             throttle = steer = drift = overturnedFor = 0;
             wasHandbrake=false;driftSign=1;
+            Airborne=false;airTime=airPitch=0;lastHullContact=float.NegativeInfinity;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.position = position;
@@ -222,14 +235,15 @@ namespace MoonThemedGame.Scavenger
 
         void FixedUpdate()
         {
-            SimulateStep(ReadInput(), Time.fixedDeltaTime, ReadHandbrake());
+            SimulateStep(ReadInput(), Time.fixedDeltaTime, ReadHandbrake(), ReadAirPitch());
         }
 
         // Also accepts external vehicle input (touch controls, AI or a deterministic physics run).
-        public void SimulateStep(Vector2 input, float dt, bool handbrake=false)
+        public void SimulateStep(Vector2 input, float dt, bool handbrake=false, float airPitchInput=0)
         {
             if (!body || dt <= 0) return;
-            input = controllable && !IsOverturned ? new Vector2(Mathf.Clamp(input.x,-1,1),Mathf.Clamp(input.y,-1,1)) : Vector2.zero;
+            input = controllable && !MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput ? new Vector2(Mathf.Clamp(input.x,-1,1),Mathf.Clamp(input.y,-1,1)) : Vector2.zero;
+            airPitchInput = controllable && !MoonThemedGame.Interactions.GameSettingsMenu.BlockGameplayInput ? Mathf.Clamp(airPitchInput,-1,1) : 0;
             handbrake &= controllable && !IsOverturned;
             if(handbrake && !wasHandbrake)driftSign=ForwardSpeed<0?-1:1;
             wasHandbrake=handbrake;
@@ -248,6 +262,7 @@ namespace MoonThemedGame.Scavenger
                 Suspension(wheel, up, dt);
                 if (wheel.grounded) grounded++;
             }
+            UpdateAirControl(grounded,input,airPitchInput,dt);
             if (grounded > 0 && !IsOverturned)
             {
                 Traction(grounded, input, dt, handbrake);
@@ -257,6 +272,44 @@ namespace MoonThemedGame.Scavenger
                     body.AddForce(-up*gravity*speedDownforce*speed*speed,ForceMode.Acceleration);
                 }
             }
+        }
+
+        void OnCollisionEnter(Collision collision)=>lastHullContact=Time.time;
+        void OnCollisionStay(Collision collision)=>lastHullContact=Time.time;
+        void UpdateAirControl(int grounded,Vector2 input,float airPitchInput,float dt)
+        {
+            bool flying=grounded==0 && Time.time-lastHullContact>0.12f && !body.isKinematic;
+            if(Airborne)
+            {
+                var delta=body.rotation*Quaternion.Inverse(previousAirRotation);
+                delta.ToAngleAxis(out float degrees,out Vector3 axis);
+                if(degrees>180)degrees-=360;
+                var right=previousAirRotation*Vector3.Cross(Vector3.up,localForward).normalized;
+                if(axis.sqrMagnitude>0.001f && !float.IsNaN(axis.x))airPitch+=degrees*Vector3.Dot(axis,right);
+                airTime+=dt;
+            }
+            if(!flying && Airborne && controllable && airTime>0.25f && Vector3.Dot(transform.up,Vector3.up)>0.55f)
+            {
+                int flips=Mathf.FloorToInt((Mathf.Abs(airPitch)+5)/360);
+                if(flips>0)SuccessfulFlip?.Invoke(flips);
+            }
+            if(flying && !Airborne){airHeading=Heading;airTime=airPitch=0;}
+            Airborne=flying;previousAirRotation=body.rotation;
+            if(!controllable)return;
+            body.angularDamping=flying?0.3f:1.5f;
+            if(!flying)return;
+            // Manual pitch remains available through the upside-down half of a flip.
+            var pitchAxis=Vector3.Cross(transform.up,Forward).normalized;
+            float pitch=airPitchInput*airPitchSpeed*Mathf.Deg2Rad;
+            float yaw=input.x*airYawSpeed*Mathf.Deg2Rad;
+            var torque=pitchAxis*(pitch-Vector3.Dot(body.angularVelocity,pitchAxis))*airRotationResponse;
+            torque+=Vector3.up*(yaw-Vector3.Dot(body.angularVelocity,Vector3.up))*airRotationResponse;
+            body.maxAngularVelocity=Mathf.Max(7,Mathf.Max(airPitchSpeed,airYawSpeed)*Mathf.Deg2Rad);
+            body.AddTorque(torque,ForceMode.Acceleration);
+            airHeading=(Quaternion.AngleAxis(Vector3.Dot(body.angularVelocity,Vector3.up)*Mathf.Rad2Deg*dt,Vector3.up)*airHeading).normalized;
+            var direction=Heading*input.y;
+            if(Vector3.Dot(body.linearVelocity,direction)<MaximumForwardSpeed)
+                body.AddForce(direction*airAcceleration*length,ForceMode.Acceleration);
         }
 
         // `length` is how far the wheel centre hangs below its mount point.
@@ -421,6 +474,30 @@ namespace MoonThemedGame.Scavenger
             if (Input.GetKey(KeyCode.A)) input.x -= 1;
 #endif
             return input;
+        }
+
+        static float ReadAirPitch()
+        {
+            if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return 0;
+            float pitch=0;
+#if ENABLE_INPUT_SYSTEM
+            var keys=Keyboard.current;
+            if(keys!=null)
+            {
+                if(keys.upArrowKey.isPressed)pitch+=1;
+                if(keys.downArrowKey.isPressed)pitch-=1;
+            }
+            // Keep the existing gamepad pitch control independent of keyboard throttle.
+            if(Gamepad.current!=null)
+            {
+                float stick=Gamepad.current.leftStick.y.ReadValue();
+                if(Mathf.Abs(stick)>Mathf.Abs(pitch))pitch=stick;
+            }
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            if(Input.GetKey(KeyCode.UpArrow))pitch+=1;
+            if(Input.GetKey(KeyCode.DownArrow))pitch-=1;
+#endif
+            return pitch;
         }
 
         static bool ReadHandbrake()

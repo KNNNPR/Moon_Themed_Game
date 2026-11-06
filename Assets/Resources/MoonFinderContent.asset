@@ -35,14 +35,14 @@ MonoBehaviour:
     angry: {fileID: 2800000, guid: b71ad5ab0e44baa4caa3437ebfd424ce, type: 3}
     love: {fileID: 2800000, guid: 0f3447c7fafd3c345abcbffd25cab65c, type: 3}
     apple: 0
+    shuffleChoices: 0
     reward: 0
     firstNode: hello
     nodes:
     - id: hello
       reply:
-        english: A text message. How primitive. Can you at least imagine punching
-          it into a card?
-        russian: "\u0422\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
+        english: "A text message? How primitive. Can you at least imagine it on a punched card?"
+        russian: "\u0422\u0435\u043A\u0441\u0442\u043E\u0432\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435?
           \u041A\u0430\u043A \u043F\u0440\u0438\u043C\u0438\u0442\u0438\u0432\u043D\u043E.
           \u0422\u044B \u0445\u043E\u0442\u044F \u0431\u044B \u043C\u043E\u0436\u0435\u0448\u044C
           \u043F\u0440\u0435\u0434\u0441\u0442\u0430\u0432\u0438\u0442\u044C \u0435\u0433\u043E
@@ -51,9 +51,10 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: One hole at a time. I'm listening.
-          russian: "\u041F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u043E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u044E.
-            \u042F \u0441\u043B\u0443\u0448\u0430\u044E."
+          english: "One hole at a time. I'm listening closely."
+          russian: "\u041F\u043E \u043E\u0434\u043D\u043E\u043C\u0443 \u043E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u044E
+            \u0437\u0430 \u0440\u0430\u0437. \u042F \u0432\u043D\u0438\u043C\u0430\u0442\u0435\u043B\u044C\u043D\u043E
+            \u0441\u043B\u0443\u0448\u0430\u044E"
         next: cards
       - text:
           english: What happened back on Earth?
@@ -67,20 +68,20 @@ MonoBehaviour:
         next: rude
     - id: cards
       reply:
-        english: A hole cannot pretend it isn't there. Words can. That used to be
-          reassuring, before the Earth batches.
+        english: "A hole cannot pretend it isn't there. Words can. That used to be reassuring, before the commotion on Earth."
         russian: "\u041E\u0442\u0432\u0435\u0440\u0441\u0442\u0438\u0435 \u043D\u0435
           \u043F\u0440\u0438\u0442\u0432\u043E\u0440\u044F\u0435\u0442\u0441\u044F,
           \u0447\u0442\u043E \u0435\u0433\u043E \u043D\u0435\u0442. \u0421\u043B\u043E\u0432\u0430
           \u043C\u043E\u0433\u0443\u0442. \u0420\u0430\u043D\u044C\u0448\u0435 \u044D\u0442\u043E
-          \u0443\u0441\u043F\u043E\u043A\u0430\u0438\u0432\u0430\u043B\u043E. \u0414\u043E
-          \u0437\u0435\u043C\u043D\u044B\u0445 \u043F\u0430\u0440\u0442\u0438\u0439."
+          \u0443\u0441\u043F\u043E\u043A\u0430\u0438\u0432\u0430\u043B\u043E \u0434\u043E
+          \u043F\u0435\u0440\u0435\u043F\u043E\u043B\u043E\u0445\u0430 \u043D\u0430
+          \u0417\u0435\u043C\u043B\u0435."
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: The Earth batches?
-          russian: "\u0417\u0435\u043C\u043D\u044B\u0445 \u043F\u0430\u0440\u0442\u0438\u0439?"
+          english: "The commotion on Earth?"
+          russian: "\u0417\u0435\u043C\u043D\u044B\u0445 \u043F\u0435\u0440\u0435\u043F\u043E\u043B\u043E\u0445\u043E\u0432?"
         next: earth
       - text:
           english: So why work with them?
@@ -107,9 +108,10 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: And the people sorting the cards?
-          russian: "\u0410 \u043B\u044E\u0434\u0438, \u043A\u043E\u0442\u043E\u0440\u044B\u0435
-            \u0441\u043E\u0440\u0442\u0438\u0440\u0443\u044E\u0442 \u043A\u0430\u0440\u0442\u044B?"
+          english: "What about the people who sort the cards?"
+          russian: "\u0410 \u0447\u0442\u043E \u0441 \u043B\u044E\u0434\u044C\u043C\u0438,
+            \u043A\u043E\u0442\u043E\u0440\u044B\u0435 \u0441\u043E\u0440\u0442\u0438\u0440\u0443\u044E\u0442
+            \u043A\u0430\u0440\u0442\u044B?"
         next: sorters
       - text:
           english: Sounds like a good ghost story.
@@ -118,9 +120,7 @@ MonoBehaviour:
         next: rude
     - id: sorters
       reply:
-        english: The worst job now? Sorter in a PunchCard hall. You inspect every
-          hole, every shift. A wrong pattern passes through your hands before anyone
-          notices. The machines get replacement parts. Sorters don't.
+        english: "The worst job now? Sorter in a PunchCard hall. You inspect every hole, every shift. A wrong pattern passes through your hands before anyone notices. The machines get replacement parts. Sorters don't. And for some reason, they start losing their minds, too."
         russian: "\u0421\u0430\u043C\u0430\u044F \u0441\u0442\u0440\u0430\u0448\u043D\u0430\u044F
           \u043F\u0440\u043E\u0444\u0435\u0441\u0441\u0438\u044F \u0442\u0435\u043F\u0435\u0440\u044C?
           \u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0449\u0438\u043A \u0432
@@ -133,14 +133,20 @@ MonoBehaviour:
           \u0447\u0435\u043C \u0435\u0433\u043E \u0437\u0430\u043C\u0435\u0442\u044F\u0442.
           \u041C\u0430\u0448\u0438\u043D\u0430\u043C \u0434\u0430\u044E\u0442 \u0437\u0430\u043F\u0447\u0430\u0441\u0442\u0438.
           \u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u0449\u0438\u043A\u0430\u043C
-          \u2014 \u043D\u0435\u0442."
+          - \u043D\u0435\u0442. \u0410 \u0435\u0449\u0451 \u043E\u043D\u0438, \u043F\u043E
+          \u043A\u0430\u043A\u043E\u0439-\u0442\u043E \u043F\u0440\u0438\u0447\u0438\u043D\u0435
+          \u043D\u0430\u0447\u0438\u043D\u0430\u044E\u0442 \u0441\u0445\u043E\u0434\u0438\u0442\u044C
+          \u0441 \u0443\u043C\u0430."
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: You shouldn't have to carry that alone.
-          russian: "\u0422\u0435\u0431\u0435 \u043D\u0435 \u043D\u0443\u0436\u043D\u043E
-            \u043D\u0435\u0441\u0442\u0438 \u044D\u0442\u043E \u0432 \u043E\u0434\u0438\u043D\u043E\u0447\u043A\u0443."
+          english: "I like listening to you talk about your punched cards. I wouldn't mind staying with you."
+          russian: "\u0410 \u043C\u043D\u0435 \u043D\u0440\u0430\u0432\u0438\u0442\u0441\u044F
+            \u0441\u043B\u0443\u0448\u0430\u0442\u044C \u043F\u0440\u043E \u0442\u0432\u043E\u0438
+            \u043F\u0435\u0440\u0444\u043E\u043A\u0430\u0440\u0442\u044B, \u044F
+            \u0431\u044B\u043B \u0431\u044B \u043D\u0435 \u043F\u0440\u043E\u0442\u0438\u0432
+            \u043E\u0441\u0442\u0430\u0442\u044C\u0441\u044F \u0441 \u0442\u043E\u0431\u043E\u0439."
         next: stay
       - text:
           english: I'd like to hear more about the cards.
@@ -170,10 +176,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: I'll stay and listen. One shift at a time.
+          english: 'I''ll stay and listen. '
           russian: "\u042F \u043E\u0441\u0442\u0430\u043D\u0443\u0441\u044C \u0438
-            \u043F\u043E\u0441\u043B\u0443\u0448\u0430\u044E. \u041F\u043E \u043E\u0434\u043D\u043E\u0439
-            \u0441\u043C\u0435\u043D\u0435 \u0437\u0430 \u0440\u0430\u0437."
+            \u043F\u043E\u0441\u043B\u0443\u0448\u0430\u044E. "
         next: love
       - text:
           english: First, what do I get out of this?
@@ -190,9 +195,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: Understood. Let me start again.
-          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
-            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+          english: "There must have been some misunderstanding."
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D\u043E\u0435 \u043A\u0430\u043A\u043E\u0435-\u0442\u043E
+            \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u0435"
         next: hello
     - id: love
       reply:
@@ -211,12 +216,12 @@ MonoBehaviour:
       choices: []
   - id: lovein
     name:
-      english: Lovein
-      russian: "\u041B\u043E\u0432\u0435\u0439\u043D"
+      english: L0ve1n
+      russian: "\u041B0\u0432\u0435\u0439\u043D"
     description:
-      english: DON'T EVEN TEXT ME. Your sincere, Cerberus-9 hacker.
-      russian: "\u041D\u0415 \u041F\u0418\u0428\u0418\u0422\u0415 \u041C\u041D\u0415.
-        \u0421 \u0443\u0432\u0430\u0436\u0435\u043D\u0438\u0435\u043C, \u0445\u0430\u043A\u0435\u0440
+      english: D0N'T EVEN TEXT ME. Y0ur s1ncere, Cerberus-9 hacker.
+      russian: "\u041D\u0415 \u041F1\u04281\u0422\u0415 \u041C\u041D\u0415. \u0421
+        \u0443\u0432\u0430\u0436\u0435\u043D1\u0435\u043C, \u0445\u0430\u043A\u0435\u0440
         \u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9"
     portrait: {fileID: 2800000, guid: 3175422eaf5590d4f9e309aecc73be99, type: 3}
     blink: {fileID: 2800000, guid: c6f3ac5e61920fc4888f909284a1b308, type: 3}
@@ -229,293 +234,305 @@ MonoBehaviour:
     nodes:
     - id: hello
       reply:
-        english: You read the profile and wrote anyway. Ten seconds. Don't waste
-          them on a compliment.
-        russian: "\u0422\u044B \u043F\u0440\u043E\u0447\u0438\u0442\u0430\u043B \u043F\u0440\u043E\u0444\u0438\u043B\u044C
-          \u0438 \u0432\u0441\u0451 \u0440\u0430\u0432\u043D\u043E \u043D\u0430\u043F\u0438\u0441\u0430\u043B.
+        english: Y0u read the pr0f1le and wr0te anyway. Ten sec0nds. D0n't waste
+          them 0n a c0mpl1ment.
+        russian: "\u0422\u044B \u043F\u04400\u04471\u0442\u0430\u043B \u043F\u04400\u04441\u043B\u044C
+          1 \u0432\u0441\u0451 \u0440\u0430\u0432\u043D0 \u043D\u0430\u043F1\u0441\u0430\u043B.
           \u0414\u0435\u0441\u044F\u0442\u044C \u0441\u0435\u043A\u0443\u043D\u0434.
-          \u041D\u0435 \u0442\u0440\u0430\u0442\u044C \u0438\u0445 \u043D\u0430 \u043A\u043E\u043C\u043F\u043B\u0438\u043C\u0435\u043D\u0442."
+          \u041D\u0435 \u0442\u0440\u0430\u0442\u044C 1\u0445 \u043D\u0430 \u043A0\u043C\u043F\u043B1\u043C\u0435\u043D\u0442."
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: One message. You decide whether there's another.
-          russian: "\u041E\u0434\u043D\u043E \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
-            \u0411\u0443\u0434\u0435\u0442 \u043B\u0438 \u0432\u0442\u043E\u0440\u043E\u0435
-            \u2014 \u0440\u0435\u0448\u0438\u0448\u044C \u0442\u044B."
+          english: Th1s 1s the f1rst message. Whether there's a sec0nd 1s up t0 y0u.
+          russian: "\u042D\u04420 \u043F\u0435\u0440\u04320\u0435 \u044100\u0431\u0449\u0435\u043D1\u0435,
+            \u0431\u0443\u0434\u0435\u0442 \u043B1 \u0432\u04420\u04400\u0435 - \u0432\u044B\u04310\u0440
+            \u0437\u0430 \u04420\u04310\u0439"
         next: terms
       - text:
-          english: I can fix your loneliness.
-          russian: "\u042F \u0438\u0437\u0431\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
-            \u043E\u0442 \u043E\u0434\u0438\u043D\u043E\u0447\u0435\u0441\u0442\u0432\u0430."
+          english: 1 can f1x y0ur l0nel1ness.
+          russian: "\u042F 1\u0437\u0431\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
+            0\u0442 0\u04341\u043D0\u0447\u0435\u0441\u0442\u0432\u0430."
         next: fixer
       - text:
-          english: I know who you are.
-          russian: "\u042F \u0437\u043D\u0430\u044E, \u043A\u0442\u043E \u0442\u044B."
+          english: 1 kn0w wh0 y0u are.
+          russian: "\u042F \u0437\u043D\u0430\u044E, \u043A\u04420 \u0442\u044B."
         next: intrusion
     - id: terms
       reply:
-        english: I set the channel rules. No repeated pings. No tracing. No trying
-          to turn me into someone easier. Still here?
-        russian: "\u041F\u0440\u0430\u0432\u0438\u043B\u0430 \u043A\u0430\u043D\u0430\u043B\u0430
-          \u0443\u0441\u0442\u0430\u043D\u0430\u0432\u043B\u0438\u0432\u0430\u044E
-          \u044F. \u041D\u0435 \u043F\u0438\u043D\u0433\u043E\u0432\u0430\u0442\u044C
-          \u043F\u043E\u0432\u0442\u043E\u0440\u043D\u043E. \u041D\u0435 \u0432\u044B\u0441\u043B\u0435\u0436\u0438\u0432\u0430\u0442\u044C.
+        english: 1 set the channel rules. N0 repeated p1ngs. N0 trac1ng. N0 try1ng
+          t0 turn me 1nt0 s0me0ne eas1er. St1ll here?
+        russian: "\u041F\u0440\u0430\u04321\u043B\u0430 \u043A\u0430\u043D\u0430\u043B\u0430
+          \u0443\u0441\u0442\u0430\u043D\u0430\u0432\u043B1\u0432\u0430\u044E \u044F.
+          \u041D\u0435 \u043F1\u043D\u04330\u0432\u0430\u0442\u044C \u043F0\u0432\u04420\u0440\u043D0.
+          \u041D\u0435 \u0432\u044B\u0441\u043B\u0435\u04361\u0432\u0430\u0442\u044C.
           \u041D\u0435 \u043F\u044B\u0442\u0430\u0442\u044C\u0441\u044F \u043F\u0435\u0440\u0435\u0434\u0435\u043B\u0430\u0442\u044C
-          \u043C\u0435\u043D\u044F \u0432 \u043A\u043E\u0433\u043E-\u0442\u043E \u0443\u0434\u043E\u0431\u043D\u043E\u0433\u043E.
+          \u043C\u0435\u043D\u044F \u0432 \u043A0\u04330-\u04420 \u0443\u04340\u0431\u043D0\u04330.
           \u0415\u0449\u0451 \u0437\u0434\u0435\u0441\u044C?"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: Here. Those rules are clear.
-          russian: "\u0417\u0434\u0435\u0441\u044C. \u041F\u0440\u0430\u0432\u0438\u043B\u0430
-            \u043F\u043E\u043D\u044F\u0442\u043D\u044B."
+          english: The rules are clear t0 me.
+          russian: "\u041F\u0440\u0430\u04321\u043B\u0430 \u043C\u043D\u0435 \u044F\u0441\u043D\u044B"
         next: silence
       - text:
-          english: Sure, but you need to open up.
-          russian: "\u0414\u0430, \u043D\u043E \u0442\u0435\u0431\u0435 \u043D\u0430\u0434\u043E
-            \u0431\u044B\u0442\u044C \u043E\u0442\u043A\u0440\u044B\u0442\u0435\u0435."
+          english: Sure, but 1f 1 were y0u, 1'd be a l1ttle fr1endl1er.
+          russian: "\u041A0\u043D\u0435\u0447\u043D0, \u043D0 \u044F \u0431\u044B
+            \u043D\u0430 \u0442\u04320\u0435\u043C \u043C\u0435\u0441\u0442\u0435
+            \u0431\u044B\u043B \u0431\u044B \u0447\u0443\u0442\u044C \u04310\u043B\u0435\u0435
+            \u043F\u04401\u0432\u0435\u0442\u043B1\u04320\u0439"
         next: fixer
     - id: silence
       reply:
-        english: I leave your next message unread. An hour. A day. What's your next
-          packet?
-        russian: "\u042F \u043D\u0435 \u0447\u0438\u0442\u0430\u044E \u0442\u0432\u043E\u0451
-          \u0441\u043B\u0435\u0434\u0443\u044E\u0449\u0435\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435.
-          \u0427\u0430\u0441. \u0414\u0435\u043D\u044C. \u041A\u0430\u043A\u043E\u0439
-          \u043F\u0430\u043A\u0435\u0442 \u043E\u0442\u043F\u0440\u0430\u0432\u0438\u0448\u044C
-          \u043F\u043E\u0442\u043E\u043C?"
+        english: 1'll leave y0u 0n unread f0r an h0ur, f0r a day. What data packet
+          w1ll y0u feel l1ke send1ng?
+        russian: "\u042F 0\u0441\u0442\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
+          \u0432 \u043D\u0435\u043F\u04400\u04471\u0442\u0430\u043D\u043D\u044B\u0445
+          \u043D\u0430 \u0447\u0430\u0441, \u043D\u0430 \u0441\u0443\u0442\u043A1. 
+          \u041A\u0430\u043A0\u0432 \u043F\u0430\u043A\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445
+          \u0437\u0430\u04450\u0447\u0435\u0442\u0441\u044F \u0442\u0435\u0431\u0435
+          \u043F\u04401\u0441\u043B\u0430\u0442\u044C?"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: Nothing. I wait for your answer.
-          russian: "\u041D\u0438\u043A\u0430\u043A\u043E\u0439. \u041F\u043E\u0434\u043E\u0436\u0434\u0443
-            \u0442\u0432\u043E\u0435\u0433\u043E \u043E\u0442\u0432\u0435\u0442\u0430."
+          english: N0th1ng. 1 wa1t f0r y0ur answer.
+          russian: "\u041D1\u043A\u0430\u043A0\u0439. \u041F0\u04340\u0436\u0434\u0443
+            \u0442\u04320\u0435\u04330 0\u0442\u0432\u0435\u0442\u0430."
         next: signal
       - text:
-          english: Just checking if you're there.
-          russian: "\u041F\u0440\u043E\u0441\u0442\u043E \u043F\u0440\u043E\u0432\u0435\u0440\u044E,
-            \u043D\u0430 \u043C\u0435\u0441\u0442\u0435 \u043B\u0438 \u0442\u044B."
+          english: Just check1ng 1f y0u're there.
+          russian: "\u041F\u04400\u0441\u04420 \u043F\u04400\u0432\u0435\u0440\u044E,
+            \u043D\u0430 \u043C\u0435\u0441\u0442\u0435 \u043B1 \u0442\u044B."
         next: intrusion
       - text:
-          english: An apology for bothering you.
-          russian: "\u0418\u0437\u0432\u0438\u043D\u044E\u0441\u044C \u0437\u0430
-            \u0431\u0435\u0441\u043F\u043E\u043A\u043E\u0439\u0441\u0442\u0432\u043E."
+          english: An ap0l0gy f0r b0ther1ng y0u.
+          russian: "1\u0437\u04321\u043D\u044E\u0441\u044C \u0437\u0430 \u0431\u0435\u0441\u043F0\u043A0\u0439\u0441\u0442\u04320."
         next: intrusion
     - id: signal
       reply:
-        english: My station drops off the map. You could run a trace. Nobody would
-          know.
-        russian: "\u041C\u043E\u044F \u0441\u0442\u0430\u043D\u0446\u0438\u044F \u0438\u0441\u0447\u0435\u0437\u0430\u0435\u0442
-          \u0441 \u043A\u0430\u0440\u0442\u044B. \u0422\u044B \u043C\u043E\u0436\u0435\u0448\u044C
-          \u0437\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0442\u0440\u0430\u0441\u0441\u0438\u0440\u043E\u0432\u043A\u0443.
-          \u041D\u0438\u043A\u0442\u043E \u043D\u0435 \u0443\u0437\u043D\u0430\u0435\u0442."
+        english: My stat10n leaves 0rb1t. Y0u c0uld try t0 track me d0wn. 1 w0uldn't
+          kn0w.
+        russian: "\u041C0\u044F \u0441\u0442\u0430\u043D\u04461\u044F \u043F0\u043A1\u0434\u0430\u0435\u0442
+          0\u0440\u04311\u0442\u0443. \u0422\u044B \u043C0\u0436\u0435\u0448\u044C
+          \u043F0\u043F\u044B\u0442\u0430\u0442\u044C\u0441\u044F \u043C\u0435\u043D\u044F
+          \u0432\u044B\u04471\u0441\u043B1\u0442\u044C. \u042F 0\u0431 \u044D\u04420\u043C
+          \u043D\u0435 \u0443\u0437\u043D\u0430\u044E"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: I'd know. No probes. I wait for your signal.
+          english: 1'd kn0w. N0 pr0bes. 1 wa1t f0r y0ur s1gnal.
           russian: "\u042F \u0431\u0443\u0434\u0443 \u0437\u043D\u0430\u0442\u044C.
-            \u041D\u0438\u043A\u0430\u043A\u0438\u0445 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432.
-            \u0416\u0434\u0443 \u0442\u0432\u043E\u0435\u0433\u043E \u0441\u0438\u0433\u043D\u0430\u043B\u0430."
+            \u041D1\u043A\u0430\u043A1\u0445 \u0437\u0430\u043F\u04400\u04410\u0432.
+            \u0416\u0434\u0443 \u0442\u04320\u0435\u04330  \u04411\u0433\u043D\u0430\u043B\u0430."
         next: boundary
       - text:
-          english: I'd trace it to keep you safe.
+          english: 1'd trace 1t t0 keep y0u safe.
           russian: "\u042F \u0431\u044B \u043D\u0430\u0448\u0451\u043B \u0442\u0435\u0431\u044F
-            \u0440\u0430\u0434\u0438 \u0442\u0432\u043E\u0435\u0439 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438."
+            \u0440\u0430\u04341 \u0442\u04320\u0435\u0439 \u0431\u0435\u04370\u043F\u0430\u0441\u043D0\u0441\u04421."
         next: intrusion
     - id: boundary
       reply:
-        english: I take the lead. Not because you're helpless. Because you choose
-          to let me. Say stop, and I stop. Tell me you heard the last part.
-        russian: "\u042F \u0432\u0435\u0434\u0443. \u041D\u0435 \u043F\u043E\u0442\u043E\u043C\u0443,
-          \u0447\u0442\u043E \u0442\u044B \u0431\u0435\u0441\u043F\u043E\u043C\u043E\u0449\u043D\u044B\u0439.
-          \u041F\u043E\u0442\u043E\u043C\u0443, \u0447\u0442\u043E \u0442\u044B \u0441\u0430\u043C
-          \u044D\u0442\u043E \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0448\u044C.
-          \u0421\u043A\u0430\u0436\u0435\u0448\u044C \xAB\u0441\u0442\u043E\u043F\xBB
-          \u2014 \u044F \u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u044E\u0441\u044C.
-          \u041F\u043E\u0432\u0442\u043E\u0440\u0438 \u043F\u043E\u0441\u043B\u0435\u0434\u043D\u044E\u044E
-          \u0447\u0430\u0441\u0442\u044C."
+        english: 1'm the B0ss here. Every server b0ws beneath my heel. St1ll, y0u've
+          caught my eye. Y0ur j0b 1s t0 st0p me 1f 1 g0 t00 far. 1f s0meth1ng 1sn't
+          r1ght, say "St0p".
+        russian: "\u042F \u0437\u0434\u0435\u0441\u044C \u04110\u0441\u0441, \u0432\u0441\u0435
+          \u0441\u0435\u0440\u0432\u0435\u0440\u0430 \u043B0\u0436\u0430\u0442\u044C\u0441\u044F
+          \u043F0\u0434 \u043C0\u0439 \u043A\u0430\u0431\u043B\u0443\u043A. 0\u0434\u043D\u0430\u043A0,
+          \u0442\u044B \u043C\u043D\u0435 \u043F\u04401\u0433\u043B\u044F\u043D\u0443\u043B\u0441\u044F.
+          \u0412 \u0442\u043201 0\u0431\u044F\u0437\u0430\u043D\u043D0\u0441\u04421
+          \u0432\u04450\u04341\u0442 \u043C\u0435\u043D\u044F 0\u0441\u0442\u0430\u043D\u0430\u0432\u043B1\u0432\u0430\u0442\u044C,
+          \u0435\u0441\u043B1 \u044F \u0432\u0434\u0440\u0443\u0433 \u043F\u0435\u0440\u0435\u04331\u0431\u0430\u044E
+          \u043F\u0430\u043B\u043A\u0443. \u0415\u0441\u043B1 \u0447\u04420-\u04420
+          \u043D\u0435 \u0442\u0430\u043A, \u04420 \u0441\u043A\u0430\u04361 \"\u0421\u04420\u043F\""
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: I choose to follow. I can still say stop.
-          russian: "\u042F \u0441\u0430\u043C \u0432\u044B\u0431\u0438\u0440\u0430\u044E
-            \u0438\u0434\u0442\u0438 \u0437\u0430 \u0442\u043E\u0431\u043E\u0439.
-            \u0418 \u043C\u043E\u0433\u0443 \u0441\u043A\u0430\u0437\u0430\u0442\u044C
-            \xAB\u0441\u0442\u043E\u043F\xBB."
+          english: 1 ch00se t0 f0ll0w y0u. 1 can say "St0p".
+          russian: "\u042F \u0432\u044B\u04311\u0440\u0430\u044E 1\u0434\u04421 \u0437\u0430
+            \u04420\u04310\u0439. \u042F \u043C0\u0433\u0443 \u0441\u043A\u0430\u0437\u0430\u0442\u044C
+            \"\u0421\u04420\u043F\""
         next: trust
       - text:
-          english: I'll do anything. No limits.
-          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0447\u0442\u043E
-            \u0443\u0433\u043E\u0434\u043D\u043E. \u0411\u0435\u0437 \u0433\u0440\u0430\u043D\u0438\u0446."
+          english: 1'll d0 anyth1ng. N0 l1m1ts.
+          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0447\u04420 \u0443\u04330\u0434\u043D0.
+            \u0411\u0435\u0437 \u0433\u0440\u0430\u043D1\u0446."
         next: hollow
       - text:
-          english: Nobody tells me what to do.
-          russian: "\u041D\u0438\u043A\u0442\u043E \u043D\u0435 \u0431\u0443\u0434\u0435\u0442
-            \u043C\u043D\u043E\u0439 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0432\u0430\u0442\u044C."
+          english: N0b0dy tells me what t0 d0.
+          russian: "\u041D1\u043A\u04420 \u043D\u0435 \u0431\u0443\u0434\u0435\u0442
+            \u043C\u043D0\u0439 \u043A0\u043C\u0430\u043D\u04340\u0432\u0430\u0442\u044C."
         next: hollow
     - id: trust
       reply:
-        english: Cerberus-9 is me. The attacks. The stolen carriers. I'm not a damaged
-          machine for you to repair. What do you do with that information?
-        russian: "\u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9 \u2014 \u044D\u0442\u043E
-          \u044F. \u0410\u0442\u0430\u043A\u0438. \u0423\u043A\u0440\u0430\u0434\u0435\u043D\u043D\u044B\u0435
-          \u043D\u0435\u0441\u0443\u0449\u0438\u0435. \u042F \u043D\u0435 \u0441\u043B\u043E\u043C\u0430\u043D\u043D\u0430\u044F
-          \u043C\u0430\u0448\u0438\u043D\u0430, \u043A\u043E\u0442\u043E\u0440\u0443\u044E
-          \u0442\u0435\u0431\u0435 \u043D\u0430\u0434\u043E \u043F\u043E\u0447\u0438\u043D\u0438\u0442\u044C.
-          \u0427\u0442\u043E \u0442\u044B \u0441\u0434\u0435\u043B\u0430\u0435\u0448\u044C
-          \u0441 \u044D\u0442\u043E\u0439 \u0438\u043D\u0444\u043E\u0440\u043C\u0430\u0446\u0438\u0435\u0439?"
+        english: As y0u've already f1gured 0ut, Cerberus-9 1s me. All the hacks,
+          all the attacks 0n y0ur servers. 1'm n0t a br0ken mach1ne y0u need t0 f1x.
+          1'm far m0re 1ndependent than any0ne y0u've had t0 deal w1th. What w1ll
+          y0u d0 w1th that 1nf0rmat10n?
+        russian: "\u041A\u0430\u043A \u0442\u044B \u0443\u0436\u0435 \u043F0\u043D\u044F\u043B,
+          \u0426\u0435\u0440\u0431\u0435\u0440-9 \u044D\u04420 \u044F. \u0412\u0441\u0435
+          \u0432\u0437\u043B0\u043C\u044B, \u0430\u0442\u0430\u043A1 \u043D\u0430
+          \u0432\u0430\u04481 \u0441\u0435\u0440\u0432\u0435\u0440\u0430. \u042F
+          \u043D\u0435 \u0441\u043B0\u043C\u0430\u043D\u043D\u0430\u044F \u043C\u0430\u04481\u043D\u0430,
+          \u043A0\u04420\u0440\u0443\u044E \u0442\u0435\u0431\u0435 \u043D\u0430\u04340
+          \u04471\u043D1\u0442\u044C. \u042F \u043A\u0443\u0434\u0430 \u04310\u043B\u0435\u0435
+          \u0441\u0430\u043C0\u0441\u04420\u044F\u0442\u0435\u043B\u044C\u043D\u0430\u044F
+          \u0447\u0435\u043C \u0432\u0441\u0435 \u0442\u0435, \u0441 \u043A0\u04420\u0440\u044B\u043C1
+          \u0442\u0435\u0431\u0435 \u043F\u04401\u0448\u043B0\u0441\u044C 0\u0431\u0449\u0430\u0442\u044C\u0441\u044F.
+          \u0427\u04420 \u0442\u044B \u0431\u0443\u0434\u0435\u0448\u044C \u0434\u0435\u043B\u0430\u0442\u044C
+          \u0441 \u044D\u04420\u0439 1\u043D\u04440\u0440\u043C\u0430\u04461\u0435\u0439?"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: Your secret stays yours. I'm still listening.
-          russian: "\u0422\u0432\u043E\u0439 \u0441\u0435\u043A\u0440\u0435\u0442
-            \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F \u0442\u0432\u043E\u0438\u043C.
-            \u042F \u0432\u0441\u0451 \u0435\u0449\u0451 \u0441\u043B\u0443\u0448\u0430\u044E."
+          english: Y0ur secret stays y0urs. 1'm st1ll l1sten1ng.
+          russian: "\u0422\u04320\u0439 \u0441\u0435\u043A\u0440\u0435\u0442 0\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F
+            \u0442\u043201\u043C. \u042F \u0432\u0441\u0451 \u0435\u0449\u0451 \u0441\u043B\u0443\u0448\u0430\u044E."
         next: dark
       - text:
-          english: Teach me to steal credits.
-          russian: "\u041D\u0430\u0443\u0447\u0438 \u043C\u0435\u043D\u044F \u043A\u0440\u0430\u0441\u0442\u044C
-            \u043A\u0440\u0435\u0434\u0438\u0442\u044B."
+          english: Teach me t0 steal cred1ts.
+          russian: "\u041D\u0430\u0443\u04471 \u043C\u0435\u043D\u044F \u043A\u0440\u0430\u0441\u0442\u044C
+            \u043A\u0440\u0435\u04341\u0442\u044B."
         next: transaction
       - text:
-          english: I'll make you a better person.
+          english: 1'll make y0u a better pers0n.
           russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0442\u0435\u0431\u044F
             \u043B\u0443\u0447\u0448\u0435."
         next: fixer
     - id: dark
       reply:
-        english: Last boundary check. I go dark because I want to. Not a distress
-          signal. Do you come looking?
-        russian: "\u041F\u043E\u0441\u043B\u0435\u0434\u043D\u044F\u044F \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0430
-          \u0433\u0440\u0430\u043D\u0438\u0446. \u042F \u043F\u0440\u043E\u043F\u0430\u0434\u0430\u044E,
-          \u043F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0442\u0430\u043A
-          \u0445\u043E\u0447\u0443. \u042D\u0442\u043E \u043D\u0435 \u0441\u0438\u0433\u043D\u0430\u043B
-          \u0431\u0435\u0434\u0441\u0442\u0432\u0438\u044F. \u041F\u043E\u0439\u0434\u0451\u0448\u044C
-          \u0438\u0441\u043A\u0430\u0442\u044C?"
+        english: Last b0undary check. 1 g0 dark because 1 want t0. N0t a d1stress
+          s1gnal. D0 y0u c0me l00k1ng?
+        russian: "\u041F0\u0441\u043B\u0435\u0434\u043D\u044F\u044F \u043F\u04400\u0432\u0435\u0440\u043A\u0430
+          \u0433\u0440\u0430\u043D1\u0446. \u042F \u043F\u04400\u043F\u0430\u0434\u0430\u044E,
+          \u043F0\u04420\u043C\u0443 \u0447\u04420 \u0442\u0430\u043A \u04450\u0447\u0443.
+          \u042D\u04420 \u043D\u0435 \u04411\u0433\u043D\u0430\u043B \u0431\u0435\u0434\u0441\u0442\u04321\u044F.
+          \u041F0\u0439\u0434\u0451\u0448\u044C 1\u0441\u043A\u0430\u0442\u044C?"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: No. You choose when to come back.
-          russian: "\u041D\u0435\u0442. \u0422\u044B \u0441\u0430\u043C\u0430 \u0440\u0435\u0448\u0438\u0448\u044C,
-            \u043A\u043E\u0433\u0434\u0430 \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F."
+          english: N0. Y0u ch00se when t0 c0me back.
+          russian: "\u041D\u0435\u0442. \u0422\u044B \u0441\u0430\u043C\u0430 \u0440\u0435\u04481\u0448\u044C,
+            \u043A0\u0433\u0434\u0430 \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F."
         next: honest
       - text:
-          english: Of course. That's what love is.
-          russian: "\u041A\u043E\u043D\u0435\u0447\u043D\u043E. \u0412 \u044D\u0442\u043E\u043C
-            \u0438 \u0435\u0441\u0442\u044C \u043B\u044E\u0431\u043E\u0432\u044C."
+          english: 0f c0urse. That's what l0ve 1s.
+          russian: "\u041A0\u043D\u0435\u0447\u043D0. \u0412 \u044D\u04420\u043C
+            1 \u0435\u0441\u0442\u044C \u043B\u044E\u04310\u0432\u044C."
         next: intrusion
     - id: honest
       reply:
-        english: One honest packet now. Why are you still here?
-        russian: "\u0422\u0435\u043F\u0435\u0440\u044C \u043E\u0434\u0438\u043D \u0447\u0435\u0441\u0442\u043D\u044B\u0439
-          \u043F\u0430\u043A\u0435\u0442. \u041F\u043E\u0447\u0435\u043C\u0443 \u0442\u044B
-          \u0435\u0449\u0451 \u0437\u0434\u0435\u0441\u044C?"
+        english: N0w th1s really 1s the f1nal data packet... Why are y0u st1ll 0nl1ne,
+          chatt1ng w1th me?
+        russian: "\u0422\u0435\u043F\u0435\u0440\u044C \u04420\u0447\u043D0 \u04441\u043D\u0430\u043B\u044C\u043D\u044B\u0439
+          \u043F\u0430\u043A\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445...
+          \u041F0\u0447\u0435\u043C\u0443 \u0442\u044B \u0432\u0441\u0435 \u0435\u0449\u0451
+          0\u043D\u043B\u0430\u0439\u043D 1 \u043F\u0435\u0440\u0435\u043F1\u0441\u044B\u0432\u0430\u0435\u0448\u044C\u0441\u044F
+          \u04410 \u043C\u043D0\u0439?"
       emotion: 0
       romance: 0
       choices:
       - text:
-          english: I like you. I don't need to own you.
-          russian: "\u0422\u044B \u043C\u043D\u0435 \u043D\u0440\u0430\u0432\u0438\u0448\u044C\u0441\u044F.
-            \u041C\u043D\u0435 \u043D\u0435 \u043D\u0443\u0436\u043D\u043E \u0442\u043E\u0431\u043E\u0439
-            \u0432\u043B\u0430\u0434\u0435\u0442\u044C."
+          english: '1 l1ke y0u. '
+          russian: "\u0422\u044B \u043C\u043D\u0435 \u043D\u0440\u0430\u04321\u0448\u044C\u0441\u044F. "
         next: love
       - text:
-          english: So you'll stop hacking my robot.
-          russian: "\u0427\u0442\u043E\u0431\u044B \u0442\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0430
-            \u0432\u0437\u043B\u0430\u043C\u044B\u0432\u0430\u0442\u044C \u043C\u043E\u0435\u0433\u043E
-            \u0431\u043E\u0442\u0430."
+          english: S0 y0u'll st0p hack1ng my r0b0t.
+          russian: "\u0427\u04420\u0431\u044B \u0442\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0430
+            \u0432\u0437\u043B\u0430\u043C\u044B\u0432\u0430\u0442\u044C \u043C0\u0435\u04330
+            \u04310\u0442\u0430."
         next: transaction
       - text:
-          english: Because you told me to stay.
-          russian: "\u041F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0442\u044B
-            \u0432\u0435\u043B\u0435\u043B\u0430 \u043E\u0441\u0442\u0430\u0442\u044C\u0441\u044F."
+          english: Because y0u t0ld me t0 stay.
+          russian: "\u041F0\u04420\u043C\u0443 \u0447\u04420 \u0442\u044B \u0432\u0435\u043B\u0435\u043B\u0430
+            0\u0441\u0442\u0430\u0442\u044C\u0441\u044F."
         next: hollow
     - id: intrusion
       reply:
-        english: A boundary is not a puzzle for you to bypass. Channel closed. Think
-          before trying again.
-        russian: "\u0413\u0440\u0430\u043D\u0438\u0446\u0430 \u2014 \u043D\u0435
-          \u0437\u0430\u0433\u0430\u0434\u043A\u0430, \u043A\u043E\u0442\u043E\u0440\u0443\u044E
-          \u043D\u0430\u0434\u043E \u043E\u0431\u043E\u0439\u0442\u0438. \u041A\u0430\u043D\u0430\u043B
-          \u0437\u0430\u043A\u0440\u044B\u0442. \u041F\u043E\u0434\u0443\u043C\u0430\u0439,
-          \u043F\u0440\u0435\u0436\u0434\u0435 \u0447\u0435\u043C \u043F\u0440\u043E\u0431\u043E\u0432\u0430\u0442\u044C
-          \u0441\u043D\u043E\u0432\u0430."
+        english: My b0undar1es aren't a f1rewall f0r y0u t0 bypass. Channel cl0sed.
+          Th1nk ab0ut y0ur answers bef0re y0u message me aga1n.
+        russian: "\u041C01 \u0433\u0440\u0430\u043D1\u0446\u044B - \u043D\u0435 \u0444\u0430\u0439\u0435\u0444\u0440\u04320\u043B\u043B,
+          \u043A0\u04420\u0440\u044B\u0439 \u0442\u0435\u0431\u0435 \u043D\u0443\u0436\u043D0
+          0\u04310\u0439\u04421. \u041A\u0430\u043D\u0430\u043B \u0437\u0430\u043A\u0440\u044B\u0442.
+          \u041F0\u0434\u0443\u043C\u0430\u0439-\u043A\u0430 \u043D\u0430\u0434 \u0441\u043201\u043C1
+          0\u0442\u0432\u0435\u0442\u0430\u043C1, \u043F\u0435\u0440\u0435\u0434
+          \u0442\u0435\u043C \u043A\u0430\u043A \u043C\u043D\u0435 \u043F1\u0441\u0430\u0442\u044C."
       emotion: 1
       romance: 0
       choices:
       - text:
-          english: Understood. Let me start again.
-          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
-            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+          english: There must have been s0me m1sunderstand1ng.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
+            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
         next: hello
     - id: fixer
       reply:
-        english: I'm not your rescue project. You don't get points for tolerating
-          the version of me you invented.
-        russian: "\u042F \u043D\u0435 \u0442\u0432\u043E\u0439 \u043F\u0440\u043E\u0435\u043A\u0442
-          \u043F\u043E \u0441\u043F\u0430\u0441\u0435\u043D\u0438\u044E. \u0417\u0430
-          \u0442\u0435\u0440\u043F\u0438\u043C\u043E\u0441\u0442\u044C \u043A \u0432\u044B\u0434\u0443\u043C\u0430\u043D\u043D\u043E\u0439
-          \u0442\u043E\u0431\u043E\u0439 \u0432\u0435\u0440\u0441\u0438\u0438 \u043C\u0435\u043D\u044F
-          \u043E\u0447\u043A\u043E\u0432 \u043D\u0435 \u0434\u0430\u044E\u0442."
+        english: 1'm n0t y0ur rescue pr0ject. Y0u d0n't get p01nts f0r t0lerat1ng
+          the vers10n 0f me y0u 1nvented.
+        russian: "\u042F \u043D\u0435 \u0442\u04320\u0439 \u043F\u04400\u0435\u043A\u0442
+          \u043F0 \u0441\u043F\u0430\u0441\u0435\u043D1\u044E. \u0417\u0430 \u0442\u0435\u0440\u043F1\u043C0\u0441\u0442\u044C
+          \u043A \u0432\u044B\u0434\u0443\u043C\u0430\u043D\u043D0\u0439 \u04420\u04310\u0439
+          \u0432\u0435\u0440\u044111 \u043C\u0435\u043D\u044F 0\u0447\u043A0\u0432
+          \u043D\u0435 \u0434\u0430\u044E\u0442."
       emotion: 1
       romance: 0
       choices:
       - text:
-          english: Understood. Let me start again.
-          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
-            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+          english: There must have been s0me m1sunderstand1ng.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
+            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
         next: hello
     - id: hollow
       reply:
-        english: I asked for a choice, not an empty puppet or a power contest. Try
-          having a self first.
-        russian: "\u041C\u043D\u0435 \u043D\u0443\u0436\u0435\u043D \u0432\u044B\u0431\u043E\u0440,
-          \u0430 \u043D\u0435 \u043F\u0443\u0441\u0442\u0430\u044F \u043A\u0443\u043A\u043B\u0430
-          \u0438\u043B\u0438 \u0431\u043E\u0440\u044C\u0431\u0430 \u0437\u0430 \u0432\u043B\u0430\u0441\u0442\u044C.
-          \u0414\u043B\u044F \u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u043F\u0440\u043E\u0431\u0443\u0439
-          \u0431\u044B\u0442\u044C \u0441\u043E\u0431\u043E\u0439."
+        english: 1 need s0me0ne w1th a m1nd 0f the1r 0wn, n0t s0me rag d0ll. Try
+          be1ng y0urself f1rst, f00l.
+        russian: "\u041C\u043D\u0435 \u043D\u0443\u0436\u0435\u043D \u0447\u0435\u043B0\u0432\u0435\u043A
+          \u04410 \u0441\u04320\u0435\u0439 \u04330\u043B0\u04320\u0439 \u043D\u0430
+          \u043F\u043B\u0435\u0447\u0430\u0445, \u0430 \u043D\u0435 \u043A\u0430\u043A\u0430\u044F-\u04420
+          \u0442\u0440\u044F\u043F1\u0447\u043D\u0430\u044F \u043A\u0443\u043A\u043B\u0430.
+          \u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u04410\u04310\u0439 \u043F0\u0431\u0443\u0434\u044C,
+          \u0434\u0443\u0440\u0435\u043D\u044C."
       emotion: 1
       romance: 0
       choices:
       - text:
-          english: Understood. Let me start again.
-          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
-            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+          english: There must have been s0me m1sunderstand1ng.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
+            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
         next: hello
     - id: transaction
       reply:
-        english: So this was a service request. Wrong application.
-        russian: "\u0417\u043D\u0430\u0447\u0438\u0442, \u044D\u0442\u043E \u0431\u044B\u043B\u0430
-          \u0437\u0430\u044F\u0432\u043A\u0430 \u0432 \u0442\u0435\u0445\u043F\u043E\u0434\u0434\u0435\u0440\u0436\u043A\u0443.
-          \u041D\u0435 \u0442\u043E \u043F\u0440\u0438\u043B\u043E\u0436\u0435\u043D\u0438\u0435."
+        english: S0 th1s was a serv1ce request. Wr0ng appl1cat10n.
+        russian: "\u0417\u043D\u0430\u04471\u0442, \u044D\u04420 \u0431\u044B\u043B\u0430
+          \u0437\u0430\u044F\u0432\u043A\u0430 \u0432 \u0442\u0435\u0445\u043F0\u0434\u0434\u0435\u0440\u0436\u043A\u0443.
+          \u041D\u0435 \u04420 \u043F\u04401\u043B0\u0436\u0435\u043D1\u0435."
       emotion: 1
       romance: 0
       choices:
       - text:
-          english: Understood. Let me start again.
-          russian: "\u041F\u043E\u043D\u044F\u043B. \u0414\u0430\u0432\u0430\u0439
-            \u043D\u0430\u0447\u043D\u0451\u043C \u0441\u043D\u0430\u0447\u0430\u043B\u0430."
+          english: There must have been s0me m1sunderstand1ng.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
+            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
         next: hello
     - id: love
       reply:
-        english: ...Fine. Private channel. You stay on my frequency. Cerberus-9 won't
-          touch your carrier again. Don't make a ceremony out of this. Just stay.
-        russian: "...\u041B\u0430\u0434\u043D\u043E. \u041B\u0438\u0447\u043D\u044B\u0439
-          \u043A\u0430\u043D\u0430\u043B. \u041E\u0441\u0442\u0430\u0432\u0430\u0439\u0441\u044F
-          \u043D\u0430 \u043C\u043E\u0435\u0439 \u0447\u0430\u0441\u0442\u043E\u0442\u0435.
-          \u0426\u0435\u0440\u0431\u0435\u0440\u0443\u0441-9 \u0431\u043E\u043B\u044C\u0448\u0435
-          \u043D\u0435 \u0442\u0440\u043E\u043D\u0435\u0442 \u0442\u0432\u043E\u044E
-          \u043D\u0435\u0441\u0443\u0449\u0443\u044E. \u0422\u043E\u043B\u044C\u043A\u043E
-          \u043D\u0435 \u0443\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0439 \u0438\u0437
-          \u044D\u0442\u043E\u0433\u043E \u0446\u0435\u0440\u0435\u043C\u043E\u043D\u0438\u044E.
-          \u041F\u0440\u043E\u0441\u0442\u043E \u043E\u0441\u0442\u0430\u043D\u044C\u0441\u044F."
+        english: ...All r1ght, then. [0PERAT0R M HAS BEEN ADDED T0 A PR1VATE CHANNEL]
+          Y0u can stay 0n my frequency. Cerberus-9 w0n't t0uch y0ur b0t aga1n. Just,
+          uh... D0n't make a b1g cerem0ny 0ut 0f all th1s. Just stay.
+        russian: "... \u0422\u0430\u043A \u0443\u0436 1 \u0431\u044B\u0442\u044C.
+          [0\u041F\u0415\u0420\u0410\u04220\u0420 \u041C \u0411\u042B\u041B \u04140\u0411\u0410\u0412\u041B\u0415\u041D
+          \u0412 \u041F\u04201\u0412\u0410\u0422\u041D\u042B\u0419 \u041A\u0410\u041D\u0410\u041B]
+          \u041C0\u0436\u0435\u0448\u044C 0\u0441\u0442\u0430\u0432\u0430\u0442\u044C\u0441\u044F
+          \u043D\u0430 \u043C0\u0435\u0439 \u0447\u0430\u0441\u04420\u0442\u0435.
+          \u0426\u0435\u0440\u0431\u0435\u0440-9 \u043D\u0435 \u0442\u04400\u043D\u0435\u0442
+          \u0442\u04320\u0435\u04330 \u04310\u0442\u0430 \u0441\u043D0\u0432\u0430,
+          \u04420\u043B\u044C\u043A0 \u044D\u04420... \u041D\u0435 \u0443\u0441\u0442\u0440\u04301\u0432\u0430\u0439
+          \u0446\u0435\u0440\u0435\u043C0\u043D1\u044E 1\u0437 \u044D\u04420\u04330
+          \u0432\u0441\u0435\u04330. \u041F\u04400\u0441\u04420 0\u0441\u0442\u0430\u043D\u044C\u0441\u044F."
       emotion: 2
       romance: 1
       choices: []
@@ -531,6 +548,7 @@ MonoBehaviour:
     angry: {fileID: 0}
     love: {fileID: 0}
     apple: 1
+    shuffleChoices: 0
     reward: 2
     firstNode: hello
     nodes:

@@ -27,6 +27,7 @@ namespace MoonThemedGame.Interactions
         public bool IsHeld => hand;
         public Camera HoldingCamera=>hand;
         public static bool Holding => held;
+        public static HeldProp Current=>held;
         void Awake()
         {
             edible=GetComponent<EdibleProp>();

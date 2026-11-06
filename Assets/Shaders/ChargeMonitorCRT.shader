@@ -16,6 +16,7 @@ Shader "Moon Game/Charge Monitor CRT"
         _LetterFlickerRate("Letter Flicker Events / Second", Range(0.2, 8)) = 2.4
         _LetterFlickerDuration("Letter Flicker Duration", Range(0.02, 0.3)) = 0.095
         _LetterFlickerFloor("Dimmed Letter Brightness", Range(0, 1)) = 0.08
+        _LetterCount("Letter Count", Float) = 6
         [HideInInspector] _LetterRect("Letter Cells UV Rect", Vector) = (0.125, 0, 0.75, 1)
         [HideInInspector] _PreviewTime("Preview Time (-1 = Live)", Float) = -1
     }
@@ -43,6 +44,7 @@ Shader "Moon Game/Charge Monitor CRT"
                 float _Curvature, _WaveStrength, _VerticalDrift, _WaveSpeed;
                 float _Brightness, _Glow, _Scanlines, _Flicker, _PreviewTime;
                 float _LetterFlickerChance, _LetterFlickerRate, _LetterFlickerDuration, _LetterFlickerFloor;
+                float _LetterCount;
             CBUFFER_END
             #define MOON_CHARGE_DISPLAY 1
             #include "PCMonitorCRT.hlsl"

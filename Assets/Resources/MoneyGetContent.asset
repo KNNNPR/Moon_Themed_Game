@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9eb3318201094007b1fcebccfa569a0a, type: 3}
+  m_Name: MoneyGetContent
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.MoneyGetContent
+  price: 40
+  shopModel: {fileID: 7747246879555394565, guid: a0059c2a49edaaa4883ace25dcbf5aa2, type: 3}
+  desktopIcon: {fileID: 7388822144124034973, guid: 6a7863cbaa574cffaf4562eaa6aa4e7f, type: 3}
+  quoteInterval: 3
+  stocks:
+  - company: PALEHORSECO.
+    startingPrice: 8
+    volatility: 0.035
+    goodNews: Station repair contracts renewed.
+    goodNewsRu: Продлены контракты на ремонт станций.
+    badNews: Relay failures delay supply ships.
+    badNewsRu: Сбои ретрансляторов задержали поставки.
+  - company: MILLENIUMAPPLECO.
+    startingPrice: 5
+    volatility: 0.065
+    goodNews: Record lunar apple harvest.
+    goodNewsRu: Рекордный урожай лунных яблок.
+    badNews: Suspicious fruit batch recalled.
+    badNewsRu: Отозвана подозрительная партия фруктов.
+  - company: PUNCHCARDSUNIVERSAL
+    startingPrice: 12
+    volatility: 0.055
+    goodNews: New punchcard reader orders arrive.
+    goodNewsRu: Поступили заказы на новые считыватели перфокарт.
+    badNews: Earth sorting facility goes silent.
+    badNewsRu: Земной сортировочный цех перестал выходить на связь.
+  - company: M.M.BONE
+    startingPrice: 4
+    volatility: 0.08
+    goodNews: Rare mineral deposit discovered.
+    goodNewsRu: Обнаружено месторождение редких минералов.
+    badNews: Mining licence suspended.
+    badNewsRu: Приостановлена лицензия на добычу.
+  - company: BUILDCONSUMECONSTRUCT.
+    startingPrice: 10
+    volatility: 0.045
+    goodNews: Orbital construction tender secured.
+    goodNewsRu: Выигран тендер на орбитальное строительство.
+    badNews: Construction costs spiral upwards.
+    badNewsRu: Расходы на строительство вышли из-под контроля.

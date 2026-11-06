@@ -5,6 +5,7 @@ using System.Linq;
 using MoonThemedGame.Computer;
 using MoonThemedGame.Repair;
 using MoonThemedGame.Scavenger;
+using MoonThemedGame.Weather;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
@@ -19,7 +20,8 @@ namespace MoonThemedGame.Interactions
         static int consumedFrame=-1;
         public static bool IsOpen {get;private set;}
         public static bool BlockGameplayInput=>IsOpen || consumedFrame==Time.frameCount;
-        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","clear","close"};
+        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","clear","close"};
+        static readonly string[] weatherNames={"sunny","fog","radiation","meteors"};
         readonly List<string> lines=new List<string>(),history=new List<string>();
         public IReadOnlyList<string> Lines=>lines;
         public VisualElement Root=>root;
@@ -32,6 +34,7 @@ namespace MoonThemedGame.Interactions
         string draft="";
         bool chordHeld,previousCursorVisible;
         float previousTimeScale;
+        float caretResetTime;
         CursorLockMode previousCursor;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -49,6 +52,8 @@ namespace MoonThemedGame.Interactions
             if(chord && !chordHeld){if(IsOpen)Close();else Open();}
             chordHeld=chord;
             if(IsOpen && keyboard!=null && keyboard.escapeKey.wasPressedThisFrame)Close();
+            if(IsOpen && input!=null)
+                input.EnableInClassList("console-caret-off",Mathf.Repeat(Time.unscaledTime-caretResetTime,1f)>=.5f);
         }
         public void Open()
         {
@@ -58,6 +63,7 @@ namespace MoonThemedGame.Interactions
             previousTimeScale=Time.timeScale;previousCursor=Cursor.lockState;previousCursorVisible=Cursor.visible;
             IsOpen=true;Time.timeScale=0;Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
             root.style.display=DisplayStyle.Flex;historyIndex=history.Count;
+            ResetCaret();
             input.Focus();input.schedule.Execute(()=>{if(IsOpen)input.Focus();});
         }
         public void Close()
@@ -88,6 +94,9 @@ namespace MoonThemedGame.Interactions
             var row=new VisualElement();row.AddToClassList("console-command-row");window.Add(row);
             row.Add(new Label(">"));input=new TextField{name="console-input",maxLength=256};row.Add(input);
             input.RegisterCallback<KeyDownEvent>(OnInputKey,TrickleDown.TrickleDown);
+            input.RegisterCallback<PointerDownEvent>(evt=>ResetCaret(),TrickleDown.TrickleDown);
+            input.RegisterCallback<FocusInEvent>(evt=>ResetCaret());
+            input.RegisterValueChangedCallback(evt=>ResetCaret());
             row.Add(new Button(Submit){text="Submit",name="console-submit"});
             var footer=new Label("F3 + F4: toggle    ESC: close    UP/DOWN: history    TAB: complete");footer.AddToClassList("console-footer");window.Add(footer);
             Write("PALE HORSE developer console");Write("Type help for commands.");
@@ -106,6 +115,7 @@ namespace MoonThemedGame.Interactions
         }
         void OnInputKey(KeyDownEvent evt)
         {
+            ResetCaret();
             if(evt.keyCode==KeyCode.Return || evt.keyCode==KeyCode.KeypadEnter)Submit();
             else if(evt.keyCode==KeyCode.Escape)Close();
             else if(evt.keyCode==KeyCode.UpArrow || evt.keyCode==KeyCode.DownArrow)
@@ -118,14 +128,26 @@ namespace MoonThemedGame.Interactions
             else return;
             evt.StopImmediatePropagation();evt.PreventDefault();
         }
+        void ResetCaret()
+        {
+            caretResetTime=Time.unscaledTime;
+            input?.RemoveFromClassList("console-caret-off");
+        }
         void Complete()
         {
             string text=input.value;string[] tokens=text.Split(' ');
             IEnumerable<string> candidates=commands;string prefix=text;
             if(tokens.Length==2 && (tokens[0].Equals("spawn",StringComparison.OrdinalIgnoreCase)||tokens[0].Equals("deliver",StringComparison.OrdinalIgnoreCase)))
             {candidates=GetParts().Keys;prefix=tokens[1];}
+            if(tokens.Length==2 && tokens[0].Equals("weather",StringComparison.OrdinalIgnoreCase))
+            {candidates=weatherNames;prefix=tokens[1];}
             var matches=candidates.Where(c=>c.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)).ToArray();
-            if(matches.Length==1)input.SetValueWithoutNotify((tokens.Length==2?tokens[0]+" ":"")+matches[0]+" ");
+            if(matches.Length==1)
+            {
+                string completed=(tokens.Length==2?tokens[0]+" ":"")+matches[0]+" ";
+                input.SetValueWithoutNotify(completed);
+                input.SelectRange(completed.Length,completed.Length);
+            }
             else if(matches.Length>1)Write(string.Join("   ",matches));
         }
         static Dictionary<string,GameObject> GetParts()
@@ -157,11 +179,39 @@ namespace MoonThemedGame.Interactions
                 Write("parts                     List repair part IDs");
                 Write("spawn <part> [count]      Spawn near the human operator (1-20)");
                 Write("deliver <part> [count]    Send through Tube_For_Scrap (1-20)");
+                Write("weather                   Show current weather and available presets");
+                Write("weather <preset>          Set sunny, fog, radiation or meteors immediately");
                 Write("clear                     Clear console output");Write("close                     Close console");return;
             }
             if(command=="clear" && args.Length==1){lines.Clear();output?.Clear();return;}
             if(command=="close" && args.Length==1){Close();return;}
             if(command=="parts" && args.Length==1){Write("Parts: "+string.Join(", ",GetParts().Keys));return;}
+            if(command=="weather")
+            {
+                var weather=MoonWeatherSystem.Active;
+                if(!weather)weather=FindFirstObjectByType<MoonWeatherSystem>();
+                if(!weather){Write("No weather system available in this scene.");return;}
+                if(args.Length==1)
+                {
+                    Write("Weather: "+MoonWeatherSystem.Name(weather.Current)+" ("+Mathf.CeilToInt(weather.Remaining)+"s remaining)");
+                    Write("Presets: "+string.Join(", ",weatherNames));
+                    Write("Example: weather fog. Close console to resume simulation.");return;
+                }
+                WeatherKind kind;
+                string preset=args.Length==2?args[1].ToLowerInvariant():"";
+                switch(preset)
+                {
+                    case "sunny": kind=WeatherKind.Sunny;break;
+                    case "fog": case "dust": case "moondust": kind=WeatherKind.MoonDust;break;
+                    case "radiation": kind=WeatherKind.Radiation;break;
+                    case "meteors": case "meteorite": case "meteoriterain": kind=WeatherKind.MeteoriteRain;break;
+                    default: Write("Usage: weather <sunny|fog|radiation|meteors>");return;
+                }
+                weather.SetWeather(kind);
+                Write("Weather set: "+MoonWeatherSystem.Name(kind)+". Close console to resume simulation.");
+                if(kind==WeatherKind.MeteoriteRain)Write("Meteors spawn outside shelters; impact markers warn at least 5 seconds before impact.");
+                return;
+            }
             if(command=="balance" || command=="credits")
             {
                 var terminal=FindFirstObjectByType<PcMonitorTerminal>();if(!terminal){Write("No PC balance available in this scene.");return;}

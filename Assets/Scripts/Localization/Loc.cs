@@ -284,6 +284,7 @@ namespace MoonThemedGame
             { "LEVER - DRIVE CLOSER, ARM CAN'T REACH", "РЫЧАГ - ПОДЪЕДЬТЕ БЛИЖЕ, РУКА НЕ ДОСТАЁТ" },
             { "{0} - DRIVE   {1} - SATELLITE   [{2}] - TUNER   ESC - BACK TO PC", "{0} - ЕХАТЬ   {1} - СПУТНИК   [{2}] - ТЮНЕР   ESC - К ПК" },
             { "[{0}] HANDBRAKE   MOUSE / RIGHT STICK - LOOK   [{1}] / MMB - RECENTER", "[{0}] РУЧНИК   МЫШЬ / ПРАВЫЙ СТИК - ОБЗОР   [{1}] / СКМ - ВЕРНУТЬ КАМЕРУ" },
+            { "[UP] FRONT FLIP   [DOWN] BACK FLIP   {0}/{1} - MOVE", "[UP] ФРОНТФЛИП   [DOWN] БЭКФЛИП   {0}/{1} - ПЕРЕМЕЩЕНИЕ" },
             { "  COVER {0}%", "  УКРЫТИЕ {0}%" },
             { "LINK BASE RELAY  Q {0}%{1}", "КАНАЛ РЕТРАНСЛЯТОР БАЗЫ  К {0}%{1}" },
             { "SAT NONE", "СПУТНИК НЕТ" },
