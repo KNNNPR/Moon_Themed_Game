@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class FirstPersonController : MonoBehaviour
 {
+    public float DebugSpeedMultiplier {get;set;}=1;
     [Header("References")]
     [SerializeField] private Transform cameraRoot;
     [SerializeField] private InputActionReference moveAction;
@@ -46,6 +47,14 @@ public class FirstPersonController : MonoBehaviour
     public static bool LookFrozen;
     public Transform CameraRoot => cameraRoot;
     public float Pitch => pitch;
+    // Feed recoil into the same view angles as mouse input, so the player can compensate.
+    public void AddViewKick(float up, float yaw)
+    {
+        if (!enabled || !cameraRoot) return;
+        pitch=Mathf.Clamp(pitch-up,-pitchLimit,pitchLimit);
+        transform.Rotate(Vector3.up,yaw);
+        cameraRoot.localRotation=Quaternion.Euler(pitch,0,0);
+    }
     public float CrouchAmount { get; private set; }
     public bool IsCrouching=>CrouchAmount>0.01f;
 
@@ -66,6 +75,7 @@ public class FirstPersonController : MonoBehaviour
 
     private void OnDisable()
     {
+        GetComponentInChildren<FirstPersonCameraEffects>()?.ResetWeaponMotion();
         moveAction.action.Disable();
         lookAction.action.Disable();
         SetCursorLocked(false);
@@ -197,7 +207,7 @@ public class FirstPersonController : MonoBehaviour
         bool sprinting=!IsCrouching && MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Sprint);
         Vector3 targetVelocity =
             (transform.right * input.x + transform.forward * input.y)
-            * (sprinting?sprintSpeed:moveSpeed) * Mathf.Lerp(1,crouchSpeedMultiplier,CrouchAmount);
+            * (sprinting?sprintSpeed:moveSpeed) * Mathf.Lerp(1,crouchSpeedMultiplier,CrouchAmount) * DebugSpeedMultiplier;
 
         float rate = input.sqrMagnitude > 0.001f
             ? acceleration
@@ -206,7 +216,7 @@ public class FirstPersonController : MonoBehaviour
         horizontalVelocity = Vector3.MoveTowards(
             horizontalVelocity,
             targetVelocity,
-            rate * dt);
+            rate * dt * DebugSpeedMultiplier);
 
         if (controller.isGrounded && verticalVelocity < 0f)
         {

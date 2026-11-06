@@ -45,7 +45,6 @@ namespace MoonThemedGame.Scavenger
         float flipUntil;
         readonly Dictionary<GameObject,int> neededParts=new Dictionary<GameObject,int>();
         readonly List<SalvagePiece> markerCandidates=new List<SalvagePiece>(),orderMarkers=new List<SalvagePiece>();
-        readonly List<GameObject> neededKinds=new List<GameObject>();
         float nextMarkerRefresh;
         Texture2D markerDot;
         GUIStyle markerText;
@@ -54,22 +53,18 @@ namespace MoonThemedGame.Scavenger
         {
             orderMarkers.Clear();
             if(!link.robot || !TryGetComponent<RepairMessagesApp>(out var messages))return;
-            messages.GetSalvageNeeds(neededParts);
+            messages.GetUnstockedSalvageNeeds(neededParts);
             if(neededParts.Count==0)return;
-            if(link.Salvage)
-                foreach(var prefab in link.Salvage.Cargo)SubtractSupply(prefab);
-            foreach(var part in FindObjectsByType<RepairPartProp>(FindObjectsSortMode.None))
-                if(part.gameObject.scene==gameObject.scene)SubtractSupply(part.prefab);
-            neededKinds.Clear();neededKinds.AddRange(neededParts.Keys);
-            foreach(var tube in FindObjectsByType<ScrapTubeDelivery>(FindObjectsSortMode.None))
-                if(tube.gameObject.scene==gameObject.scene)
-                    foreach(var prefab in neededKinds)neededParts[prefab]=Mathf.Max(0,neededParts[prefab]-tube.CountPrefab(prefab));
             markerCandidates.Clear();
             foreach(var piece in SalvagePiece.All)
                 if(piece && !piece.Collected && piece.gameObject.scene==gameObject.scene && piece.prefab && neededParts.TryGetValue(piece.prefab,out int count) && count>0)
                     markerCandidates.Add(piece);
             var origin=link.robot.position;
-            markerCandidates.Sort((a,b)=>(a.transform.position-origin).sqrMagnitude.CompareTo((b.transform.position-origin).sqrMagnitude));
+            markerCandidates.Sort((a,b)=>
+            {
+                int route=link.Salvage?link.Salvage.IsOrderTarget(b).CompareTo(link.Salvage.IsOrderTarget(a)):0;
+                return route!=0?route:(a.transform.position-origin).sqrMagnitude.CompareTo((b.transform.position-origin).sqrMagnitude);
+            });
             foreach(var piece in markerCandidates)
                 if(neededParts[piece.prefab]>0){orderMarkers.Add(piece);SubtractSupply(piece.prefab);}
         }

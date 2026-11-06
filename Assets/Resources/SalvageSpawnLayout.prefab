@@ -1,0 +1,2920 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &50282932891087411
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 179938681982799808}
+  - component: {fileID: 3596271151531381994}
+  m_Layer: 0
+  m_Name: 29 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &179938681982799808
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 50282932891087411}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.061980736, y: -0, z: -0.07155542, w: 0.995509}
+  m_LocalPosition: {x: -77.5, y: -0.99217653, z: -448.29996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4718720795505167460}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3596271151531381994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 50282932891087411}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Later route after the bridge is lowered. 164-184m from charge station
+    2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
+    on the moving bridge deck.
+  progressionTier: 5
+  estimatedLoopSeconds: 254
+  orderRoute: 0
+--- !u!1 &219811456248124307
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 37171217834480138}
+  - component: {fileID: 8567776348801526261}
+  m_Layer: 0
+  m_Name: 44 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &37171217834480138
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219811456248124307}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.15874839, y: -0, z: -0.08584517, w: 0.98358}
+  m_LocalPosition: {x: -22.800001, y: -0.7146971, z: -517.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8352540908028129702}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8567776348801526261
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 219811456248124307}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
+    2 and 578-611m from the base. Upgrade battery and regulator, recharge before
+    departing. Fixed reachable ground, never the moving bridge or cliff tops.
+  progressionTier: 6
+  estimatedLoopSeconds: 290
+  orderRoute: 0
+--- !u!1 &601966011566633819
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 185161799672507279}
+  - component: {fileID: 2527290356918255970}
+  m_Layer: 0
+  m_Name: 12 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &185161799672507279
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601966011566633819}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.011482239, y: -0, z: -0.00038928917, w: 0.999934}
+  m_LocalPosition: {x: 42.59999, y: 2.0919285, z: -140.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3376975823303264532}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2527290356918255970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601966011566633819}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
+    third initial order. Normal weather; leave time to return, or collect only part
+    of the cache.
+  progressionTier: 1
+  estimatedLoopSeconds: 79
+  orderRoute: 1
+--- !u!1 &928496275403264945
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6404849198023047942}
+  m_Layer: 0
+  m_Name: 04 WEST - relay detour
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6404849198023047942
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 928496275403264945}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 673392619875485411}
+  - {fileID: 3362157812436904292}
+  - {fileID: 5379471064766761062}
+  - {fileID: 5621744413289148136}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1093919721384127962
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2365522429349831401}
+  - component: {fileID: 3557393493412877956}
+  m_Layer: 0
+  m_Name: 30 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2365522429349831401
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093919721384127962}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.051940683, y: -0, z: -0.18023378, w: 0.9822515}
+  m_LocalPosition: {x: -71.9, y: -2.300825, z: -452.39996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4718720795505167460}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3557393493412877956
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093919721384127962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Later route after the bridge is lowered. 164-184m from charge station
+    2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
+    on the moving bridge deck.
+  progressionTier: 5
+  estimatedLoopSeconds: 254
+  orderRoute: 0
+--- !u!1 &1094686030581850089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2160967478215560660}
+  - component: {fileID: 6474501727513679681}
+  m_Layer: 0
+  m_Name: 32 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2160967478215560660
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094686030581850089}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.017042222, y: -0, z: 0.0758278, w: 0.9969753}
+  m_LocalPosition: {x: -86.59999, y: 0.8663902, z: -466.39993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4718720795505167460}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6474501727513679681
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1094686030581850089}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Later route after the bridge is lowered. 164-184m from charge station
+    2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
+    on the moving bridge deck.
+  progressionTier: 5
+  estimatedLoopSeconds: 254
+  orderRoute: 0
+--- !u!1 &1360783608361931817
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5615618347522416541}
+  - component: {fileID: 6851624852675689559}
+  m_Layer: 0
+  m_Name: 17 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5615618347522416541
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360783608361931817}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -73.7, y: -3.1457767, z: -250.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1331727570956715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6851624852675689559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360783608361931817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
+    not as an unupgraded return trip. Open the outpost gate with the arm before relying
+    on that charger.
+  progressionTier: 3
+  estimatedLoopSeconds: 159
+  orderRoute: 1
+--- !u!1 &1418492490853282068
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 132621842470332677}
+  - component: {fileID: 1863052195182047463}
+  m_Layer: 0
+  m_Name: 34 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &132621842470332677
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1418492490853282068}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 173.10002, y: -9.325467, z: -378.19998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 27782338856689073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1863052195182047463
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1418492490853282068}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
+    upgrades are required for a comfortable return. The first three groups contain
+    the same required part types earlier.'
+  progressionTier: 4
+  estimatedLoopSeconds: 208
+  orderRoute: 1
+--- !u!1 &1506260681130743790
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4523956501696798899}
+  - component: {fileID: 629672710891683296}
+  m_Layer: 0
+  m_Name: 47 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4523956501696798899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1506260681130743790}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.15463229, y: -0, z: 0.20580584, w: 0.9662986}
+  m_LocalPosition: {x: 142.6, y: -8.004448, z: -507.59995}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3436239468198145238}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &629672710891683296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1506260681130743790}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
+    and improved capacity/efficiency; gather on the outward route, not on stock battery.
+    Spread between the depot exit and the far eastern road.
+  progressionTier: 6
+  estimatedLoopSeconds: 260
+  orderRoute: 0
+--- !u!1 &1627787475405802185
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 377720800636901524}
+  - component: {fileID: 902043179282551525}
+  m_Layer: 0
+  m_Name: 10 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &377720800636901524
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627787475405802185}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.000103886865, y: -0, z: -0.003601722, w: 0.9999935}
+  m_LocalPosition: {x: 43.199997, y: 1.7702878, z: -130.29999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3376975823303264532}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &902043179282551525
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627787475405802185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
+    third initial order. Normal weather; leave time to return, or collect only part
+    of the cache.
+  progressionTier: 1
+  estimatedLoopSeconds: 79
+  orderRoute: 1
+--- !u!1 &1804351700398505436
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8585843718487480004}
+  - component: {fileID: 177038439025347338}
+  m_Layer: 0
+  m_Name: 08 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8585843718487480004
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804351700398505436}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 3.7999954, y: 1.7690699, z: -124.899994}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3670999480364024433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &177038439025347338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804351700398505436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
+    before any unlock. Can split collection into shorter sorties.
+  progressionTier: 0
+  estimatedLoopSeconds: 68
+  orderRoute: 1
+--- !u!1 &2122111647836159607
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2876882686257129839}
+  - component: {fileID: 661361570505239052}
+  m_Layer: 0
+  m_Name: 01 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2876882686257129839
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2122111647836159607}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -9.300003, y: 0.6312275, z: -53.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6049833844597853771}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &661361570505239052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2122111647836159607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: No shortcuts. Closed-gate base route 41-61m each way. First-order wheels
+    and battery, plus headlights. First collection should retain a large battery
+    reserve.
+  progressionTier: 0
+  estimatedLoopSeconds: 42
+  orderRoute: 1
+--- !u!1 &2449431908540943316
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8781977827184336159}
+  - component: {fileID: 6776141746102491322}
+  m_Layer: 0
+  m_Name: 06 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8781977827184336159
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2449431908540943316}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 10.499998, y: 1.769073, z: -107.499985}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3670999480364024433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6776141746102491322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2449431908540943316}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
+    before any unlock. Can split collection into shorter sorties.
+  progressionTier: 0
+  estimatedLoopSeconds: 68
+  orderRoute: 1
+--- !u!1 &2577861221566620281
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5621744413289148136}
+  - component: {fileID: 2615617130540719990}
+  m_Layer: 0
+  m_Name: 16 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5621744413289148136
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2577861221566620281}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -42.800003, y: 1.7690661, z: -146.39998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6404849198023047942}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2615617130540719990
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2577861221566620281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
+    recommended for a full four-part detour. Avoid a full cache run during radiation
+    on stock power.
+  progressionTier: 2
+  estimatedLoopSeconds: 108
+  orderRoute: 1
+--- !u!1 &2793881225235108254
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5379471064766761062}
+  - component: {fileID: 1028782333254553891}
+  m_Layer: 0
+  m_Name: 15 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5379471064766761062
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2793881225235108254}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.12678394, y: -0, z: 0.02092916, w: 0.99170953}
+  m_LocalPosition: {x: -59.699997, y: 2.4220989, z: -144.79999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6404849198023047942}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1028782333254553891
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2793881225235108254}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
+    recommended for a full four-part detour. Avoid a full cache run during radiation
+    on stock power.
+  progressionTier: 2
+  estimatedLoopSeconds: 108
+  orderRoute: 1
+--- !u!1 &2811384459692116064
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1462029655743003056}
+  - component: {fileID: 5691597625325014997}
+  m_Layer: 0
+  m_Name: 24 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1462029655743003056
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2811384459692116064}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.06456261, y: -0, z: 0.068942815, w: 0.9955293}
+  m_LocalPosition: {x: -172.60002, y: 1.165341, z: -340.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6448829227879031850}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5691597625325014997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2811384459692116064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
+    cargo still returns to the main base for unloading.
+  progressionTier: 4
+  estimatedLoopSeconds: 199
+  orderRoute: 0
+--- !u!1 &3022640451870541756
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2993387647561339517}
+  - component: {fileID: 1349872223431509486}
+  m_Layer: 0
+  m_Name: 28 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2993387647561339517
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3022640451870541756}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.19716042, y: -0, z: -0.15973946, w: 0.9672699}
+  m_LocalPosition: {x: -119, y: -2.3036609, z: -349.99997}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 913390429758586726}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1349872223431509486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3022640451870541756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
+    pieces support short loops from that charger, rather than a single long trip
+    from the base.
+  progressionTier: 4
+  estimatedLoopSeconds: 211
+  orderRoute: 0
+--- !u!1 &3060458836882160653
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 994297994535252734}
+  - component: {fileID: 6973010851346015469}
+  m_Layer: 0
+  m_Name: SalvageSpawnLayout
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &994297994535252734
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3060458836882160653}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6049833844597853771}
+  - {fileID: 3670999480364024433}
+  - {fileID: 3376975823303264532}
+  - {fileID: 6404849198023047942}
+  - {fileID: 1331727570956715}
+  - {fileID: 6448829227879031850}
+  - {fileID: 913390429758586726}
+  - {fileID: 4718720795505167460}
+  - {fileID: 27782338856689073}
+  - {fileID: 4110479998474860158}
+  - {fileID: 8352540908028129702}
+  - {fileID: 3436239468198145238}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6973010851346015469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3060458836882160653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6606d38ab2e846b980c7715626e2513a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnLayout
+  balanceNotes: '48 fixed part spawns in 12 four-part routes, reaching the southern
+    basin and eastern perimeter. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative
+    route speed 4.55 m/s. First 12 parts cover the first three repair orders, without
+    any gate or bridge. Outer routes use capacity/efficiency upgrades and the second
+    charger. Gates and bridge unlock the outpost and later caches. Edit child positions
+    and Part fields in this prefab or its scene instance.'
+--- !u!1 &3275041195148092381
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2306579092599053102}
+  - component: {fileID: 8301564052062723445}
+  m_Layer: 0
+  m_Name: 23 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2306579092599053102
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3275041195148092381}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -167.39998, y: 1.769034, z: -325.89996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6448829227879031850}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8301564052062723445
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3275041195148092381}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
+    cargo still returns to the main base for unloading.
+  progressionTier: 4
+  estimatedLoopSeconds: 199
+  orderRoute: 0
+--- !u!1 &3436380902280940942
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4166059797485810904}
+  - component: {fileID: 783806203990607737}
+  m_Layer: 0
+  m_Name: 42 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4166059797485810904
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3436380902280940942}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.022595186, y: -0, z: -0.010785881, w: 0.99968654}
+  m_LocalPosition: {x: -65.5, y: 1.5573695, z: -506.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8352540908028129702}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &783806203990607737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3436380902280940942}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
+    2 and 578-611m from the base. Upgrade battery and regulator, recharge before
+    departing. Fixed reachable ground, never the moving bridge or cliff tops.
+  progressionTier: 6
+  estimatedLoopSeconds: 290
+  orderRoute: 0
+--- !u!1 &3557695237120569466
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6444601618455473168}
+  - component: {fileID: 2314966176992474471}
+  m_Layer: 0
+  m_Name: 05 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6444601618455473168
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3557695237120569466}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.021024074, y: -0, z: -0.0035611333, w: 0.99977267}
+  m_LocalPosition: {x: -1.1000042, y: 1.6872317, z: -104.100006}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3670999480364024433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2314966176992474471
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3557695237120569466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
+    before any unlock. Can split collection into shorter sorties.
+  progressionTier: 0
+  estimatedLoopSeconds: 68
+  orderRoute: 1
+--- !u!1 &4012254611959536338
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8014859452824769512}
+  - component: {fileID: 8540449914016141882}
+  m_Layer: 0
+  m_Name: 27 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8014859452824769512
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4012254611959536338}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.21652508, y: -0, z: -0.24009013, w: 0.9462947}
+  m_LocalPosition: {x: -127.99997, y: -0.6506603, z: -354.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 913390429758586726}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8540449914016141882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4012254611959536338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
+    pieces support short loops from that charger, rather than a single long trip
+    from the base.
+  progressionTier: 4
+  estimatedLoopSeconds: 211
+  orderRoute: 0
+--- !u!1 &4298959463195185045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5197018119747859008}
+  - component: {fileID: 1892822910935137682}
+  m_Layer: 0
+  m_Name: 07 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5197018119747859008
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4298959463195185045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.022995323, y: -0, z: 0.003937513, w: 0.99972785}
+  m_LocalPosition: {x: 20.699999, y: 1.7611332, z: -101.40001}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3670999480364024433}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1892822910935137682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4298959463195185045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
+    before any unlock. Can split collection into shorter sorties.
+  progressionTier: 0
+  estimatedLoopSeconds: 68
+  orderRoute: 1
+--- !u!1 &4454494452797111133
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8889506313417246007}
+  - component: {fileID: 462465088710357903}
+  m_Layer: 0
+  m_Name: 37 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8889506313417246007
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4454494452797111133}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.29000962, y: -0, z: 0.051638503, w: 0.9556296}
+  m_LocalPosition: {x: 174, y: -12.903702, z: -420.79996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4110479998474860158}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &462465088710357903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4454494452797111133}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
+    battery and power-regulator upgrades turn this dense cache into a viable haul.
+  progressionTier: 5
+  estimatedLoopSeconds: 230
+  orderRoute: 0
+--- !u!1 &4456246365405754853
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8692661470451390602}
+  - component: {fileID: 4147049773999636613}
+  m_Layer: 0
+  m_Name: 18 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8692661470451390602
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4456246365405754853}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.22648443, y: -0, z: 0.11265627, w: 0.96747786}
+  m_LocalPosition: {x: -85.6, y: -3.3125916, z: -267.6}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1331727570956715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4147049773999636613
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4456246365405754853}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
+    not as an unupgraded return trip. Open the outpost gate with the arm before relying
+    on that charger.
+  progressionTier: 3
+  estimatedLoopSeconds: 159
+  orderRoute: 1
+--- !u!1 &4542959464622744676
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6449677022226707469}
+  - component: {fileID: 1158701579762613200}
+  m_Layer: 0
+  m_Name: 25 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6449677022226707469
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4542959464622744676}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.32992095, y: -0, z: 0.12784041, w: 0.9353123}
+  m_LocalPosition: {x: -176.70001, y: -2.162911, z: -348}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 913390429758586726}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1158701579762613200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4542959464622744676}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
+    pieces support short loops from that charger, rather than a single long trip
+    from the base.
+  progressionTier: 4
+  estimatedLoopSeconds: 211
+  orderRoute: 0
+--- !u!1 &4588590441676105216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7688541435044679617}
+  - component: {fileID: 4926251471358532209}
+  m_Layer: 0
+  m_Name: 33 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7688541435044679617
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4588590441676105216}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 161.90001, y: -9.325461, z: -347.89996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 27782338856689073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4926251471358532209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4588590441676105216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
+    upgrades are required for a comfortable return. The first three groups contain
+    the same required part types earlier.'
+  progressionTier: 4
+  estimatedLoopSeconds: 208
+  orderRoute: 1
+--- !u!1 &4619163481975064956
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 913390429758586726}
+  m_Layer: 0
+  m_Name: 07 OUTPOST - southern rubble
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &913390429758586726
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4619163481975064956}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6449677022226707469}
+  - {fileID: 2276063681546566210}
+  - {fileID: 8014859452824769512}
+  - {fileID: 2993387647561339517}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &4917801158180805392
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8352540908028129702}
+  m_Layer: 0
+  m_Name: 11 FAR SOUTH - lunar basin
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8352540908028129702
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4917801158180805392}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2735769098577006809}
+  - {fileID: 4166059797485810904}
+  - {fileID: 345451274659870133}
+  - {fileID: 37171217834480138}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5079659380248978664
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 345451274659870133}
+  - component: {fileID: 1376005940784527219}
+  m_Layer: 0
+  m_Name: 43 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &345451274659870133
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5079659380248978664}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.027634017, y: -0, z: -0.023987558, w: 0.9993303}
+  m_LocalPosition: {x: -54.500008, y: 1.5849317, z: -514.69995}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8352540908028129702}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1376005940784527219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5079659380248978664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
+    2 and 578-611m from the base. Upgrade battery and regulator, recharge before
+    departing. Fixed reachable ground, never the moving bridge or cliff tops.
+  progressionTier: 6
+  estimatedLoopSeconds: 290
+  orderRoute: 0
+--- !u!1 &5213911551893585124
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4286671181670068299}
+  - component: {fileID: 5211192357242781988}
+  m_Layer: 0
+  m_Name: 21 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4286671181670068299
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5213911551893585124}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -169.89998, y: 1.7690363, z: -313.29996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6448829227879031850}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5211192357242781988
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5213911551893585124}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
+    cargo still returns to the main base for unloading.
+  progressionTier: 4
+  estimatedLoopSeconds: 199
+  orderRoute: 0
+--- !u!1 &5304900932550292603
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8515449524153944721}
+  - component: {fileID: 760057198752891256}
+  m_Layer: 0
+  m_Name: 19 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8515449524153944721
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5304900932550292603}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.011611776, y: -0, z: -0.023968216, w: 0.9996453}
+  m_LocalPosition: {x: -127.99999, y: 1.5743822, z: -266.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1331727570956715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &760057198752891256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5304900932550292603}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
+    not as an unupgraded return trip. Open the outpost gate with the arm before relying
+    on that charger.
+  progressionTier: 3
+  estimatedLoopSeconds: 159
+  orderRoute: 1
+--- !u!1 &5323547722147523935
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2276063681546566210}
+  - component: {fileID: 4121653144696951902}
+  m_Layer: 0
+  m_Name: 26 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2276063681546566210
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5323547722147523935}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.24192539, y: -0, z: 0.249044, w: 0.93778956}
+  m_LocalPosition: {x: -162.99998, y: -3.0276632, z: -358.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 913390429758586726}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4121653144696951902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5323547722147523935}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
+    pieces support short loops from that charger, rather than a single long trip
+    from the base.
+  progressionTier: 4
+  estimatedLoopSeconds: 211
+  orderRoute: 0
+--- !u!1 &5570114715472325752
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3408993376942920497}
+  - component: {fileID: 1085754797493274890}
+  m_Layer: 0
+  m_Name: 31 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3408993376942920497
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5570114715472325752}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.027830614, y: -0, z: -0.08260236, w: 0.99619395}
+  m_LocalPosition: {x: -80.8, y: 0.31385076, z: -460.5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4718720795505167460}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1085754797493274890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5570114715472325752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: Later route after the bridge is lowered. 164-184m from charge station
+    2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
+    on the moving bridge deck.
+  progressionTier: 5
+  estimatedLoopSeconds: 254
+  orderRoute: 0
+--- !u!1 &5775566520683160168
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2831756717413478678}
+  - component: {fileID: 5258291315917846850}
+  m_Layer: 0
+  m_Name: 38 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2831756717413478678
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5775566520683160168}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.07090566, y: -0, z: 0.09542131, w: 0.9929085}
+  m_LocalPosition: {x: 180.59998, y: -13.255177, z: -424.49994}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4110479998474860158}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5258291315917846850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5775566520683160168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
+    battery and power-regulator upgrades turn this dense cache into a viable haul.
+  progressionTier: 5
+  estimatedLoopSeconds: 230
+  orderRoute: 0
+--- !u!1 &5878118158307796490
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 673392619875485411}
+  - component: {fileID: 6160407129960431862}
+  m_Layer: 0
+  m_Name: 13 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &673392619875485411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5878118158307796490}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -42.5, y: 1.7690653, z: -151.4}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6404849198023047942}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6160407129960431862
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5878118158307796490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
+    recommended for a full four-part detour. Avoid a full cache run during radiation
+    on stock power.
+  progressionTier: 2
+  estimatedLoopSeconds: 108
+  orderRoute: 1
+--- !u!1 &6040118723213052428
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7773376546748390250}
+  - component: {fileID: 8908962591905830804}
+  m_Layer: 0
+  m_Name: 40 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7773376546748390250
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6040118723213052428}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.2930096, y: -0, z: 0.15872878, w: 0.94284177}
+  m_LocalPosition: {x: 173.99998, y: -13.321066, z: -451.29993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4110479998474860158}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8908962591905830804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6040118723213052428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
+    battery and power-regulator upgrades turn this dense cache into a viable haul.
+  progressionTier: 5
+  estimatedLoopSeconds: 230
+  orderRoute: 0
+--- !u!1 &6266131850010284037
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4110479998474860158}
+  m_Layer: 0
+  m_Name: 10 EAST - gated depot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4110479998474860158
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6266131850010284037}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8889506313417246007}
+  - {fileID: 2831756717413478678}
+  - {fileID: 9055562175771910348}
+  - {fileID: 7773376546748390250}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6334450753391495847
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6049833844597853771}
+  m_Layer: 0
+  m_Name: 01 STARTER - access road
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6049833844597853771
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6334450753391495847}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2876882686257129839}
+  - {fileID: 1228264374125964439}
+  - {fileID: 177884016530186016}
+  - {fileID: 888759664309467166}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6454280475506677791
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3436239468198145238}
+  m_Layer: 0
+  m_Name: 12 FAR EAST - perimeter haul
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3436239468198145238
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6454280475506677791}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5952993225948993365}
+  - {fileID: 4164199286493123669}
+  - {fileID: 4523956501696798899}
+  - {fileID: 910262330134020365}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6518642832892776646
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3670999480364024433}
+  m_Layer: 0
+  m_Name: 02 STARTER - roadside wrecks
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3670999480364024433
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6518642832892776646}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6444601618455473168}
+  - {fileID: 8781977827184336159}
+  - {fileID: 5197018119747859008}
+  - {fileID: 8585843718487480004}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6622789043498561397
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 177884016530186016}
+  - component: {fileID: 975537553015547903}
+  m_Layer: 0
+  m_Name: 03 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &177884016530186016
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6622789043498561397}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.400001, y: 0.6312275, z: -57.899998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6049833844597853771}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &975537553015547903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6622789043498561397}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: No shortcuts. Closed-gate base route 41-61m each way. First-order wheels
+    and battery, plus headlights. First collection should retain a large battery
+    reserve.
+  progressionTier: 0
+  estimatedLoopSeconds: 42
+  orderRoute: 1
+--- !u!1 &6717587140891874141
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4065810391209791926}
+  - component: {fileID: 5494476457434493588}
+  m_Layer: 0
+  m_Name: 20 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4065810391209791926
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6717587140891874141}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.0068362416, y: -0, z: -0.018249337, w: 0.9998101}
+  m_LocalPosition: {x: -131.69998, y: 1.658726, z: -272.29996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1331727570956715}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5494476457434493588
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6717587140891874141}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
+    not as an unupgraded return trip. Open the outpost gate with the arm before relying
+    on that charger.
+  progressionTier: 3
+  estimatedLoopSeconds: 159
+  orderRoute: 1
+--- !u!1 &6738915652119973339
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 888759664309467166}
+  - component: {fileID: 5129525079835846218}
+  m_Layer: 0
+  m_Name: 04 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &888759664309467166
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6738915652119973339}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -3.3000038, y: 0.6312276, z: -72.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6049833844597853771}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5129525079835846218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6738915652119973339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: No shortcuts. Closed-gate base route 41-61m each way. First-order wheels
+    and battery, plus headlights. First collection should retain a large battery
+    reserve.
+  progressionTier: 0
+  estimatedLoopSeconds: 42
+  orderRoute: 1
+--- !u!1 &6740460262989881683
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4718720795505167460}
+  m_Layer: 0
+  m_Name: 08 BRIDGE - far-side cache
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4718720795505167460
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6740460262989881683}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 179938681982799808}
+  - {fileID: 2365522429349831401}
+  - {fileID: 3408993376942920497}
+  - {fileID: 2160967478215560660}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6780248487535774663
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9055562175771910348}
+  - component: {fileID: 1485529288631690595}
+  m_Layer: 0
+  m_Name: 39 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9055562175771910348
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6780248487535774663}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.19510175, y: -0, z: 0.27784908, w: 0.9406036}
+  m_LocalPosition: {x: 174.79999, y: -14.447565, z: -442.79993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4110479998474860158}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1485529288631690595
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6780248487535774663}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
+    battery and power-regulator upgrades turn this dense cache into a viable haul.
+  progressionTier: 5
+  estimatedLoopSeconds: 230
+  orderRoute: 0
+--- !u!1 &7141708134144228602
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 43195287437486958}
+  - component: {fileID: 1423121503958325014}
+  m_Layer: 0
+  m_Name: 11 Window_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &43195287437486958
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7141708134144228602}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 47.69999, y: 1.7690696, z: -127.3}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3376975823303264532}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1423121503958325014
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7141708134144228602}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
+  routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
+    third initial order. Normal weather; leave time to return, or collect only part
+    of the cache.
+  progressionTier: 1
+  estimatedLoopSeconds: 79
+  orderRoute: 1
+--- !u!1 &7183714329886677295
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1331727570956715}
+  m_Layer: 0
+  m_Name: 05 WEST - outpost approach
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1331727570956715
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7183714329886677295}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5615618347522416541}
+  - {fileID: 8692661470451390602}
+  - {fileID: 8515449524153944721}
+  - {fileID: 4065810391209791926}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7263720743186530016
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1228264374125964439}
+  - component: {fileID: 4977030653723849406}
+  m_Layer: 0
+  m_Name: 02 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1228264374125964439
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7263720743186530016}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.3000021, y: 0.6312274, z: -52.999996}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6049833844597853771}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4977030653723849406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7263720743186530016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: No shortcuts. Closed-gate base route 41-61m each way. First-order wheels
+    and battery, plus headlights. First collection should retain a large battery
+    reserve.
+  progressionTier: 0
+  estimatedLoopSeconds: 42
+  orderRoute: 1
+--- !u!1 &7590122325717972319
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5952993225948993365}
+  - component: {fileID: 3688400095375182831}
+  m_Layer: 0
+  m_Name: 45 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5952993225948993365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7590122325717972319}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.11227871, y: -0, z: 0.0035228122, w: 0.9936705}
+  m_LocalPosition: {x: 184.89998, y: -11.552639, z: -417.49994}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3436239468198145238}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3688400095375182831
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7590122325717972319}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
+    and improved capacity/efficiency; gather on the outward route, not on stock battery.
+    Spread between the depot exit and the far eastern road.
+  progressionTier: 6
+  estimatedLoopSeconds: 260
+  orderRoute: 0
+--- !u!1 &7616674335312121166
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7137189032066762756}
+  - component: {fileID: 4648944446713711732}
+  m_Layer: 0
+  m_Name: 36 Back_Body_Robot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7137189032066762756
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7616674335312121166}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.06801505, y: -0, z: 0.025456225, w: 0.9973595}
+  m_LocalPosition: {x: 186.69998, y: -9.244772, z: -397.19995}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 27782338856689073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4648944446713711732
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7616674335312121166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
+  routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
+    upgrades are required for a comfortable return. The first three groups contain
+    the same required part types earlier.'
+  progressionTier: 4
+  estimatedLoopSeconds: 208
+  orderRoute: 1
+--- !u!1 &7784101057453883400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4549145352447762361}
+  - component: {fileID: 2733145580088789401}
+  m_Layer: 0
+  m_Name: 22 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4549145352447762361
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7784101057453883400}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -166.69998, y: 1.7690353, z: -318.59998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6448829227879031850}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2733145580088789401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7784101057453883400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
+    cargo still returns to the main base for unloading.
+  progressionTier: 4
+  estimatedLoopSeconds: 199
+  orderRoute: 0
+--- !u!1 &7913781278995112533
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910262330134020365}
+  - component: {fileID: 5627918909967990962}
+  m_Layer: 0
+  m_Name: 48 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910262330134020365
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7913781278995112533}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.06102449, y: -0, z: -0.16998695, w: 0.983555}
+  m_LocalPosition: {x: 147.59999, y: -5.3602514, z: -487.99994}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3436239468198145238}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5627918909967990962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7913781278995112533}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
+    and improved capacity/efficiency; gather on the outward route, not on stock battery.
+    Spread between the depot exit and the far eastern road.
+  progressionTier: 6
+  estimatedLoopSeconds: 260
+  orderRoute: 0
+--- !u!1 &8499510162985409298
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4063769290831187154}
+  - component: {fileID: 8222109437475967074}
+  m_Layer: 0
+  m_Name: 09 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4063769290831187154
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8499510162985409298}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 29.699991, y: 1.7690692, z: -128.79999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3376975823303264532}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8222109437475967074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8499510162985409298}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
+    third initial order. Normal weather; leave time to return, or collect only part
+    of the cache.
+  progressionTier: 1
+  estimatedLoopSeconds: 79
+  orderRoute: 1
+--- !u!1 &8572760383763249988
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3362157812436904292}
+  - component: {fileID: 4310193065898825764}
+  m_Layer: 0
+  m_Name: 14 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3362157812436904292
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8572760383763249988}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -46.199997, y: 1.7690643, z: -156.39998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6404849198023047942}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4310193065898825764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8572760383763249988}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
+    recommended for a full four-part detour. Avoid a full cache run during radiation
+    on stock power.
+  progressionTier: 2
+  estimatedLoopSeconds: 108
+  orderRoute: 1
+--- !u!1 &8787108322304671217
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 27782338856689073}
+  m_Layer: 0
+  m_Name: 09 EAST - service road
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &27782338856689073
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8787108322304671217}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7688541435044679617}
+  - {fileID: 132621842470332677}
+  - {fileID: 8337151057743484270}
+  - {fileID: 7137189032066762756}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8791188171891174306
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3376975823303264532}
+  m_Layer: 0
+  m_Name: 03 STARTER - northern junction
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3376975823303264532
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8791188171891174306}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4063769290831187154}
+  - {fileID: 377720800636901524}
+  - {fileID: 43195287437486958}
+  - {fileID: 185161799672507279}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8809400752696632045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4164199286493123669}
+  - component: {fileID: 6760137850780162323}
+  m_Layer: 0
+  m_Name: 46 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4164199286493123669
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8809400752696632045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.087426886, y: -0, z: 0.040932886, w: 0.9953296}
+  m_LocalPosition: {x: 174.4, y: -9.376944, z: -409.79993}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3436239468198145238}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6760137850780162323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8809400752696632045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
+    and improved capacity/efficiency; gather on the outward route, not on stock battery.
+    Spread between the depot exit and the far eastern road.
+  progressionTier: 6
+  estimatedLoopSeconds: 260
+  orderRoute: 0
+--- !u!1 &8842893322457597820
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2735769098577006809}
+  - component: {fileID: 2632787980882137330}
+  m_Layer: 0
+  m_Name: 41 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2735769098577006809
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8842893322457597820}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.011451215, y: -0, z: -0.34838176, w: 0.9372828}
+  m_LocalPosition: {x: -78.5, y: 3.448778, z: -502.59998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8352540908028129702}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2632787980882137330
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8842893322457597820}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
+    2 and 578-611m from the base. Upgrade battery and regulator, recharge before
+    departing. Fixed reachable ground, never the moving bridge or cliff tops.
+  progressionTier: 6
+  estimatedLoopSeconds: 290
+  orderRoute: 0
+--- !u!1 &8894366870011335458
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8337151057743484270}
+  - component: {fileID: 100097255934677153}
+  m_Layer: 0
+  m_Name: 35 Headlights
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8337151057743484270
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8894366870011335458}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 171, y: -9.325468, z: -384.19998}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 27782338856689073}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &100097255934677153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8894366870011335458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
+  routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
+    upgrades are required for a comfortable return. The first three groups contain
+    the same required part types earlier.'
+  progressionTier: 4
+  estimatedLoopSeconds: 208
+  orderRoute: 1
+--- !u!1 &9068186053417467463
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6448829227879031850}
+  m_Layer: 0
+  m_Name: 06 OUTPOST - charging yard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6448829227879031850
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9068186053417467463}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4286671181670068299}
+  - {fileID: 4549145352447762361}
+  - {fileID: 2306579092599053102}
+  - {fileID: 1462029655743003056}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

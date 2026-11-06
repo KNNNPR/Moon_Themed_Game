@@ -19,6 +19,11 @@ namespace MoonThemedGame.Repair
         Vector3 outLocal, inLocal;
         Renderer[] renderers;
         int turns;
+        float visualTurns;
+        Quaternion restRotation;
+        public const float TurnDuration=.34f;
+        public float VisualTurns=>visualTurns;
+        public bool IsTurning=>Mathf.Abs(visualTurns-turns)>.001f;
 
         public Fastener Kind { get; private set; }
         public int Turns => Kind == Fastener.Bolt ? 6 : 5;
@@ -213,6 +218,7 @@ namespace MoonThemedGame.Repair
             bolt.robot = robot;
             bolt.part = part;
             bolt.outLocal = root.transform.localPosition;
+            bolt.restRotation = root.transform.localRotation;
             bolt.inLocal = part.transform.InverseTransformPoint(surface + normal * size * 0.2f);
             bolt.renderers = pieces.ToArray();
             bolt.Paint(kind == Fastener.Bolt ? RustyBolt : BrassScrew);
@@ -244,13 +250,19 @@ namespace MoonThemedGame.Repair
         {
             if (!Seated || (Tight && direction > 0)) return;
             turns = Mathf.Clamp(turns + direction, 0, Turns);
-            float t = turns / (float)Turns;
+        }
+
+        void Update()
+        {
+            if (!part) return;
+            visualTurns=Mathf.MoveTowards(visualTurns,turns,Time.deltaTime/TurnDuration);
+            float t = visualTurns / Turns;
             transform.localPosition = Vector3.Lerp(outLocal, inLocal, t);
-            transform.Rotate(Vector3.up, 60 * direction, Space.Self);
+            transform.localRotation=restRotation*Quaternion.AngleAxis(60*visualTurns,Vector3.up);
             var loose = Kind == Fastener.Bolt ? RustyBolt : BrassScrew;
             for (int i = 0; i < renderers.Length; i++)
                 if (renderers[i] && !(Kind == Fastener.Screw && i == 2)) renderers[i].material.color = Color.Lerp(loose, Steel, t * t);
-            if (Tight && robot) robot.BoltTightened(part);
+            if (Tight && !IsTurning && robot) robot.BoltTightened(part);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

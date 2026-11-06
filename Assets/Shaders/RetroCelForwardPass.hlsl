@@ -2,6 +2,7 @@
 #define OLD_TECH_RETRO_CEL_FORWARD_INCLUDED
 
 #include "RetroCelInput.hlsl"
+#include "MoonWeatherLighting.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 // Global art direction; material textures, emission and per-material settings remain editable.
 float _LunarLookEnabled, _LunarBandPixelSize;
@@ -114,6 +115,8 @@ half4 CelFragment(CelVaryings input) : SV_Target
     #endif
     half4 shadowMask = SAMPLE_SHADOWMASK(input.lightmapUV);
     Light mainLight = GetMainLight(inputData.shadowCoord, input.positionWS, shadowMask);
+    half nightLight=lerp(1,0.015h,_MoonDeepNight*MoonExterior(input.positionWS));
+    mainLight.color*=nightLight;
     half3 direct = CelLight(mainLight, normalWS, noise);
 
     #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -135,6 +138,7 @@ half4 CelFragment(CelVaryings input) : SV_Target
     half ambientScale = _LunarLookEnabled > 0.5 ? _LunarCel.y : 1;
     half3 ambient = SAMPLE_GI(input.lightmapUV, input.vertexSH, normalWS) * _AmbientStrength * ambientScale;
     ambient = max(ambient, _ShadowFloor * shadowTint * ambientScale);
+    ambient*=nightLight;
     half lightAmount = saturate(Luminance(direct));
     half3 tint = lerp(shadowTint, half3(1, 1, 1), lightAmount);
     half3 color = albedo * tint * (ambient * ao.indirectAmbientOcclusion + direct * ao.directAmbientOcclusion);

@@ -35,8 +35,8 @@ namespace MoonThemedGame.Editor
             for(int i=0;i<SceneManager.sceneCount;i++)
             {
                 var scene=SceneManager.GetSceneAt(i);
-                if(scene.path!=OperatorScene || SessionState.GetBool("MoonGame.LandscapeColliders.v2."+scene.handle,false))continue;
-                Apply(scene,set);SessionState.SetBool("MoonGame.LandscapeColliders.v2."+scene.handle,true);
+                if(scene.path!=OperatorScene || SessionState.GetBool("MoonGame.LandscapeColliders.v3."+scene.handle,false))continue;
+                Apply(scene,set);SessionState.SetBool("MoonGame.LandscapeColliders.v3."+scene.handle,true);
             }
         }
 

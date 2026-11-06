@@ -38,6 +38,9 @@ namespace MoonThemedGame.Scavenger
         readonly Label[] rows = new Label[PageSize];
         readonly VisualElement[] strikes = new VisualElement[PageSize];
         int selected, page;
+        [SerializeField,Min(0)] int completedOrders;
+        public int CompletedOrders=>completedOrders;
+        public bool HasActiveOrder=>accepted!=null && delivery;
         float yaw = 30f;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
@@ -46,6 +49,20 @@ namespace MoonThemedGame.Scavenger
             counts.Clear();
             if(accepted==null || !delivery)return;
             delivery.FillMissingParts(counts);
+        }
+        internal void GetUnstockedSalvageNeeds(Dictionary<GameObject,int> counts)
+        {
+            GetSalvageNeeds(counts);
+            void Subtract(GameObject prefab,int quantity=1)
+            {if(prefab && counts.TryGetValue(prefab,out int count))counts[prefab]=Mathf.Max(0,count-quantity);}
+            var salvage=GetComponent<ScavengerLink>()?.Salvage;
+            if(salvage)foreach(var prefab in salvage.Cargo)Subtract(prefab);
+            foreach(var part in FindObjectsByType<RepairPartProp>(FindObjectsSortMode.None))
+                if(part.gameObject.scene==gameObject.scene)Subtract(part.prefab);
+            var kinds=new List<GameObject>(counts.Keys);
+            foreach(var tube in FindObjectsByType<ScrapTubeDelivery>(FindObjectsSortMode.None))
+                if(tube.gameObject.scene==gameObject.scene)
+                    foreach(var prefab in kinds)Subtract(prefab,tube.CountPrefab(prefab));
         }
 
         void Awake() => terminal = GetComponent<PcMonitorTerminal>();
@@ -184,6 +201,7 @@ namespace MoonThemedGame.Scavenger
             delivery = dropper.TryDropOrder(orders[selected].missingSlots);
             if (!delivery) return;
             accepted = orders[selected];
+            GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
             Refresh();
         }
 
@@ -193,6 +211,7 @@ namespace MoonThemedGame.Scavenger
             if (delivery)
             {
                 accepted.completed = true;
+                completedOrders++;
                 if (dropper)
                 {
                     AddOrder();

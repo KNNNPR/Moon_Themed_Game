@@ -5,12 +5,12 @@ using UnityEngine.InputSystem;
 
 namespace MoonThemedGame.Interactions
 {
-    public enum GameCommand { Forward, Backward, Left, Right, Interact, Throw, Repair, VisualStyle, RadioPrevious, RadioNext, RadioPlay, RadioOff, RobotPanel, SatelliteOne, SatelliteTwo, SatelliteThree, Menu, RobotCameraReset, RobotHandbrake, RobotRecover, Crouch, Jump, Sprint }
+    public enum GameCommand { Forward, Backward, Left, Right, Interact, Throw, Repair, VisualStyle, RadioPrevious, RadioNext, RadioPlay, RadioOff, RobotPanel, SatelliteOne, SatelliteTwo, SatelliteThree, Menu, RobotCameraReset, RobotHandbrake, RobotRecover, Crouch, Jump, Sprint, Reload, LeanLeft, LeanRight }
 
     public static class GameControls
     {
-        static readonly Key[] defaults = { Key.W,Key.S,Key.A,Key.D,Key.E,Key.G,Key.F,Key.F6,Key.LeftArrow,Key.RightArrow,Key.UpArrow,Key.DownArrow,Key.H,Key.Digit1,Key.Digit2,Key.Digit3,Key.Escape,Key.C,Key.Space,Key.R,Key.LeftCtrl,Key.Space,Key.LeftShift };
-        static readonly string[] names = { "Move forward", "Move backward", "Move left", "Move right", "Interact / take", "Throw object", "Repair robot", "Retro / ASCII", "Previous station", "Next station", "Radio on", "Radio off", "Robot tuner", "Satellite 1", "Satellite 2", "Satellite 3", "Open settings", "Reset robot camera", "Robot handbrake", "Right overturned robot", "Crouch (hold)", "Jump (operator)", "Sprint (hold)" };
+        static readonly Key[] defaults = { Key.W,Key.S,Key.A,Key.D,Key.E,Key.G,Key.F,Key.F6,Key.LeftArrow,Key.RightArrow,Key.UpArrow,Key.DownArrow,Key.H,Key.Digit1,Key.Digit2,Key.Digit3,Key.Escape,Key.C,Key.Space,Key.R,Key.LeftCtrl,Key.Space,Key.LeftShift,Key.R,Key.Q,Key.E };
+        static readonly string[] names = { "Move forward", "Move backward", "Move left", "Move right", "Interact / take", "Throw object", "Repair robot", "Retro / ASCII", "Previous station", "Next station", "Radio on", "Radio off", "Robot tuner", "Satellite 1", "Satellite 2", "Satellite 3", "Open settings", "Reset robot camera", "Robot handbrake", "Right overturned robot", "Crouch (hold)", "Jump (operator)", "Sprint (hold)", "Reload pistol", "Lean left (pistol)", "Lean right (pistol)" };
         static Key[] keys;
         public static event Action Changed;
         static void Load()
@@ -23,7 +23,7 @@ namespace MoonThemedGame.Interactions
                 if (Enum.IsDefined(typeof(Key), saved) && saved != (int)Key.None) keys[i]=(Key)saved;
             }
             // New defaults must not steal an existing custom binding from an older save.
-            foreach(var command in new[]{GameCommand.RobotCameraReset,GameCommand.RobotHandbrake,GameCommand.RobotRecover,GameCommand.Crouch,GameCommand.Jump,GameCommand.Sprint})
+            foreach(var command in new[]{GameCommand.RobotCameraReset,GameCommand.RobotHandbrake,GameCommand.RobotRecover,GameCommand.Crouch,GameCommand.Jump,GameCommand.Sprint,GameCommand.Reload,GameCommand.LeanLeft,GameCommand.LeanRight})
                 if(!PlayerPrefs.HasKey("controls."+command) && Occupied(keys[(int)command],command))
                     foreach(Key candidate in Enum.GetValues(typeof(Key)))
                         if(candidate!=Key.None && candidate!=Key.Escape && !Occupied(candidate,command)) {keys[(int)command]=candidate;break;}
@@ -31,6 +31,9 @@ namespace MoonThemedGame.Interactions
         static bool Occupied(Key key,GameCommand except)
         { for(int i=0;i<keys.Length;i++)if(i!=(int)except && keys[i]==key && !SeparateContexts((GameCommand)i,except))return true;return false; }
         static bool SeparateContexts(GameCommand a,GameCommand b)=>
+            (a==GameCommand.Interact && (b==GameCommand.LeanLeft || b==GameCommand.LeanRight)) ||
+            (b==GameCommand.Interact && (a==GameCommand.LeanLeft || a==GameCommand.LeanRight)) ||
+            (a==GameCommand.Reload && b==GameCommand.RobotRecover)||(b==GameCommand.Reload && a==GameCommand.RobotRecover)||
             (a==GameCommand.Jump && b==GameCommand.RobotHandbrake)||(b==GameCommand.Jump && a==GameCommand.RobotHandbrake);
         public static string Name(GameCommand command) => Loc.T(names[(int)command]);
         public static Key Binding(GameCommand command) { Load(); return keys[(int)command]; }
@@ -39,16 +42,24 @@ namespace MoonThemedGame.Interactions
             var key=Binding(command);
             // Bindings address physical keys; a Russian OS layout must not turn E/G into У/П.
             string value=key.ToString();
-            if(value.StartsWith("Digit",StringComparison.Ordinal))return value.Substring(5);
-            if(value.StartsWith("Numpad",StringComparison.Ordinal))return "NUM "+value.Substring(6).ToUpperInvariant();
-            return key switch
+            string label=value.StartsWith("Digit",StringComparison.Ordinal)?value.Substring(5):
+                value.StartsWith("Numpad",StringComparison.Ordinal)?"NUM "+value.Substring(6).ToUpperInvariant():key switch
             {
                 Key.Escape=>"ESC",Key.LeftArrow=>"LEFT",Key.RightArrow=>"RIGHT",Key.UpArrow=>"UP",Key.DownArrow=>"DOWN",
                 Key.LeftShift=>"L SHIFT",Key.RightShift=>"R SHIFT",Key.LeftCtrl=>"L CTRL",Key.RightCtrl=>"R CTRL",
                 _=>value.ToUpperInvariant()
             };
+            return command==GameCommand.Interact && MoonThemedGame.Repair.PlayerPistol.LeanControlsActive && SharedLeanKey(key)?"ALT+"+label:label;
         }
-        public static bool Pressed(GameCommand command) => !DeveloperConsole.BlockGameplayInput && Keyboard.current != null && Keyboard.current[Binding(command)].wasPressedThisFrame;
+        static bool SharedLeanKey(Key key)=>key==Binding(GameCommand.LeanLeft) || key==Binding(GameCommand.LeanRight);
+        public static bool Pressed(GameCommand command)
+        {
+            if(DeveloperConsole.BlockGameplayInput || Keyboard.current==null)return false;
+            var binding=Binding(command);
+            if(command==GameCommand.Interact && MoonThemedGame.Repair.PlayerPistol.LeanControlsActive &&
+                !MoonThemedGame.Repair.PlayerPistol.InteractionModifierHeld && SharedLeanKey(binding))return false;
+            return Keyboard.current[binding].wasPressedThisFrame;
+        }
         public static bool Held(GameCommand command) => !DeveloperConsole.BlockGameplayInput && Keyboard.current != null && Keyboard.current[Binding(command)].isPressed;
         public static Vector2 Movement => Vector2.ClampMagnitude(new Vector2((Held(GameCommand.Right)?1:0)-(Held(GameCommand.Left)?1:0), (Held(GameCommand.Forward)?1:0)-(Held(GameCommand.Backward)?1:0)),1);
         public static bool SetBinding(GameCommand command, Key key, out string message)

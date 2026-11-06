@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using MoonThemedGame.Scavenger;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace MoonThemedGame.Weather
 {
-    public enum WeatherKind { Sunny, MoonDust, Radiation, MeteoriteRain }
+    public enum WeatherKind { Sunny, MoonDust, Radiation, MeteoriteRain, DeepNight, CryogenicFront, AshenCalm }
     public readonly struct WeatherForecast
     {
         public readonly WeatherKind kind;
@@ -21,6 +22,7 @@ namespace MoonThemedGame.Weather
         [Header("Schedule (seconds)")]
         public WeatherKind startingWeather = WeatherKind.Sunny;
         [Min(10)] public float sunnyDuration = 90, dustDuration = 75, toxicityDuration = 75, meteorDuration = 90;
+        [Min(10)] public float nightDuration=100, cryogenicDuration=80, ashDuration=65;
         public int forecastSeed = 415;
         [Header("Sealed base / world coordinates")]
         public Vector3 shelterCenter;
@@ -34,6 +36,10 @@ namespace MoonThemedGame.Weather
         [Tooltip("Seconds every weather takes to build up after it starts and to die down before it ends.")]
         [Min(0)] public float atmosphereFadeIn = 8, atmosphereFadeOut = 10;
         [Min(1)] public float toxicEnergyMultiplier = 4;
+        [Min(1)] public float coldEnergyMultiplier=2;
+        [Range(.1f,1)] public float coldGripMultiplier=.45f;
+        [Header("Camera frost (seconds)")]
+        [Min(.1f)] public float frostBuildSeconds=14, frostMeltSeconds=10;
         [Header("Meteorites")]
         [Min(5)] public float warningSeconds = 5;
         [Min(0.2f)] public float fallSeconds = 1.6f;
@@ -72,6 +78,11 @@ namespace MoonThemedGame.Weather
         System.Random random;
         bool firstTail = true;
         float nextMeteor, emissionRemainder, intensityLead;
+        static readonly int KindCount=Enum.GetValues(typeof(WeatherKind)).Length;
+        readonly Vector4[] lightingMins=new Vector4[4],lightingMaxs=new Vector4[4];
+        sealed class FrostCamera { public Camera camera;public float amount; }
+        readonly List<FrostCamera> frostCameras=new List<FrostCamera>();
+        public float NightIntensity=>Current==WeatherKind.DeepNight?Intensity:0;
         ScavengerLink scavenger;
         ParticleSystem particles;
         readonly ParticleSystem.Particle[] liveParticles = new ParticleSystem.Particle[1200];
@@ -93,13 +104,17 @@ namespace MoonThemedGame.Weather
         public static string Name(WeatherKind kind) => kind switch
         {
             WeatherKind.MoonDust => "FOG / MOON DUST", WeatherKind.Radiation => "RADIATION",
-            WeatherKind.MeteoriteRain => "METEORITE RAIN", _ => "SUNNY"
+            WeatherKind.MeteoriteRain => "METEORITE RAIN", WeatherKind.DeepNight=>"DEEP NIGHT",
+            WeatherKind.CryogenicFront=>"CRYOGENIC FRONT",WeatherKind.AshenCalm=>"ASHEN CALM", _ => "SUNNY"
         };
         public static string Effect(WeatherKind kind) => kind switch
         {
             WeatherKind.MoonDust => "Low Visibility",
             WeatherKind.Radiation => "Drains your energy faster",
             WeatherKind.MeteoriteRain => "Meteorites drop from the sky,\nwhen hit - drains your energy",
+            WeatherKind.DeepNight=>"Almost total darkness. Use your headlights.",
+            WeatherKind.CryogenicFront=>"Faster battery drain. Reduced grip. Frost on the camera.",
+            WeatherKind.AshenCalm=>"Slowly falling ash. No penalties.",
             _ => "Perfect Weather"
         };
 
@@ -109,8 +124,8 @@ namespace MoonThemedGame.Weather
             random = new System.Random(forecastSeed);
             Current = startingWeather;
             CurrentDuration = Remaining = Duration(Current);
-            nextOne = (WeatherKind)(((int)Current + 1) % 4);
-            nextTwo = (WeatherKind)(((int)Current + 2) % 4);
+            nextOne = Following(Current);
+            nextTwo = Following(nextOne);
             nextMeteor = MeteorInterval();
             CreateParticles();
             SnapAtmosphere();
@@ -119,7 +134,8 @@ namespace MoonThemedGame.Weather
         public float Duration(WeatherKind kind) => Mathf.Max(1, kind switch
         {
             WeatherKind.MoonDust => dustDuration, WeatherKind.Radiation => toxicityDuration,
-            WeatherKind.MeteoriteRain => meteorDuration, _ => sunnyDuration
+            WeatherKind.MeteoriteRain => meteorDuration,WeatherKind.DeepNight=>nightDuration,
+            WeatherKind.CryogenicFront=>cryogenicDuration,WeatherKind.AshenCalm=>ashDuration, _ => sunnyDuration
         });
         public WeatherForecast Forecast(int index) => index == 0
             ? new WeatherForecast(nextOne, Remaining, Duration(nextOne))
@@ -150,7 +166,40 @@ namespace MoonThemedGame.Weather
             }
         }
 
-        public float EnergyMultiplier(Vector3 position) => Current == WeatherKind.Radiation && !IsSheltered(position) ? 1 + (toxicEnergyMultiplier - 1) * Intensity : 1;
+        public float EnergyMultiplier(Vector3 position) => IsSheltered(position)?1:Mathf.Lerp(1,
+            Current==WeatherKind.Radiation?toxicEnergyMultiplier:Current==WeatherKind.CryogenicFront?coldEnergyMultiplier:1,Intensity);
+        public float GripMultiplier(Vector3 position)=>Current==WeatherKind.CryogenicFront && !IsSheltered(position)?Mathf.Lerp(1,coldGripMultiplier,Intensity):1;
+        bool IsRobotCamera(Camera camera)
+        {
+            if(!scavenger)scavenger=FindFirstObjectByType<ScavengerLink>();
+            return scavenger && camera && camera==scavenger.robotCamera;
+        }
+        public Vector4 CameraEffects(Camera camera)
+        {
+            // Lens frost and its cold tint belong only to the rover feed, never the human view.
+            if(!IsRobotCamera(camera))return new Vector4(NightIntensity,0,Time.time,0);
+            var frost=frostCameras.Find(f=>f.camera==camera);
+            if(frost==null){frost=new FrostCamera{camera=camera};frostCameras.Add(frost);}
+            return new Vector4(NightIntensity,frost.amount,Time.time,0);
+        }
+        void UpdateFrost(float dt)
+        {
+            for(int i=frostCameras.Count-1;i>=0;i--)
+            {
+                var frost=frostCameras[i];if(!IsRobotCamera(frost.camera)){frostCameras.RemoveAt(i);continue;}
+                float target=Current==WeatherKind.CryogenicFront && !IsSheltered(frost.camera.transform.position)?Intensity:0;
+                float duration=target>frost.amount?frostBuildSeconds:frostMeltSeconds;
+                frost.amount=Mathf.MoveTowards(frost.amount,target,Mathf.Max(0,dt)/Mathf.Max(.1f,duration));
+            }
+        }
+        static WeatherKind Following(WeatherKind kind)=>(WeatherKind)(((int)kind+1)%KindCount);
+        void PublishLighting()
+        {
+            Shader.SetGlobalFloat("_MoonDeepNight",NightIntensity);
+            for(int i=0;i<ShelterCount;i++){lightingMins[i]=GetShelter(i).min;lightingMaxs[i]=GetShelter(i).max;}
+            Shader.SetGlobalInt("_MoonWeatherShelterCount",ShelterCount);
+            Shader.SetGlobalVectorArray("_MoonWeatherShelterMins",lightingMins);Shader.SetGlobalVectorArray("_MoonWeatherShelterMaxs",lightingMaxs);
+        }
 
         // Manual/context-menu selection is visible immediately; the forecast queue still fades naturally.
         public void SetWeather(WeatherKind kind, float duration = -1, bool immediate = true)
@@ -158,8 +207,8 @@ namespace MoonThemedGame.Weather
             if(random==null)random=new System.Random(forecastSeed);
             Current = kind;
             CurrentDuration = Remaining = duration > 0 ? duration : Duration(kind);
-            nextOne = (WeatherKind)(((int)kind + 1) % 4);
-            nextTwo = (WeatherKind)(((int)kind + 2) % 4);
+            nextOne = Following(kind);
+            nextTwo = Following(nextOne);
             firstTail = true;
             intensityLead=immediate?atmosphereFadeIn:0;
             nextMeteor = MeteorInterval();
@@ -172,6 +221,7 @@ namespace MoonThemedGame.Weather
             Density = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
             AtmosphereTint = Current == WeatherKind.Radiation ? RadiationTint : DustTint;
             OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
+            PublishLighting();
         }
 
         public void AdvanceSchedule(float seconds)
@@ -180,7 +230,7 @@ namespace MoonThemedGame.Weather
             while (Remaining <= 0)
             {
                 Current = nextOne; nextOne = nextTwo;
-                nextTwo = firstTail ? (WeatherKind)(((int)nextOne + 1) % 4) : PickAfter(nextOne);
+                nextTwo = firstTail ? Following(nextOne) : PickAfter(nextOne);
                 firstTail = false;
                 CurrentDuration = Duration(Current);
                 Remaining += CurrentDuration;
@@ -212,17 +262,19 @@ namespace MoonThemedGame.Weather
 
         WeatherKind PickAfter(WeatherKind previous)
         {
-            return (WeatherKind)(((int)previous + 1 + random.Next(3)) % 4);
+            return (WeatherKind)(((int)previous + 1 + random.Next(KindCount-1)) % KindCount);
         }
 
         void Update()
         {
             AdvanceSchedule(Time.deltaTime);
+            UpdateFrost(Time.deltaTime);
             float target = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
             AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? RadiationTint : DustTint, blend);
             OpacityLimit = Mathf.Lerp(OpacityLimit, Current == WeatherKind.Radiation ? toxicOpacity : 0.96f, blend);
+            PublishLighting();
             UpdateParticles();
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)
             {
@@ -261,9 +313,9 @@ namespace MoonThemedGame.Weather
             int count = particles.GetParticles(liveParticles);
             for (int i = 0; i < count; i++) if (IsSheltered(liveParticles[i].position)) liveParticles[i].remainingLifetime = 0;
             particles.SetParticles(liveParticles, count);
-            bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation;
-            if (!dust && !toxic) return;
-            emissionRemainder += Time.deltaTime * (dust ? 45 : 12) * Intensity;
+            bool dust = Current == WeatherKind.MoonDust, toxic = Current == WeatherKind.Radiation, ash=Current==WeatherKind.AshenCalm;
+            if (!dust && !toxic && !ash) return;
+            emissionRemainder += Time.deltaTime * (dust ? 45 : ash?18:12) * Intensity;
             var camera = ViewCamera;
             var center = camera && !IsSheltered(camera.transform.position) ? camera.transform.position : shelterCenter;
             particles.transform.position=center;
@@ -274,10 +326,10 @@ namespace MoonThemedGame.Weather
                 if (IsSheltered(point)) continue;
                 particles.Emit(new ParticleSystem.EmitParams
                 {
-                    position = point, velocity = new Vector3(dust ? 1.3f : 0.3f, 0.04f, 0.3f),
-                    startSize = dust ? UnityEngine.Random.Range(0.035f, 0.13f) : UnityEngine.Random.Range(1.3f, 3f),
-                    startColor = dust ? new Color(0.7f, 0.65f, 0.55f, 0.3f) : new Color(0.3f, 0.6f, 0.15f, 0.055f),
-                    startLifetime = 7
+                    position = point, velocity = ash?new Vector3(.025f,-.14f,.015f):new Vector3(dust ? 1.3f : 0.3f, 0.04f, 0.3f),
+                    startSize = dust || ash ? UnityEngine.Random.Range(0.035f, ash ? .085f : .13f) : UnityEngine.Random.Range(1.3f, 3f),
+                    startColor = ash?new Color(.58f,.61f,.64f,.36f):dust ? new Color(0.7f, 0.65f, 0.55f, 0.3f) : new Color(0.3f, 0.6f, 0.15f, 0.055f),
+                    startLifetime = ash?12:7
                 }, 1);
             }
         }
@@ -343,13 +395,16 @@ namespace MoonThemedGame.Weather
         }
 
         void OnEnable() { if (Application.isPlaying && !MoonThemedGame.Computer.MainMenuController.IsMenuScene) Active = this; }
-        void OnDisable() { if (Active == this) Active = null; }
+        void OnDisable() { frostCameras.Clear();if (Active == this){Active = null;Shader.SetGlobalFloat("_MoonDeepNight",0);Shader.SetGlobalVector("_MoonWeatherCamera",Vector4.zero);} }
         void OnDestroy() { if (Active == this) Active = null; }
         [ContextMenu("Weather / Sunny")] void Sunny() => SetWeather(WeatherKind.Sunny);
         [ContextMenu("Weather / Moon Dust")] void Dust() => SetWeather(WeatherKind.MoonDust);
         [ContextMenu("Weather / Radiation")] void Toxic() => SetWeather(WeatherKind.Radiation);
         [ContextMenu("Weather / Meteorite Rain")] void Meteors() => SetWeather(WeatherKind.MeteoriteRain);
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState() => Active = null;
+        [ContextMenu("Weather / Deep Night")] void Night()=>SetWeather(WeatherKind.DeepNight);
+        [ContextMenu("Weather / Cryogenic Front")] void Cold()=>SetWeather(WeatherKind.CryogenicFront);
+        [ContextMenu("Weather / Ashen Calm")] void Ash()=>SetWeather(WeatherKind.AshenCalm);
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState(){Active = null;Shader.SetGlobalFloat("_MoonDeepNight",0);Shader.SetGlobalVector("_MoonWeatherCamera",Vector4.zero);}
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void RestoreActive()
         {

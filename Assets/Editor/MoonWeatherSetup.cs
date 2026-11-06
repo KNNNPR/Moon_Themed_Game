@@ -39,6 +39,9 @@ namespace MoonThemedGame.Editor
             assets.dust = Load<VectorImage>("Assets/Weather/Icons/dust.svg");
             assets.toxicity = Load<VectorImage>("Assets/Weather/Icons/toxicity.svg");
             assets.meteors = Load<VectorImage>("Assets/Weather/Icons/meteors.svg");
+            assets.night=Load<VectorImage>("Assets/Weather/Icons/night.svg");
+            assets.snow=Load<VectorImage>("Assets/Weather/Icons/snow.svg");
+            assets.wind=Load<VectorImage>("Assets/Weather/Icons/wind.svg");
             assets.screenMaterial = Material(ScreenMatPath, "Moon Game/PC Monitor CRT");
             assets.screenMaterial.SetFloat("_Curvature", 0.035f); assets.screenMaterial.SetFloat("_Scanlines", 0.055f);
             assets.screenMaterial.SetFloat("_WaveStrength", 0.0006f); assets.screenMaterial.SetFloat("_Glow", 0.12f);

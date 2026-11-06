@@ -217,8 +217,16 @@ namespace MoonThemedGame.Scavenger
             state.cargoCapacity = RobotUpgrades.CargoSlots;
             Drive.maxSpeed = baseSpeed * RobotUpgrades.SpeedScale;
             Drive.acceleration = baseAcceleration * RobotUpgrades.SpeedScale;
-            if (RobotUpgrades.Lamps && !lampBeam) lampBeam = CreateLampBeam();
-            if (lampBeam) lampBeam.enabled = RobotUpgrades.Lamps;
+            if (!lampBeam) lampBeam = CreateLampBeam();
+            if (lampBeam)
+            {
+                lampBeam.enabled=state.HasSignal;
+                lampBeam.range=Drive.Length*(RobotUpgrades.Lamps?14:5);
+                // Ground at a shallow beam angle needs enough intensity to survive cel-light bands.
+                lampBeam.intensity=RobotUpgrades.Lamps?1200:120;
+                lampBeam.spotAngle=RobotUpgrades.Lamps?70:50;
+                lampBeam.innerSpotAngle=RobotUpgrades.Lamps?35:25;
+            }
             if (RobotUpgrades.HasArm && !arm) arm = CreateArm();
             if (arm) arm.gameObject.SetActive(RobotUpgrades.HasArm);
         }
@@ -307,6 +315,7 @@ namespace MoonThemedGame.Scavenger
             light.intensity = 12;
             light.color = new Color(1f, 0.95f, 0.82f);
             light.shadows = LightShadows.None;
+            light.renderMode = LightRenderMode.ForcePixel;
             return light;
         }
 
@@ -374,7 +383,7 @@ namespace MoonThemedGame.Scavenger
             if (evacuated && Drive) Drive.PlaceAt(homePosition, homeRotation);
         }
 
-        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !patch.IsOpen && !ArmBusy;
+        void UpdateDrive() => Drive.controllable = Phase == LinkPhase.Live && Powered && Uplink == UplinkStatus.Ok && !ArmBusy;
 
         // The headlights sit at the front of the model; snap to the closest local axis.
         public static Vector3 DetectForward(Transform robot, Vector3 center)
@@ -417,6 +426,7 @@ namespace MoonThemedGame.Scavenger
 
         void Update()
         {
+            if(lampBeam)lampBeam.enabled=state && state.HasSignal;
             if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!robotCamera || !terminal) return;
             bool interact = false, click = false, escape = false;

@@ -173,6 +173,23 @@ namespace MoonThemedGame.Repair
             ShowKit(false);
         }
 
+        public bool GrantPistol()
+        {
+            if (!kit) return false;
+            foreach (var slot in slots) if (slot.tool is PlayerPistol) return true;
+            var prefab=Resources.Load<GameObject>("PlayerPistol");
+            if (!prefab) return false;
+            var pistol=MakeSlot("PISTOL",prefab,2,null);
+            System.Array.Resize(ref slots,slots.Length+1);
+            slots[slots.Length-1]=pistol;
+            // The smaller pistol lies in the far cradle, clear of the three long tools.
+            pistol.anchor.localPosition=new Vector3(0,.12f,.15f)*unit;
+            pistol.hang=Quaternion.Euler(0,90,90);
+            Stow(pistol);
+            foreach (var renderer in pistol.tool.GetComponentsInChildren<Renderer>(true)) renderer.enabled=kitVisible;
+            return true;
+        }
+
         Arm MakeArm(float side)
         {
             var shoulder = Joint(side < 0 ? "Left arm" : "Right arm", root, new Vector3(0.215f * side, 1.33f, -0.09f));
@@ -285,7 +302,7 @@ namespace MoonThemedGame.Repair
             var instance = Instantiate(prefab);
             instance.name = prefab.name;
             var renderers = instance.GetComponentsInChildren<Renderer>();
-            if (renderers.Length > 0)
+            if (renderers.Length > 0 && name!="PISTOL")
             {
                 var bounds = renderers[0].bounds;
                 foreach (var r in renderers) bounds.Encapsulate(r.bounds);
@@ -293,7 +310,12 @@ namespace MoonThemedGame.Repair
                 if (largest > 1e-4f) instance.transform.localScale *= ToolLength * Scale / largest;
             }
             RepairCarryable tool;
-            if (drives.HasValue)
+            if (name=="PISTOL")
+            {
+                instance.transform.localScale*=Scale;
+                tool=instance.GetComponent<PlayerPistol>();
+            }
+            else if (drives.HasValue)
             {
                 var driver = instance.AddComponent<RepairWrench>();
                 driver.drives = drives.Value;
@@ -454,6 +476,12 @@ namespace MoonThemedGame.Repair
                     leftTarget = bounds.center - view.transform.right * reach + below;
                     rightTarget = bounds.center + view.transform.right * reach + below;
                 }
+                else if (carried is PlayerPistol pistol)
+                {
+                    rightTarget=pistol.RightGrip;
+                    leftTarget=pistol.LeftHandTarget;
+                }
+                else if(carried is RepairWrench workingTool && workingTool.Engaged)rightTarget=workingTool.HandleGrip;
                 else rightTarget = Grip(carried, bounds);
             }
             else if(HeldProp.Current && view)
@@ -465,8 +493,12 @@ namespace MoonThemedGame.Repair
             if (kitVisible && kit) leftTarget = kit.TransformPoint(new Vector3(-0.24f, 0.06f, -0.1f) * unit);
             if(cosmonaut!=null)
             {
-                cosmonaut.PoseHands(leftTarget,rightTarget,stride,walk,Time.deltaTime);
-                if(carried && (carried is RepairWrench || carried is RepairTool) && !open)
+                var heldPistol=!open?carried as PlayerPistol:null;
+                cosmonaut.PoseHands(leftTarget,rightTarget,stride,walk,Time.deltaTime,
+                    heldPistol?(Quaternion?)heldPistol.RightHandRotation:null);
+                if(carried is RepairWrench wrench && wrench.Engaged && !open)
+                    cosmonaut.TwistRightWrist(wrench.WorkAxis,wrench.WristAngle);
+                if(carried && (carried is RepairWrench || carried is RepairTool) && !open && !(carried is RepairWrench working && working.Engaged))
                     carried.transform.position+=cosmonaut.RightPalm-Grip(carried,carried.RendererBounds());
             }
             else {Solve(left, leftTarget);Solve(right, rightTarget);}

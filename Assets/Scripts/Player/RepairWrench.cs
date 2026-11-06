@@ -9,7 +9,21 @@ namespace MoonThemedGame.Repair
         public Fastener drives = Fastener.Bolt;
         public string displayName = "WRENCH";
         RepairBolt target;
-        float swing;
+        RepairBolt working;
+        float engage, cycle=1, turnStart;
+        int turnDirection;
+        public bool Engaged=>engage>.01f && working;
+        public Vector3 WorkAxis=>working?working.transform.up:Vector3.up;
+        public float WristAngle {get;private set;}
+        public Vector3 HandleGrip
+        {
+            get
+            {
+                var mesh=GetComponent<MeshFilter>().sharedMesh;
+                var axis=LongAxis();
+                return transform.TransformPoint(mesh.bounds.center-axis*(Vector3.Dot(mesh.bounds.extents,axis)*.55f));
+            }
+        }
 
         static float Reach => 2.2f * PlayerBody.Scale;
         protected override bool AlignInHand => true;
@@ -21,18 +35,50 @@ namespace MoonThemedGame.Repair
             target = RepairBolt.Aimed(new Ray(hand.transform.position, hand.transform.forward), Reach);
             int direction = 0;
             float scroll = Scroll();
-            if (scroll > 0.01f || MouseClicked()) direction = 1;
+            if (scroll > 0.01f || MouseHeld()) direction = 1;
             else if (scroll < -0.01f) direction = -1;
-            if (target && target.Kind == drives && target.Seated && direction != 0 && !(direction > 0 && target.Tight))
+            bool valid=target && target.Kind==drives && target.Seated;
+            if(cycle>=1 && valid)working=target;
+            bool near=working && Vector3.Distance(working.transform.position,hand.transform.position)<1.15f*PlayerBody.Scale;
+            engage=Mathf.MoveTowards(engage,valid && near?1:0,Time.deltaTime*7);
+            cycle=Mathf.Min(1,cycle+Time.deltaTime/.54f);
+            if (valid && direction != 0 && cycle>=1 && !target.IsTurning && !(direction > 0 && target.Tight) && !(direction<0 && target.TurnsDone==0))
             {
+                working=target;
+                turnStart=target.VisualTurns;
+                turnDirection=direction;
                 target.Turn(direction);
-                swing = 1;
+                cycle=0;
             }
-            swing = Mathf.MoveTowards(swing, 0, Time.deltaTime * 5);
-            var length = LongAxis();
-            var axis = drives == Fastener.Screw ? length : length == Vector3.forward ? Vector3.up : Vector3.forward;
-            transform.rotation *= Quaternion.AngleAxis(-40 * Mathf.Sin(swing * Mathf.PI), axis);
+            if(!Engaged)return;
+            var filter=GetComponent<MeshFilter>();
+            if(!filter || !filter.sharedMesh)return;
+            var bounds=filter.sharedMesh.bounds;
+            var length=LongAxis();
+            var normal=working.transform.up;
+            float turn=60*(working.VisualTurns-turnStart);
+            float reset=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.68f,1,cycle));
+            float angle=turn-60*turnDirection*reset;
+            WristAngle=angle;
+            Quaternion rotation;
+            if(drives==Fastener.Screw)
+                rotation=Quaternion.AngleAxis(angle,normal)*Quaternion.FromToRotation(length,-normal);
+            else
+            {
+                var size=bounds.size;
+                var thin=size.x<=size.y && size.x<=size.z?Vector3.right:size.y<=size.z?Vector3.up:Vector3.forward;
+                var along=Vector3.ProjectOnPlane(working.transform.position-hand.transform.position,normal).normalized;
+                if(along.sqrMagnitude<.01f)along=Vector3.Cross(normal,hand.transform.right).normalized;
+                rotation=Quaternion.AngleAxis(angle,normal)*Quaternion.LookRotation(along,normal)*Quaternion.Inverse(Quaternion.LookRotation(length,thin));
+            }
+            // Rotate around the working end, never swing the whole tool into the fastener.
+            var tip=bounds.center+length*(Vector3.Dot(bounds.extents,length)*.88f);
+            var contact=working.transform.position+normal*((.003f+Mathf.Sin(reset*Mathf.PI)*.018f)*PlayerBody.Scale);
+            var position=contact-rotation*Vector3.Scale(tip,transform.lossyScale);
+            transform.SetPositionAndRotation(Vector3.Lerp(transform.position,position,engage),Quaternion.Slerp(transform.rotation,rotation,engage));
         }
+
+        protected override void OnPutAway(){engage=0;cycle=1;working=null;WristAngle=0;}
 
         protected override string CarryHint
         {

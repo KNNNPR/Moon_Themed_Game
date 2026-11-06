@@ -20,6 +20,9 @@ MonoBehaviour:
   dust: {fileID: 7388822144124034973, guid: f2d99047b59048c18ee47e5fdc7db777, type: 3}
   toxicity: {fileID: 7388822144124034973, guid: a6114a2e670e4e699a8a45e1586b2a43, type: 3}
   meteors: {fileID: 7388822144124034973, guid: 16978389043849b9af09bcd0628fbcd5, type: 3}
+  night: {fileID: 7388822144124034973, guid: b3c3dda3fc9744bc9eb8194c8b21eba1, type: 3}
+  snow: {fileID: 7388822144124034973, guid: a9f0a9ff0c62488090a1b78635291f0c, type: 3}
+  wind: {fileID: 7388822144124034973, guid: 275a636abba043eb909182ce1b194463, type: 3}
   screenMaterial: {fileID: 2100000, guid: 47b94e9963d8b4e438974856a747525c, type: 2}
   atmosphereMaterial: {fileID: 2100000, guid: 644a0063bfd6a1c429fc7409ef498c6a, type: 2}
   particleMaterial: {fileID: 2100000, guid: 54b4c9529af187d4ba80b66dc1a3fb7a, type: 2}

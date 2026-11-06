@@ -43,6 +43,7 @@ namespace MoonThemedGame.Interactions
             if (target && Keyboard.current != null &&
                 GameControls.Pressed(GameCommand.Interact))
             {
+                movement.GetComponentInChildren<FirstPersonCameraEffects>()?.ResetWeaponMotion();
                 target.Interact();
                 if (!CanUseInput() || !target || !target.CanInteract(viewCamera)) SetTarget(null);
             }
