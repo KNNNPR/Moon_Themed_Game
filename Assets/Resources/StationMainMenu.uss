@@ -1,0 +1,11 @@
+.menu-screen { background-color: rgb(4,6,5); color: rgb(230,239,227); padding: 70px 42px 48px; }
+.menu-kicker { font-size: 20px; letter-spacing: 2px; color: rgb(158,177,160); margin-bottom: 40px; }
+.menu-heading { font-size: 42px; margin: 0; padding: 0; }
+.menu-subtitle { font-size: 19px; color: rgb(158,177,160); margin-top: 14px; margin-bottom: 90px; }
+.menu-action { height: 124px; margin: 0 0 20px; padding: 12px 10px; font-size: 39px; color: rgb(231,239,228); background-color: rgba(0,0,0,0); border-width: 0 0 1px; border-bottom-color: rgb(60,75,63); border-radius: 0; -unity-text-align: middle-left; }
+.menu-action.is-hovered { color: rgb(9,14,10); background-color: rgb(212,229,210); }
+.menu-action:disabled { color: rgb(95,110,98); }
+.menu-language { margin-top: 44px; height: 62px; font-size: 24px; color: rgb(164,187,166); background-color: rgba(0,0,0,0); border-width: 0; -unity-text-align: middle-left; }
+.menu-language.is-hovered { color: rgb(255,255,255); }
+.menu-status { position: absolute; left: 50px; bottom: 67px; font-size: 20px; color: rgb(166,192,168); }
+.menu-footer { position: absolute; left: 50px; bottom: 35px; font-size: 15px; color: rgb(113,132,117); }

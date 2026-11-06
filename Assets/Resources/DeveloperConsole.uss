@@ -8,7 +8,8 @@
 .console-command-row { flex-direction: row; align-items: center; height: 32px; margin-top: 8px; flex-shrink: 0; border-top-width: 1px; border-top-color: rgb(70,70,70); padding-top: 4px; }
 .console-command-row > Label { width: 17px; color: rgb(255,255,255); }
 #console-input { flex-grow: 1; margin: 0 8px 0 0; }
-#console-input .unity-text-field__input { background-color: rgb(0,0,0); color: rgb(255,255,255); border-width: 0; border-radius: 0; padding: 3px; font-size: 15px; }
+#console-input .unity-text-field__input { background-color: rgb(0,0,0); color: rgb(255,255,255); border-width: 0; border-radius: 0; padding: 3px; font-size: 15px; --unity-cursor-color: rgb(255,255,255); --unity-selection-color: rgba(255,255,255,0.3); }
+#console-input.console-caret-off .unity-text-field__input { --unity-cursor-color: rgba(255,255,255,0); }
 .console-window Button { background-color: rgb(0,0,0); color: rgb(255,255,255); border-radius: 0; border-width: 0; font-size: 14px; }
 .console-window Button:hover { background-color: rgb(35,35,35); }
 .console-window Button:active { background-color: rgb(60,60,60); }

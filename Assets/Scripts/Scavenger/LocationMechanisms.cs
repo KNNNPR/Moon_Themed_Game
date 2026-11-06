@@ -39,14 +39,18 @@ namespace MoonThemedGame.Scavenger
 
         static void Install()
         {
-            var named = new Dictionary<string, Transform>();
+            if(MoonThemedGame.Computer.MainMenuController.IsMenuScene)return;
+            var named = new Dictionary<string, Transform>(StringComparer.OrdinalIgnoreCase);
             foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
                 if (!named.ContainsKey(t.name)) named[t.name] = t;
-            if (!named.TryGetValue(Platform, out var platform) && !named.ContainsKey(Gates[0].lockName)) return;
+            named.TryGetValue(Platform,out var platform);
+            var bridge = Find(named, "bridge") ?? Find(named, "Cube.080");
+            var bridgeButton = Find(named, "Bridge Button") ?? Find(named, "Cylinder.049") ?? Find(named, "Cyllinder.049");
 
             foreach (var gate in Gates)
             {
                 if (!named.TryGetValue(gate.button, out var button) || !named.TryGetValue(gate.lockName, out var lockPart)) continue;
+                if (button == bridgeButton && bridge) continue;
                 if (button.GetComponent<RobotLever>()) continue;
                 var leaves = new List<Transform>();
                 foreach (var leaf in gate.leaves) if (named.TryGetValue(leaf, out var t)) leaves.Add(t);
@@ -62,6 +66,21 @@ namespace MoonThemedGame.Scavenger
                 lift.Setup(top, bottom, Find(named, TopGround));
                 Wire(top, Find(named, TopPost), "PLATFORM", lever => lift.Press());
                 Wire(bottom, Find(named, BottomPost), "PLATFORM", lever => lift.Press());
+            }
+            if(bridge && bridgeButton)
+            {
+                var mechanism=bridge.GetComponent<LocationBridge>();
+                if(mechanism && mechanism.IsInitialized)return;
+                if(!mechanism)mechanism=bridge.gameObject.AddComponent<LocationBridge>();
+                mechanism.Setup(bridgeButton);
+                if(bridgeButton.TryGetComponent<RobotLever>(out var existing))existing.Pulled+=lever=>mechanism.Press();
+                else Wire(bridgeButton,null,Loc.Russian?"МОСТ":"BRIDGE",lever=>mechanism.Press());
+                if(!bridgeButton.GetComponent<BridgeButtonInteractable>())bridgeButton.gameObject.AddComponent<BridgeButtonInteractable>();
+                if(!bridgeButton.GetComponent<Collider>())
+                {
+                    var mesh=bridgeButton.GetComponent<MeshFilter>();
+                    if(mesh && mesh.sharedMesh)bridgeButton.gameObject.AddComponent<MeshCollider>().sharedMesh=mesh.sharedMesh;
+                }
             }
         }
 

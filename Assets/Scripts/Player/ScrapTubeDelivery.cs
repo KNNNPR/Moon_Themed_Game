@@ -21,6 +21,12 @@ namespace MoonThemedGame.Repair
         float distance,total,cooldown;
         public int PendingCount=>pending.Count+(current?1:0);
         public int DeliveredCount {get;private set;}
+        internal int CountPrefab(GameObject prefab)
+        {
+            int count=current && currentPrefab==prefab?1:0;
+            foreach(var queued in pending)if(queued==prefab)count++;
+            return count;
+        }
         public GameObject InTransit=>current;
         public Transform Outlet=>waypoints.Length>0?waypoints[waypoints.Length-1]:null;
         public bool HasRoute

@@ -67,11 +67,9 @@ Shader "Moon Game/Scavenger Interference"
                 if (Hash(float2(floor(t * 6), 3)) < k * 0.35) uv.y += (Hash(float2(frame, 11)) - 0.5) * 0.06 * k;
                 uv = saturate(uv);
 
-                float shift = 0.012 * k;
-                half3 color;
-                color.r = SampleSceneColor(uv + float2(shift, 0)).r;
-                color.g = SampleSceneColor(uv).g;
-                color.b = SampleSceneColor(uv - float2(shift, 0)).b;
+                // Keep the feed palette stable when leaving the base relay: signal
+                // degradation distorts the picture, without adding RGB color fringes.
+                half3 color = SampleSceneColor(uv);
 
                 float noise = Hash(floor(pixel * 0.5) + frac(t * 61.7) * 113);
                 color = lerp(color, noise.xxx, 0.65 * k * k);

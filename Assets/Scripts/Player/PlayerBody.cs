@@ -76,6 +76,7 @@ namespace MoonThemedGame.Repair
 
         static void Install()
         {
+            if(MoonThemedGame.Computer.MainMenuController.IsMenuScene)return;
             foreach (var player in FindObjectsByType<FirstPersonController>(FindObjectsSortMode.None))
                 if (!player.GetComponent<PlayerBody>()) player.gameObject.AddComponent<PlayerBody>();
         }

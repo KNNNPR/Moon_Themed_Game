@@ -10,6 +10,20 @@ namespace MoonThemedGame.Weather
         Light flash;
         float age;
         MaterialPropertyBlock properties;
+        float strength=1;
+        public static ParticleSystem MakeParticles(Transform parent,string name,Material material,float lifetime,float size,int capacity,bool loop)
+        {
+            var host=new GameObject(name);host.transform.SetParent(parent,false);
+            var ps=host.AddComponent<ParticleSystem>();ps.Stop(true,ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main=ps.main;main.loop=loop;main.playOnAwake=false;main.startLifetime=lifetime;main.startSize=size;main.startSpeed=0;main.maxParticles=capacity;
+            main.simulationSpace=ParticleSystemSimulationSpace.World;main.cullingMode=ParticleSystemCullingMode.AlwaysSimulate;
+            var emission=ps.emission;emission.enabled=false;var shape=ps.shape;shape.enabled=false;
+            var fade=ps.colorOverLifetime;fade.enabled=true;
+            var gradient=new Gradient();gradient.SetKeys(new[]{new GradientColorKey(Color.white,0),new GradientColorKey(Color.white,1)},new[]{new GradientAlphaKey(0,0),new GradientAlphaKey(1,.1f),new GradientAlphaKey(.7f,.55f),new GradientAlphaKey(0,1)});fade.color=gradient;
+            var growth=ps.sizeOverLifetime;growth.enabled=true;growth.size=new ParticleSystem.MinMaxCurve(1,AnimationCurve.Linear(0,.4f,1,1.8f));
+            var renderer=ps.GetComponent<ParticleSystemRenderer>();renderer.sharedMaterial=material;renderer.shadowCastingMode=ShadowCastingMode.Off;renderer.receiveShadows=false;
+            ps.Play();return ps;
+        }
         void Awake() => properties = new MaterialPropertyBlock();
         public static Mesh Quad
         {
@@ -32,15 +46,31 @@ namespace MoonThemedGame.Weather
             return renderer;
         }
 
-        public static void Spawn(MoonWeatherSystem weather, Vector3 point, Vector3 normal)
+        public static void Spawn(MoonWeatherSystem weather, Vector3 point, Vector3 normal,float diameter=3)
         {
             var host = new GameObject("Meteorite impact / dust burst"); host.transform.SetParent(weather.transform, false);
             host.transform.SetPositionAndRotation(point + normal * 0.04f, Quaternion.FromToRotation(Vector3.up, normal));
             var fx = host.AddComponent<WeatherImpactFx>();
+            fx.strength=Mathf.Clamp(diameter/3,0.8f,2);
             fx.ring = MakeRing(host.transform, weather.assets.warningMaterial, 0.4f);
             var lightHost = new GameObject("Short impact flash"); lightHost.transform.SetParent(host.transform, false); lightHost.transform.localPosition = Vector3.up * 0.6f;
-            fx.flash = lightHost.AddComponent<Light>(); fx.flash.color = new Color(1, 0.46f, 0.17f); fx.flash.range = 6; fx.flash.intensity = 1.8f; fx.flash.shadows = LightShadows.None;
-            var dust = host.AddComponent<ParticleSystem>(); dust.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            fx.flash = lightHost.AddComponent<Light>(); fx.flash.color = new Color(1, 0.46f, 0.17f); fx.flash.range = 18*fx.strength; fx.flash.intensity = 6; fx.flash.shadows = LightShadows.None;
+            var smoke=MakeParticles(host.transform,"Impact smoke / lingering plume",weather.assets.particleMaterial,10,3,160,false);
+            var smokeVelocity=smoke.velocityOverLifetime;smokeVelocity.enabled=true;smokeVelocity.space=ParticleSystemSimulationSpace.World;smokeVelocity.y=.7f;
+            for(int i=0;i<100;i++)
+            {
+                var spread=Random.insideUnitSphere;spread.y=Mathf.Abs(spread.y);
+                smoke.Emit(new ParticleSystem.EmitParams{position=point+normal*.6f+spread*diameter*.3f,velocity=spread*Random.Range(1.2f,4)*fx.strength,
+                    startSize=Random.Range(1.3f,3.5f)*fx.strength,startLifetime=Random.Range(7,12),startColor=new Color(.21f,.20f,.18f,.82f)},1);
+            }
+            var fire=MakeParticles(host.transform,"Impact fireball and embers",weather.assets.particleMaterial,1,1,100,false);
+            for(int i=0;i<64;i++)
+            {
+                var spread=Random.insideUnitSphere;spread.y=Mathf.Abs(spread.y)+.1f;
+                fire.Emit(new ParticleSystem.EmitParams{position=point+normal*.3f,velocity=spread*Random.Range(3f,10)*fx.strength,
+                    startSize=Random.Range(.3f,1.8f)*fx.strength,startLifetime=Random.Range(.4f,1.5f),startColor=new Color(3,Random.Range(.4f,1.4f),.08f,1)},1);
+            }
+            var dust = host.AddComponent<ParticleSystem>(); dust.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
             var main = dust.main; main.loop = false; main.playOnAwake = false; main.startLifetime = 1.5f; main.startSpeed = 0;
             main.simulationSpace = ParticleSystemSimulationSpace.World; main.gravityModifier = 0.12f; main.maxParticles = 80;
             var emission = dust.emission; emission.enabled = false;
@@ -49,7 +79,7 @@ namespace MoonThemedGame.Weather
             var gradient = new Gradient(); gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) },
                 new[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(0, 1) }); color.color = gradient;
             dust.GetComponent<ParticleSystemRenderer>().sharedMaterial = weather.assets.particleMaterial;
-            dust.Play();
+            dust.Play(false);
             for (int i = 0; i < 48; i++)
             {
                 bool spark = i < 12;
@@ -64,10 +94,10 @@ namespace MoonThemedGame.Weather
         void Update()
         {
             age += Time.deltaTime;
-            ring.transform.localScale = Vector3.one * Mathf.Lerp(0.4f, 7, Mathf.Clamp01(age / 0.65f));
+            ring.transform.localScale = Vector3.one * Mathf.Lerp(0.4f, 16*strength, Mathf.Clamp01(age / 0.8f));
             properties.SetFloat("_Impact", 1); properties.SetFloat("_Opacity", Mathf.Clamp01(1 - age / 0.65f) * 0.6f); ring.SetPropertyBlock(properties);
-            if (flash) flash.intensity = Mathf.Max(0, 1.8f * (1 - age / 0.18f));
-            if (age > 2.2f) Destroy(gameObject);
+            if (flash) flash.intensity = Mathf.Max(0, 6f * (1 - age / 0.3f));
+            if (age > 12.5f) Destroy(gameObject);
         }
     }
 }

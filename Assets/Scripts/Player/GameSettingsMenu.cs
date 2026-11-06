@@ -16,7 +16,7 @@ namespace MoonThemedGame.Interactions
     {
         public static bool IsOpen { get; private set; }
         static int consumedFrame = -1;
-        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput;
+        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying;
         FirstPersonController player;
         bool restorePlayer, visible;
         CursorLockMode cursorLock;
@@ -53,6 +53,7 @@ namespace MoonThemedGame.Interactions
         }
         void Update()
         {
+            if(OperatorWakeUp.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue)
             {
@@ -70,6 +71,7 @@ namespace MoonThemedGame.Interactions
         }
         public void HandleBack()
         {
+            if(OperatorWakeUp.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue) { CancelRebind(); return; }
             if (IsOpen)
@@ -79,6 +81,7 @@ namespace MoonThemedGame.Interactions
                 return;
             }
             // Screen controllers receive Escape first; pausing never also happens on that press.
+            if(MainMenuController.Active && MainMenuController.Active.IsFocused)return;
             foreach (var pc in FindObjectsByType<PcMonitorTerminal>(FindObjectsSortMode.None)) if (pc.IsFocused) return;
             foreach (var screen in FindObjectsByType<WeatherMonitorDisplay>(FindObjectsSortMode.None)) if (screen.IsFocused) return;
             foreach (var note in FindObjectsByType<NoteInspectable>(FindObjectsSortMode.None)) if (note.Viewing) return;
@@ -87,6 +90,7 @@ namespace MoonThemedGame.Interactions
         }
         public void Open()
         {
+            if(OperatorWakeUp.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if (IsOpen) return;
             player = FindFirstObjectByType<FirstPersonController>(); restorePlayer = player && player.enabled;

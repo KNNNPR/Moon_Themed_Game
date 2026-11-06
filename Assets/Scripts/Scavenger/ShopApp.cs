@@ -87,10 +87,10 @@ namespace MoonThemedGame.Scavenger
             close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
             foreach (var card in cards)
             {
-                bool hover = pointer && card.root.worldBound.Contains(point);
+                bool hover = pointer && listings.contentViewport.worldBound.Contains(point) && card.root.worldBound.Contains(point);
                 card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor = hover ? Text : Edge;
                 bool canBuy = card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
-                card.buy.style.backgroundColor = hover && canBuy && card.buy.worldBound.Contains(point) ? new Color(1, 1, 1, 0.18f) : Color.clear;
+                card.buy.style.backgroundColor = hover && canBuy ? new Color(1, 1, 1, 0.18f) : Color.clear;
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
             }
@@ -115,7 +115,7 @@ namespace MoonThemedGame.Scavenger
             if(!listings.contentViewport.worldBound.Contains(point))return;
             foreach (var card in cards)
             {
-                if (!card.buy.worldBound.Contains(point)) continue;
+                if (!card.root.worldBound.Contains(point)) continue;
                 Buy(card);
                 return;
             }

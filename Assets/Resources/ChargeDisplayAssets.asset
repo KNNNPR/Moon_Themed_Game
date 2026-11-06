@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00c1260d8fe29164b87acfb84875dca1, type: 3}
+  m_Name: ChargeDisplayAssets
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.ChargeDisplayAssets
+  screenMaterial: {fileID: 2100000, guid: f964fbedcbbe02f43bd45a60fa9a1a21, type: 2}
+  english: {fileID: 2800000, guid: cd959fd9c6d34f119bbacc58dd76058c, type: 3}
+  russian: {fileID: 2800000, guid: 736be52cdacce6740ad2615e5ba3dd3e, type: 3}
+  secondaryScreen: {fileID: 4300000, guid: 2068416bcbeafd54880d918315e193b1, type: 2}

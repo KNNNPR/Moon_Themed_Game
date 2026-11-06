@@ -10,11 +10,12 @@ half3 CrtSampleDisplay(float2 uv, float time)
         float phase = frac(time * rate) / rate;
         float duration = min(_LetterFlickerDuration, 0.8 / rate);
         float chance = frac(sin(tick * 12.9898 + 71.17) * 43758.5453);
-        uint chosen = (uint)floor(frac(sin(tick * 78.233 + 19.31) * 19341.137) * 6.0);
+        float letters=max(1,_LetterCount);
+        uint chosen = (uint)floor(frac(sin(tick * 78.233 + 19.31) * 19341.137) * letters);
         float start = frac(sin(tick * 39.346 + 3.71) * 27183.135) * max(0.0, 1.0 / rate - duration);
         float pulse = saturate(min(phase - start, start + duration - phase) / 0.008);
-        float column = (uv.x - _LetterRect.x) / _LetterRect.z * 6.0;
-        float inside = step(0.0, column) * (1.0 - step(6.0, column));
+        float column = (uv.x - _LetterRect.x) / _LetterRect.z * letters;
+        float inside = step(0.0, column) * (1.0 - step(letters, column));
         float selected = 1.0 - step(0.5, abs(floor(column) - (float)chosen));
         // One randomly chosen letter briefly loses brightness. Sampling the
         // same mask for every glow tap keeps its phosphor halo in sync.

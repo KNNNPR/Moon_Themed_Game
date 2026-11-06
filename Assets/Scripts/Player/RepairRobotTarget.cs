@@ -35,6 +35,17 @@ namespace MoonThemedGame.Repair
             }
         }
         public bool IsRepaired => initialized && MissingCount == 0;
+        internal void FillMissingParts(Dictionary<GameObject,int> counts)
+        {
+            counts.Clear();
+            if(!initialized || IsBeingCollected)return;
+            foreach(var slot in slots)
+                if(!slot.visual || !slot.visual.activeSelf)
+                {
+                    var prefab=definitions[slot.part].prefab;
+                    if(prefab)counts[prefab]=counts.TryGetValue(prefab,out int count)?count+1:1;
+                }
+        }
         public bool IsSettled
         {
             get
@@ -57,8 +68,7 @@ namespace MoonThemedGame.Repair
                 var text = new StringBuilder(Loc.T("Missing parts:"));
                 for (int i = 0; i < counts.Length; i++)
                     if (counts[i] > 0)
-                        text.Append('\n').Append(string.IsNullOrWhiteSpace(definitions[i].displayName)
-                            ? definitions[i].prefab.name : definitions[i].displayName).Append(" ×").Append(counts[i]);
+                        text.Append('\n').Append(MoonThemedGame.Scavenger.SalvageField.PartName(definitions[i].prefab)).Append(" ×").Append(counts[i]);
                 if (proud.Count > 0) text.Append('\n').Append(Loc.F("Knock in with the hammer: {0} parts", proud.Count));
                 int bolts = 0, screws = 0;
                 foreach (var pair in loose)

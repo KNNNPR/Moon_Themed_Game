@@ -169,6 +169,17 @@ public class FirstPersonController : MonoBehaviour
         cameraRoot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
     }
 
+    public void SetViewPose(Vector3 position,float yaw,float pitchDegrees=0)
+    {
+        bool wasEnabled=controller && controller.enabled;
+        if(controller)controller.enabled=false;
+        transform.SetPositionAndRotation(position,Quaternion.Euler(0,yaw,0));
+        pitch=Mathf.Clamp(pitchDegrees,-pitchLimit,pitchLimit);
+        if(cameraRoot)cameraRoot.localRotation=Quaternion.Euler(pitch,0,0);
+        horizontalVelocity=Vector3.zero;verticalVelocity=0;
+        if(controller)controller.enabled=wasEnabled;
+    }
+
     private void UpdateMovement()
     {
         Vector2 input = MoonThemedGame.Interactions.GameControls.Movement;

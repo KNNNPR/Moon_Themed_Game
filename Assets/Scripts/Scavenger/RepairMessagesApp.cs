@@ -41,6 +41,12 @@ namespace MoonThemedGame.Scavenger
         float yaw = 30f;
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
+        internal void GetSalvageNeeds(Dictionary<GameObject,int> counts)
+        {
+            counts.Clear();
+            if(accepted==null || !delivery)return;
+            delivery.FillMissingParts(counts);
+        }
 
         void Awake() => terminal = GetComponent<PcMonitorTerminal>();
         void OnEnable() => Loc.Changed += Refresh;

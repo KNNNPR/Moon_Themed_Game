@@ -27,19 +27,23 @@ namespace MoonThemedGame.Weather
         public Vector3 shelterSize = new Vector3(12, 8, 12);
         public Bounds[] additionalShelters = Array.Empty<Bounds>();
         [Header("Atmosphere outside the base")]
-        [Min(0)] public float dustDensity = 0.065f;
-        [Min(0)] public float toxicDensity = 0.009f;
-        [Range(0, 1)] public float toxicOpacity = 0.28f;
+        [Min(0)] public float dustDensity = 0.12f;
+        [Min(0)] public float toxicDensity = 0.025f;
+        [Range(0, 1)] public float toxicOpacity = 0.38f;
         [Min(0.1f)] public float atmosphereTransition = 3;
         [Tooltip("Seconds every weather takes to build up after it starts and to die down before it ends.")]
-        [Min(0)] public float atmosphereFadeIn = 25, atmosphereFadeOut = 20;
+        [Min(0)] public float atmosphereFadeIn = 8, atmosphereFadeOut = 10;
         [Min(1)] public float toxicEnergyMultiplier = 4;
         [Header("Meteorites")]
         [Min(5)] public float warningSeconds = 5;
         [Min(0.2f)] public float fallSeconds = 1.6f;
         [Tooltip("Meteorite diameter in metres, chosen randomly for each impact.")]
-        public Vector2 meteorDiameterRange = new Vector2(1.4f, 2.8f);
-        public Vector2 meteorInterval = new Vector2(7, 12);
+        public Vector2 meteorDiameterRange = new Vector2(4f, 8f);
+        public Vector2 meteorInterval = new Vector2(1.3f, 2.6f);
+        [Tooltip("Map-wide impact area. Automatically uses the LAND collider when empty.")]
+        public Collider meteorMapSurface;
+        [Min(1)] public int maximumPendingStrikes=8;
+        [Range(1,4)] public int meteorsPerWave=2;
         public Vector2 strikeDistance = new Vector2(14, 45);
         [Range(0, 1)] public float nearbyRobotStrikeChance = 0.25f;
         [Min(1)] public float strikeRadius = 2.5f;
@@ -56,8 +60,8 @@ namespace MoonThemedGame.Weather
         public Bounds GetShelter(int index) => index == 0 ? Shelter : additionalShelters[index - 1];
         public float Density { get; private set; }
         // Keep dust above the retro post-process black threshold so it reads as haze.
-        static readonly Color DustTint = new Color(0.14f, 0.15f, 0.17f);
-        static readonly Color RadiationTint = new Color(0.13f, 0.32f, 0.065f);
+        static readonly Color DustTint = new Color(0.22f, 0.235f, 0.25f);
+        static readonly Color RadiationTint = new Color(0.17f, 0.43f, 0.08f);
         public Color AtmosphereTint { get; private set; } = DustTint;
         public float OpacityLimit { get; private set; } = 0.96f;
         public int PendingStrikes { get; private set; }
@@ -107,7 +111,7 @@ namespace MoonThemedGame.Weather
             CurrentDuration = Remaining = Duration(Current);
             nextOne = (WeatherKind)(((int)Current + 1) % 4);
             nextTwo = (WeatherKind)(((int)Current + 2) % 4);
-            nextMeteor = UnityEngine.Random.Range(meteorInterval.x, meteorInterval.y);
+            nextMeteor = MeteorInterval();
             CreateParticles();
             SnapAtmosphere();
         }
@@ -186,7 +190,25 @@ namespace MoonThemedGame.Weather
             }
         }
 
-        float MeteorInterval() => UnityEngine.Random.Range(Mathf.Max(5.5f, meteorInterval.x), Mathf.Max(meteorInterval.x, meteorInterval.y));
+        float MeteorInterval()
+        {
+            float minimum=Mathf.Max(0.4f,Mathf.Min(meteorInterval.x,meteorInterval.y));
+            return UnityEngine.Random.Range(minimum,Mathf.Max(minimum,Mathf.Max(meteorInterval.x,meteorInterval.y)));
+        }
+
+        public Bounds MeteorMapBounds
+        {
+            get
+            {
+                if(!meteorMapSurface)
+                    foreach(var root in gameObject.scene.GetRootGameObjects())
+                        foreach(var collider in root.GetComponentsInChildren<Collider>())
+                            if(collider.enabled && !collider.isTrigger &&
+                                (collider.name.Equals("LAND",StringComparison.OrdinalIgnoreCase) || collider is TerrainCollider) &&
+                                (!meteorMapSurface || collider.bounds.size.sqrMagnitude>meteorMapSurface.bounds.size.sqrMagnitude))meteorMapSurface=collider;
+                return meteorMapSurface?meteorMapSurface.bounds:new Bounds(shelterCenter,new Vector3(600,300,600));
+            }
+        }
 
         WeatherKind PickAfter(WeatherKind previous)
         {
@@ -205,11 +227,12 @@ namespace MoonThemedGame.Weather
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)
             {
                 // Sparse first strikes while the shower builds up, sparse again as it passes.
-                nextMeteor -= Time.deltaTime * Mathf.Max(0.15f, Intensity);
+                nextMeteor -= Time.deltaTime * Mathf.Max(0.4f, Intensity);
                 if (nextMeteor <= 0)
                 {
                     nextMeteor = MeteorInterval();
-                    if (PendingStrikes < 3 && TryFindStrike(out var point, out var normal)) ScheduleStrike(point, normal);
+                    for(int i=0;i<meteorsPerWave && PendingStrikes<maximumPendingStrikes;i++)
+                        if(TryFindStrike(out var point,out var normal))ScheduleStrike(point,normal);
                 }
             }
         }
@@ -265,14 +288,18 @@ namespace MoonThemedGame.Weather
             var state=scavenger && scavenger.Connected ? scavenger.state : null;
             var focus=state ? state.transform.position : camera ? camera.transform.position : shelterCenter;
             var center = !IsSheltered(focus) ? focus : shelterCenter;
+            var map=MeteorMapBounds;
+            bool nearby=UnityEngine.Random.value<nearbyRobotStrikeChance;
             for (int attempt = 0; attempt < 32; attempt++)
             {
                 var direction = UnityEngine.Random.insideUnitCircle.normalized;
                 float radius = attempt == 0 && state && UnityEngine.Random.value < nearbyRobotStrikeChance
                     ? UnityEngine.Random.Range(0, 2.5f) : UnityEngine.Random.Range(strikeDistance.x, strikeDistance.y);
-                var candidate = center + new Vector3(direction.x, 0, direction.y) * radius;
+                var candidate = nearby ? center + new Vector3(direction.x, 0, direction.y) * radius
+                    : new Vector3(UnityEngine.Random.Range(map.min.x,map.max.x),map.center.y,UnityEngine.Random.Range(map.min.z,map.max.z));
                 if (IsBaseFootprint(candidate, 3)) continue;
-                int count = Physics.RaycastNonAlloc(candidate + Vector3.up * 200, Vector3.down, groundHits, 500, groundLayers, QueryTriggerInteraction.Ignore);
+                float top=Mathf.Max(map.max.y,candidate.y)+100;
+                int count = Physics.RaycastNonAlloc(new Vector3(candidate.x,top,candidate.z),Vector3.down,groundHits,Mathf.Max(500,top-map.min.y+100),groundLayers,QueryTriggerInteraction.Ignore);
                 float nearest = float.MaxValue;
                 int selected = -1;
                 for (int i = 0; i < count; i++)
@@ -297,7 +324,7 @@ namespace MoonThemedGame.Weather
             return strike;
         }
 
-        internal void ResolveStrike(Vector3 point, Vector3 normal)
+        internal void ResolveStrike(Vector3 point, Vector3 normal,float diameter=3)
         {
             PendingStrikes = Mathf.Max(0, PendingStrikes - 1); Impacts++;
             foreach (var state in FindObjectsByType<ScavengerRobotState>(FindObjectsSortMode.None))
@@ -310,12 +337,12 @@ namespace MoonThemedGame.Weather
                     if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify(Loc.T("METEOR IMPACT - ENERGY LOST"));
                 }
             }
-            WeatherImpactFx.Spawn(this, point, normal);
+            WeatherImpactFx.Spawn(this, point, normal,diameter);
             MeteorCameraShake.Kick(point, shakeDistance);
             Impact?.Invoke(point);
         }
 
-        void OnEnable() { if (Application.isPlaying) Active = this; }
+        void OnEnable() { if (Application.isPlaying && !MoonThemedGame.Computer.MainMenuController.IsMenuScene) Active = this; }
         void OnDisable() { if (Active == this) Active = null; }
         void OnDestroy() { if (Active == this) Active = null; }
         [ContextMenu("Weather / Sunny")] void Sunny() => SetWeather(WeatherKind.Sunny);
@@ -326,6 +353,7 @@ namespace MoonThemedGame.Weather
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void RestoreActive()
         {
+            if(MoonThemedGame.Computer.MainMenuController.IsMenuScene){Active=null;return;}
             // Also runs when entering Play with domain/scene reload disabled.
             if(!Active)
             {

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f237069dce445dfa4385766b6d1b77f, type: 3}
+  m_Name: MainMenuAssets
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.MainMenuAssets
+  screenStyle: {fileID: 7433441132597879392, guid: 960c98946b444594b041766b7a0eee7a, type: 3}
+  applePrefab: {fileID: 4564191211039260815, guid: fe63411d4ed4ead4c8cc74e1b2f65017, type: 3}
+  previewMaterial: {fileID: 2100000, guid: 15e41242a6fda364397e4c5bd4ffaa10, type: 2}
+  titleMaterial: {fileID: 2100000, guid: 7eee2847d3bb5354495a4f06b5a7d226, type: 2}
+  appleDiameter: 0.46
+  gameplayScene: Operator
