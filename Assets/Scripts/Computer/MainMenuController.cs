@@ -34,9 +34,13 @@ namespace MoonThemedGame.Computer
         public RenderTexture DisplayTexture=>display;
         public MainMenuTitle Title=>title;
         public float FocusAmount=>focus;
-        public int FloatingAppleCount {get;private set;}
+        public int FloatingAppleCount=>floatingApples.Count;
 
         readonly Dictionary<string,Button> buttons=new Dictionary<string,Button>();
+        readonly Queue<MenuZeroGravity> floatingApples=new Queue<MenuZeroGravity>();
+        Transform appleRoot;
+        int appleSequence;
+        const int MaximumFloatingApples=6;
         MeshRenderer surface;
         Collider surfaceCollider,powerCollider;
         InteractionOutline highlight;
@@ -51,7 +55,7 @@ namespace MoonThemedGame.Computer
         Vector3 anchorCenter,anchorNormal,anchorUp,anchorRight;
         Vector2 screenSize;
         Quaternion authoredRotation;
-        float focus,started;
+        float focus,started,powerOff;
         bool initialized;
         int keyboardButton=-1;
         const float FocusFov=38;
@@ -152,6 +156,7 @@ namespace MoonThemedGame.Computer
             originalMaterial=surface.sharedMaterial;
             screenMaterial=new Material(weather.screenMaterial){name="MENU / CRT"};screenMaterial.SetTexture("_BaseMap",display);
             if(screenMaterial.HasProperty("_WaveStrength"))screenMaterial.SetFloat("_WaveStrength",.00085f);
+            if(screenMaterial.HasProperty("_PowerOff"))screenMaterial.SetFloat("_PowerOff",0);
             surface.sharedMaterial=screenMaterial;
             screenPanel=ScriptableObject.CreateInstance<PanelSettings>();screenPanel.themeStyleSheet=weather.theme;
             screenPanel.targetTexture=display;screenPanel.scaleMode=PanelScaleMode.ConstantPixelSize;screenPanel.scale=1;
@@ -211,22 +216,52 @@ namespace MoonThemedGame.Computer
         {
             if(!assets.applePrefab)return;
             var root=new GameObject("Menu / drifting apples");root.transform.SetParent(transform,false);root.SetActive(false);
+            appleRoot=root.transform;
             var positions=new[]{new Vector3(.08f,.31f,2.3f),new Vector3(.87f,.79f,2.8f),new Vector3(.84f,.2f,2.5f)};
             for(int i=0;i<positions.Length;i++)
             {
-                var apple=Instantiate(assets.applePrefab,root.transform);apple.name="Menu Floating Apple "+(i+1);
-                foreach(var script in apple.GetComponentsInChildren<MonoBehaviour>())script.enabled=false;
-                foreach(var collider in apple.GetComponentsInChildren<Collider>())collider.enabled=false;
-                foreach(var body in apple.GetComponentsInChildren<Rigidbody>()){body.isKinematic=true;body.useGravity=false;}
-                var renderer=apple.GetComponentInChildren<Renderer>();if(!renderer)continue;
-                float diameter=assets.appleDiameter+i*.065f;
-                var size=renderer.bounds.size;
-                apple.transform.localScale*=diameter/Mathf.Max(.001f,Mathf.Max(size.x,Mathf.Max(size.y,size.z)));
-                apple.transform.position=viewCamera.ViewportToWorldPoint(positions[i]);
-                var drift=apple.AddComponent<MenuZeroGravity>();drift.amplitude=.045f+i*.012f;drift.rotationAmplitude=5;
-                drift.phase=i*2.1f;drift.spin=new Vector3(3+i,7-i,2+i);FloatingAppleCount++;
+                CreateApple(viewCamera.ViewportToWorldPoint(positions[i]),assets.appleDiameter+i*.065f);
             }
             root.SetActive(true);
+        }
+        MenuZeroGravity CreateApple(Vector3 position,float diameter)
+        {
+            var apple=Instantiate(assets.applePrefab,appleRoot);apple.name="Menu Floating Apple "+(++appleSequence);
+            foreach(var script in apple.GetComponentsInChildren<MonoBehaviour>())script.enabled=false;
+            foreach(var collider in apple.GetComponentsInChildren<Collider>())collider.enabled=false;
+            foreach(var body in apple.GetComponentsInChildren<Rigidbody>()){body.isKinematic=true;body.useGravity=false;}
+            var renderer=apple.GetComponentInChildren<Renderer>();
+            if(!renderer){Destroy(apple);return null;}
+            var size=renderer.bounds.size;
+            apple.transform.localScale*=diameter/Mathf.Max(.001f,Mathf.Max(size.x,Mathf.Max(size.y,size.z)));
+            apple.transform.position=position;
+            var drift=apple.AddComponent<MenuZeroGravity>();drift.amplitude=.055f;drift.rotationAmplitude=5;
+            drift.phase=appleSequence*2.1f;drift.spin=new Vector3(4,6,3);
+            floatingApples.Enqueue(drift);return drift;
+        }
+        bool PointerOverMonitor(Ray ray)
+        {
+            if(!highlight)return false;
+            foreach(var renderer in highlight.targets)
+            {
+                if(!renderer)continue;
+                var local=new Ray(renderer.transform.InverseTransformPoint(ray.origin),renderer.transform.InverseTransformVector(ray.direction));
+                if(renderer.localBounds.IntersectRay(local))return true;
+            }
+            return false;
+        }
+        void TossApple(Ray ray)
+        {
+            if(!appleRoot || !assets.applePrefab)return;
+            // Throw from just below the camera, rather than spawning at the cursor.
+            var launch=viewCamera.transform.position+viewCamera.transform.rotation*new Vector3(.2f,-.23f,.72f);
+            bool replace=floatingApples.Count>=MaximumFloatingApples;
+            var drift=replace?floatingApples.Dequeue():CreateApple(launch,assets.appleDiameter);
+            if(!drift)return;
+            if(replace)floatingApples.Enqueue(drift);
+            var velocity=(ray.GetPoint(UnityEngine.Random.Range(3.2f,3.8f))-launch)*1.05f;
+            drift.spin=new Vector3(UnityEngine.Random.Range(-24f,24f),UnityEngine.Random.Range(20f,45f),UnityEngine.Random.Range(-18f,18f));
+            drift.Toss(launch,UnityEngine.Random.rotation,velocity,replace);
         }
         void Update()
         {
@@ -236,6 +271,8 @@ namespace MoonThemedGame.Computer
             Vector2 pointer=mouse!=null?mouse.position.ReadValue():new Vector2(-10000,-10000);
             bool click=!blocked && mouse!=null && mouse.leftButton.wasPressedThisFrame;
             float dt=Mathf.Min(Time.unscaledDeltaTime,.05f);
+            powerOff=Mathf.MoveTowards(powerOff,Powered?0:1,dt/.65f);
+            if(screenMaterial.HasProperty("_PowerOff"))screenMaterial.SetFloat("_PowerOff",powerOff);
             focus=Mathf.MoveTowards(focus,IsFocused?1:0,dt/Mathf.Max(.1f,focusDuration));
             if(!blocked && keys!=null && keys.escapeKey.wasPressedThisFrame && IsFocused)SetFocused(false);
             if(!blocked && viewCamera)
@@ -249,7 +286,8 @@ namespace MoonThemedGame.Computer
                     IsFocused?(Loc.Russian?"[ESC] НАЗАД":"[ESC] BACK"):(Loc.Russian?"[ЛКМ] ТЕРМИНАЛ":"[LMB] TERMINAL");
                 if(click && power)TogglePower();
                 else if(click && hit && !IsFocused)SetFocused(true);
-                else if(Powered && IsFocused && focus>.97f)
+                else if(click && !hit && !PointerOverMonitor(ray))TossApple(ray);
+                else if(Powered && powerOff<.02f && IsFocused && focus>.97f)
                 {
                     int index=0;
                     foreach(var pair in buttons)
@@ -303,7 +341,8 @@ namespace MoonThemedGame.Computer
         public void TogglePower()
         {
             if(IsLoading)return;
-            Powered=!Powered;screenMaterial.SetTexture("_BaseMap",Powered?display:Texture2D.blackTexture);
+            Powered=!Powered;
+            if(!screenMaterial.HasProperty("_PowerOff"))screenMaterial.SetTexture("_BaseMap",Powered?display:Texture2D.blackTexture);
             if(!Powered)SetFocused(false);
         }
         public void Activate(string id)
@@ -325,9 +364,9 @@ namespace MoonThemedGame.Computer
         void Relocalize()
         {
             if(screenRoot==null)return;
-            buttons["wake"].text=Loc.Russian?"01  ПРОСНУТЬСЯ":"01  WAKE UP";
-            buttons["settings"].text=Loc.Russian?"02  НАСТРОЙКИ":"02  SETTINGS";
-            buttons["exit"].text=Loc.Russian?"03  ВЫХОД":"03  EXIT";
+            buttons["wake"].text=Loc.Russian?"ПРОСНУТЬСЯ":"WAKE UP";
+            buttons["settings"].text=Loc.Russian?"НАСТРОЙКИ":"SETTINGS";
+            buttons["exit"].text=Loc.Russian?"ВЫХОД":"EXIT";
             buttons["language"].text=Loc.Russian?"ЯЗЫК  [RU / EN]":"LANGUAGE  [EN / RU]";
             screenRoot.Q<Label>("menu-station").text=Loc.Russian?"СТАНЦИЯ 7":"STATION 7";
             screenRoot.Q<Label>("menu-subtitle").text=Loc.Russian?"ТЕРМИНАЛ ОПЕРАТОРА":"OPERATOR TERMINAL";

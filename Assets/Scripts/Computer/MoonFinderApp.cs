@@ -104,6 +104,7 @@ namespace MoonThemedGame.Computer
             if(!open)return;
             GetComponent<ShopApp>()?.Close();GetComponent<SatelliteConsoleApp>()?.Close();
             GetComponent<RepairMessagesApp>()?.Close();
+            GetComponent<MoneyGetApp>()?.Close();
             window.BringToFront();terminal.Root.Q("screen-cursor")?.BringToFront();
             if(selected==null && content.profiles.Length>0)SelectProfile(content.profiles[0].id);else Refresh();
         }
@@ -118,7 +119,7 @@ namespace MoonThemedGame.Computer
             if(GameSettingsMenu.BlockGameplayInput)return;
             bool pointer=terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point=terminal.PointerPosition;
-            bool desktopFree=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false);
+            bool desktopFree=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false) && !(GetComponent<MoneyGetApp>()?.IsOpen??false);
             bool overIcon=Purchased && !IsOpen && desktopFree && pointer && icon.worldBound.Contains(point);
             icon.EnableInClassList("pointer-over",overIcon);
             if(IsOpen)

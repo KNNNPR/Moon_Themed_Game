@@ -1,0 +1,32 @@
+.mg-window { position: absolute; left: 196px; top: 8px; width: 756px; height: 496px; padding: 8px 10px; background-color: rgb(6, 14, 12); color: rgb(224, 239, 232); border-width: 1px; border-color: rgb(103, 137, 116); overflow: hidden; }
+.mg-window Label { margin: 0; padding: 0; -unity-text-align: middle-left; flex-shrink: 0; }
+.mg-header { flex-direction: row; align-items: center; height: 27px; flex-shrink: 0; }
+.mg-heading { font-size: 18px; height: 24px; }
+.mg-wallet { font-size: 12px; height: 22px; color: rgb(163, 207, 176); flex-shrink: 0; }
+.mg-news { font-size: 12px; height: 30px; white-space: normal; color: rgb(173, 186, 164); flex-shrink: 0; }
+.mg-body { flex-direction: row; height: 232px; flex-shrink: 0; }
+.mg-market { width: 224px; margin-right: 12px; flex-shrink: 0; }
+.mg-caption { font-size: 11px; height: 16px; color: rgb(155, 178, 166); }
+.mg-stock { height: 43px; padding: 3px 5px; border-left-width: 2px; border-left-color: rgb(34, 55, 44); flex-shrink: 0; }
+.mg-company { font-size: 13px; height: 18px; }
+.mg-price { font-size: 12px; height: 16px; }
+.mg-trade { flex-grow: 1; flex-shrink: 1; min-width: 0; }
+.mg-quote-title { font-size: 14px; height: 23px; }
+.mg-chart { height: 91px; flex-shrink: 0; background-color: rgb(3, 9, 7); }
+.mg-range { font-size: 10px; height: 17px; color: rgb(147, 170, 157); }
+.mg-controls { flex-direction: row; align-items: center; height: 26px; flex-shrink: 0; }
+.mg-button { padding: 3px 5px; margin-right: 4px; font-size: 12px; flex-shrink: 0; }
+.mg-button Label { height: 16px; }
+.mg-button:disabled { opacity: 0.3; }
+.mg-quantity { font-size: 12px; min-width: 80px; }
+.mg-selected { background-color: rgb(31, 53, 41); border-left-color: rgb(157, 226, 177); }
+.mg-hover { background-color: rgb(44, 69, 55); color: white; }
+.mg-long { color: rgb(149, 230, 178); }
+.mg-short { color: rgb(255, 145, 126); }
+.mg-order { font-size: 11px; color: rgb(169, 191, 173); height: 18px; }
+.mg-portfolio-header { flex-direction: row; align-items: center; height: 25px; flex-shrink: 0; border-top-width: 1px; border-top-color: rgb(37, 60, 47); }
+.mg-position { flex-direction: row; height: 19px; flex-shrink: 0; align-items: center; }
+.mg-position-text { flex-grow: 1; font-size: 12px; }
+.mg-position .mg-button { padding-top: 0; padding-bottom: 0; }
+.mg-risk { margin-top: 3px; white-space: normal; font-size: 11px; color: rgb(154, 172, 160); flex-shrink: 0; }
+.mg-status { margin-top: 3px; font-size: 11px; height: 14px; color: rgb(190, 210, 194); flex-shrink: 0; }

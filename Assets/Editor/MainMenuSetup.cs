@@ -78,6 +78,8 @@ namespace MoonThemedGame.Editor
                 var letter=AssetDatabase.LoadAssetAtPath<Material>(letterPath);
                 if(!letter){letter=new Material(Shader.Find("Moon Game/Bevelled Menu Letter")){name="MenuLetterMetal"};AssetDatabase.CreateAsset(letter,letterPath);}
                 assets.titleMaterial=letter;
+                var authored=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/PaleHorseTextMenu.prefab");
+                if(authored)assets.titleModel=authored;
                 EditorUtility.SetDirty(assets);AssetDatabase.SaveAssets();ConfigureBuildScenes();
                 EditorSceneManager.OpenScene("Assets/Scenes/MENU.unity");Install();
                 EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene());

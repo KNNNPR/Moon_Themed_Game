@@ -115,6 +115,7 @@ namespace MoonThemedGame.Computer
             ApplyLanguage();
             SetCredits(credits);
             if(!TryGetComponent<MoonFinderApp>(out _))gameObject.AddComponent<MoonFinderApp>();
+            if(!TryGetComponent<MoneyGetApp>(out _))gameObject.AddComponent<MoneyGetApp>();
         }
 
         public void SetCredits(int amount)

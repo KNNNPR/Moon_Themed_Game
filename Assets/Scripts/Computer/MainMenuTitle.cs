@@ -29,17 +29,32 @@ namespace MoonThemedGame.Computer
         {
             this.camera=camera;
             const float distance=2.35f;
-            height=2*distance*Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad)*.126f;
+            height=2*distance*Mathf.Tan(camera.fieldOfView*.5f*Mathf.Deg2Rad)*(assets.titleModel ? .145f : .126f);
             holder=new GameObject("Menu / PALE HORSE / 3D letters");holder.transform.SetParent(parent,false);
             holder.transform.SetPositionAndRotation(camera.ViewportToWorldPoint(new Vector3(.575f,.725f,distance)),camera.transform.rotation);
             material=new Material(assets.titleMaterial){name="PALE HORSE / letter metal"};
-            AddWord("PALE",0);AddWord("HORSE",1);
+            if(assets.titleModel)AddAuthoredModel(assets.titleModel);
+            else {AddWord("PALE",0);AddWord("HORSE",1);}
             captionGroup=new VisualElement {pickingMode=PickingMode.Ignore};captionGroup.style.position=Position.Absolute;
-            captionGroup.style.left=Length.Percent(54);captionGroup.style.top=Length.Percent(52);overlay.Add(captionGroup);
+            captionGroup.style.left=Length.Percent(54);captionGroup.style.top=Length.Percent(assets.titleModel?56:52);overlay.Add(captionGroup);
             caption=new Label {pickingMode=PickingMode.Ignore};caption.style.fontSize=12;caption.style.color=new Color(.65f,.7f,.66f);captionGroup.Add(caption);
             Relocalize();
         }
         public void Relocalize()=>caption.text=Loc.Russian?"ЛУННАЯ СТАНЦИЯ 7  /  НЕТ СИГНАЛА С ЗЕМЛИ":"LUNAR STATION 7  /  NO SIGNAL FROM EARTH";
+        void AddAuthoredModel(GameObject prefab)
+        {
+            var instance=UnityEngine.Object.Instantiate(prefab,holder.transform);
+            var pivots=new List<Transform>();foreach(Transform pivot in instance.transform)pivots.Add(pivot);
+            foreach(var pivot in pivots)
+            {
+                var home=pivot.localPosition*height;pivot.SetParent(holder.transform,false);
+                pivot.localPosition=home;pivot.localScale=Vector3.one*height;
+                foreach(var renderer in pivot.GetComponentsInChildren<MeshRenderer>())
+                {renderer.sharedMaterial=material;renderer.shadowCastingMode=UnityEngine.Rendering.ShadowCastingMode.Off;}
+                letters.Add(new Letter{transform=pivot,home=home,phase=letters.Count*1.73f});
+            }
+            UnityEngine.Object.Destroy(instance);
+        }
         void AddWord(string word,int row)
         {
             for(int i=0;i<word.Length;i++)

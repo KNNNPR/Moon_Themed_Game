@@ -113,6 +113,7 @@ namespace MoonThemedGame.Scavenger
         void Open()
         {
             GetComponent<MoonFinderApp>()?.Close();
+            GetComponent<MoneyGetApp>()?.Close();
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             if (orders.Count == 0)

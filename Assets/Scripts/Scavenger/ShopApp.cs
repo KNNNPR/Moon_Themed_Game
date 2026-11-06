@@ -29,7 +29,7 @@ namespace MoonThemedGame.Scavenger
             public Label title, description, level, value, next, buyLabel;
             public Wireframe wireframe;
             public float yaw;
-            public bool moonFinder, installed;
+            public bool moonFinder, moneyGet, installed;
         }
 
         internal sealed class Wireframe
@@ -44,6 +44,8 @@ namespace MoonThemedGame.Scavenger
         ShopCatalog catalog;
         MoonFinderContent moonFinder;
         MoonFinderApp moonFinderApp;
+        MoneyGetContent moneyGet;
+        MoneyGetApp moneyGetApp;
         ScrollView listings;
         float statusUntil;
 
@@ -89,7 +91,7 @@ namespace MoonThemedGame.Scavenger
             {
                 bool hover = pointer && listings.contentViewport.worldBound.Contains(point) && card.root.worldBound.Contains(point);
                 card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor = hover ? Text : Edge;
-                bool canBuy = card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
+                bool canBuy = card.moneyGet ? moneyGet && moneyGetApp && !moneyGetApp.Purchased && terminal.Credits>=moneyGet.price : card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
                 card.buy.style.backgroundColor = hover && canBuy ? new Color(1, 1, 1, 0.18f) : Color.clear;
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
@@ -123,6 +125,12 @@ namespace MoonThemedGame.Scavenger
 
         void Buy(Card card)
         {
+            if(card.moneyGet)
+            {
+                if(moneyGetApp && moneyGetApp.Purchased){Say(Loc.T("[INSTALLED]"),Muted);return;}
+                if(!moneyGet || !moneyGetApp || !moneyGetApp.Purchase()){Say(Loc.F("NOT ENOUGH CREDITS - NEED {0} CR",moneyGet?moneyGet.price:40),Alarm);return;}
+                Say(Loc.Russian?"ДенежноеДрево установлено на рабочем столе.":"MoneyGetApp installed on your desktop.",Good);Refresh();return;
+            }
             if(card.moonFinder)
             {
                 if(moonFinderApp && moonFinderApp.Purchased){Say(Loc.T("[INSTALLED]"),Muted);return;}
@@ -155,6 +163,7 @@ namespace MoonThemedGame.Scavenger
             if (!open) return;
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             GetComponent<MoonFinderApp>()?.Close();
+            GetComponent<MoneyGetApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
@@ -167,6 +176,7 @@ namespace MoonThemedGame.Scavenger
             catalog = Resources.Load<ShopCatalog>("ShopCatalog");
             moonFinder=Resources.Load<MoonFinderContent>("MoonFinderContent");
             moonFinderApp=GetComponent<MoonFinderApp>();
+            moneyGet=Resources.Load<MoneyGetContent>("MoneyGetContent");moneyGetApp=GetComponent<MoneyGetApp>();
             var cursor = terminal.Root.Q("screen-cursor");
             var desktop = cursor != null ? cursor.parent : terminal.Root;
             int index = cursor != null ? desktop.IndexOf(cursor) : desktop.childCount;
@@ -205,6 +215,7 @@ namespace MoonThemedGame.Scavenger
             grid.style.justifyContent = Justify.SpaceBetween;
             foreach (var upgrade in RobotUpgrades.All) grid.Add(BuildCard(upgrade));
             grid.Add(BuildCard(default,true));
+            grid.Add(BuildCard(default,false,true));
             listings=new ScrollView(ScrollViewMode.Vertical){name="shop-listings",pickingMode=PickingMode.Ignore,verticalScrollerVisibility=ScrollerVisibility.Hidden};
             listings.style.height=418;listings.Add(grid);window.Add(listings);
 
@@ -214,12 +225,12 @@ namespace MoonThemedGame.Scavenger
             desktop.Insert(index, window);
         }
 
-        VisualElement BuildCard(Upgrade upgrade,bool moonFinderCard=false)
+        VisualElement BuildCard(Upgrade upgrade,bool moonFinderCard=false,bool moneyGetCard=false)
         {
-            var card = new Card { upgrade = upgrade, moonFinder=moonFinderCard, root = Box(), yaw = 30 + cards.Count * 47 };
-            card.root.name=moonFinderCard?"shop-moonfinder":"shop-"+upgrade;
+            var card = new Card { upgrade = upgrade, moonFinder=moonFinderCard, moneyGet=moneyGetCard, root = Box(), yaw = 30 + cards.Count * 47 };
+            card.root.name=moneyGetCard?"shop-moneyget":moonFinderCard?"shop-moonfinder":"shop-"+upgrade;
             cards.Add(card);
-            var model = moonFinderCard ? (moonFinder?moonFinder.shopModel:null) : catalog ? catalog.Model(upgrade) : null;
+            var model = moneyGetCard ? (moneyGet?moneyGet.shopModel:null) : moonFinderCard ? (moonFinder?moonFinder.shopModel:null) : catalog ? catalog.Model(upgrade) : null;
             card.wireframe = model ? BuildWireframe(model) : null;
 
             var root = card.root;
@@ -289,6 +300,14 @@ namespace MoonThemedGame.Scavenger
             heading.text = Loc.Russian?"СКЛАД // ДЕТАЛИ И ПРОГРАММЫ":"DEPOT // PARTS & SOFTWARE";
             foreach (var card in cards)
             {
+                if(card.moneyGet)
+                {
+                    card.installed=moneyGetApp && moneyGetApp.Purchased;
+                    card.title.text=moneyGet?moneyGet.Title:"MoneyGetApp";card.description.text=moneyGet?moneyGet.Description:"";
+                    card.level.text=Loc.Russian?"ПРИЛОЖЕНИЕ ДЛЯ ПК":"DESKTOP APPLICATION";card.value.text=Loc.Russian?"Биржа / лонги / шорты":"Stocks / longs / shorts";card.next.text="";
+                    card.buyLabel.text=card.installed?Loc.T("[INSTALLED]"):Loc.F("[BUY  {0} CR]",moneyGet?moneyGet.price:40);
+                    card.buyLabel.style.color=card.installed?Good:terminal.Credits>=(moneyGet?moneyGet.price:40)?Text:Alarm;continue;
+                }
                 if(card.moonFinder)
                 {
                     card.installed=moonFinderApp && moonFinderApp.Purchased;

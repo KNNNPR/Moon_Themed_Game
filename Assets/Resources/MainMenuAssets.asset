@@ -16,5 +16,6 @@ MonoBehaviour:
   applePrefab: {fileID: 4564191211039260815, guid: fe63411d4ed4ead4c8cc74e1b2f65017, type: 3}
   previewMaterial: {fileID: 2100000, guid: 15e41242a6fda364397e4c5bd4ffaa10, type: 2}
   titleMaterial: {fileID: 2100000, guid: 7eee2847d3bb5354495a4f06b5a7d226, type: 2}
+  titleModel: {fileID: 8126870497191169764, guid: afc6ba856f19cf545b70154a0791274a, type: 3}
   appleDiameter: 0.46
   gameplayScene: Operator

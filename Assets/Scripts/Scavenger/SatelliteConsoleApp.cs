@@ -108,6 +108,7 @@ namespace MoonThemedGame.Scavenger
             if (!open) return;
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             GetComponent<MoonFinderApp>()?.Close();
+            GetComponent<MoneyGetApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();

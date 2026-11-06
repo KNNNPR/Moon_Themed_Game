@@ -10,6 +10,7 @@ namespace MoonThemedGame.Computer
         public GameObject applePrefab;
         public Material previewMaterial;
         public Material titleMaterial;
+        public GameObject titleModel;
         [Min(.1f)] public float appleDiameter=.46f;
         public string gameplayScene="Operator";
     }
