@@ -169,6 +169,7 @@ namespace MoonThemedGame.Scavenger
             var forward = DetectForward(robot, bounds.center);
             if (!robot.TryGetComponent(out ScavengerDrive drive)) drive = robot.gameObject.AddComponent<ScavengerDrive>();
             Drive = drive;
+            Drive.responsiveWheelVisuals=true;
             if (!chargeBuilding) chargeBuilding = FindBuilding(chargeBuildingName);
             if (!chargeBuilding) Debug.LogWarning($"[Scavenger] Charge building '{chargeBuildingName}' not found; the robot cannot charge.", this);
             var location = ScavengerStartLocation.Find();

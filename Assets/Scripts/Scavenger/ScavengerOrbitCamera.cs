@@ -20,10 +20,16 @@ namespace MoonThemedGame.Scavenger
         [Range(0,1)] public float travelInfluence = 0.4f;
         [Range(0,0.2f)] public float lookAheadTime = 0.12f;
         [Header("Sense of speed")]
-        [Range(0,20)] public float speedFieldOfView = 12;
+        [Range(0,20)] public float speedFieldOfView = 10;
         [Range(0,0.3f)] public float speedPullback = 0.12f;
         [Range(0,8)] public float speedPitchDrop = 3;
         [Range(0,3)] public float maximumCornerBank = 1.25f;
+        [Range(0,.15f)] public float cornerFollowLag=.075f;
+        [Range(0,3)] public float accelerationFieldOfView=1.5f;
+        [Range(0,.1f)] public float accelerationPullback=.04f;
+        [Header("Landing (quickly settles)")]
+        [Range(0,.3f)] public float landingDip=.18f;
+        [Range(0,4)] public float landingNod=2.5f;
 
         readonly RaycastHit[] hits = new RaycastHit[24];
         Transform robot;
@@ -32,7 +38,9 @@ namespace MoonThemedGame.Scavenger
         float radius, desiredYaw, desiredPitch, yaw, pitch, yawVelocity, pitchVelocity;
         float distance, distanceVelocity, idle;
         Camera viewCamera;
-        float baseFieldOfView, speedBlend, cornerBank;
+        float baseFieldOfView, speedBlend, cornerBank, accelerationBlend, previousSpeed;
+        float landingTime=10,landingStrength;
+        int poseVersion;
         bool wasLookAllowed, manualOrbit;
         public float Yaw => yaw;
         public float Pitch => pitch;
@@ -40,10 +48,21 @@ namespace MoonThemedGame.Scavenger
 
         public void Initialize(Transform target, ScavengerDrive vehicle, Vector3 center, float size)
         {
+            if(drive)drive.Landed-=OnLanded;
             robot=target; drive=vehicle; localCenter=center; radius=Mathf.Max(0.1f,size);
+            if(isActiveAndEnabled&&drive)drive.Landed+=OnLanded;
             if(!viewCamera) { viewCamera=GetComponent<Camera>();if(viewCamera)baseFieldOfView=viewCamera.fieldOfView; }
             ResetView(true);
         }
+        void OnEnable(){if(drive){drive.Landed-=OnLanded;drive.Landed+=OnLanded;}}
+        void OnDisable(){if(drive)drive.Landed-=OnLanded;ClearMotion();if(viewCamera)viewCamera.fieldOfView=baseFieldOfView;}
+        void OnLanded(float strength)
+        {
+            // A disabled feed must not replay an old impact when the operator reconnects.
+            if(!viewCamera||!viewCamera.enabled)return;
+            landingStrength=Mathf.Clamp01(strength);landingTime=0;
+        }
+        void ClearMotion(){landingTime=10;landingStrength=accelerationBlend=0;previousSpeed=PlanarSpeed;}
 
         float Heading
         {
@@ -74,6 +93,7 @@ namespace MoonThemedGame.Scavenger
             desiredYaw=Heading; desiredPitch=Mathf.Clamp(defaultPitch,pitchLimits.x,pitchLimits.y);
             idle=0; wasLookAllowed=false; manualOrbit=false;
             if(!snap)return;
+            ClearMotion();poseVersion=drive?drive.PoseVersion:0;
             speedBlend=SpeedRatio;cornerBank=0;UpdateLens();
             yaw=desiredYaw; pitch=desiredPitch; yawVelocity=pitchVelocity=0;
             pivot=TargetPivot; pivotVelocity=Vector3.zero;
@@ -101,9 +121,16 @@ namespace MoonThemedGame.Scavenger
         public void Advance(float dt, Vector2 lookDelta, bool reset, bool allowLook)
         {
             if(!robot)return;
+            if(drive&&poseVersion!=drive.PoseVersion){ResetView(true);return;}
             if(!allowLook || !wasLookAllowed) { lookDelta=Vector2.zero; reset=false; }
             wasLookAllowed=allowLook;
             if(dt<=0)return;
+            landingTime+=dt;
+            float speed=PlanarSpeed;
+            float acceleration=drive&&!drive.IsOverturned?Mathf.Clamp01((speed-previousSpeed)/
+                Mathf.Max(.001f,dt*drive.Length*drive.acceleration*drive.DebugSpeedMultiplier)):0;
+            previousSpeed=speed;
+            accelerationBlend=Mathf.Lerp(accelerationBlend,acceleration,1-Mathf.Exp(-10*dt));
             speedBlend=Mathf.Lerp(speedBlend,SpeedRatio,1-Mathf.Exp(-5*dt));
             UpdateLens();
             bool manual=lookDelta.sqrMagnitude>0.000001f;
@@ -124,22 +151,26 @@ namespace MoonThemedGame.Scavenger
                 desiredPitch=Mathf.Clamp(defaultPitch-speedPitchDrop*speedBlend,pitchLimits.x,pitchLimits.y);
             }
 
-            float bankTarget=drive && drive.Body && !drive.IsOverturned && !manualOrbit ?
+            float bankTarget=drive && drive.Body && !drive.IsOverturned && !drive.Airborne && !manualOrbit ?
                 -Mathf.Clamp(Vector3.Dot(drive.Body.angularVelocity,Vector3.up)/2,-1,1)*maximumCornerBank*speedBlend : 0;
             cornerBank=Mathf.Lerp(cornerBank,bankTarget,1-Mathf.Exp(-6*dt));
 
-            yaw=Mathf.SmoothDampAngle(yaw,desiredYaw,ref yawVelocity,manual?lookSmoothing:followSmoothing,Mathf.Infinity,dt);
+            float turn=drive&&drive.Body?Mathf.Clamp01(Mathf.Abs(drive.Body.angularVelocity.y)/2):0;
+            yaw=Mathf.SmoothDampAngle(yaw,desiredYaw,ref yawVelocity,manual?lookSmoothing:
+                followSmoothing+cornerFollowLag*speedBlend*turn,Mathf.Infinity,dt);
             pitch=Mathf.SmoothDampAngle(pitch,desiredPitch,ref pitchVelocity,lookSmoothing,Mathf.Infinity,dt);
-            pivot=Vector3.SmoothDamp(pivot,TargetPivot,ref pivotVelocity,0.08f,Mathf.Infinity,dt);
+            pivot=Vector3.SmoothDamp(pivot,TargetPivot,ref pivotVelocity,landingTime<.6f?.055f:.08f,Mathf.Infinity,dt);
             Place(dt,false);
         }
 
         void Place(float dt, bool snap)
         {
-            var away=Quaternion.Euler(pitch,yaw,0)*Vector3.back;
-            float wanted=radius*distanceInRadii*(1+speedPullback*speedBlend);
+            float pulse=landingTime<.65f?landingStrength*Mathf.Exp(-9*landingTime)*Mathf.Sin(23*landingTime):0;
+            var origin=pivot-Vector3.up*(radius*landingDip*pulse);
+            var away=Quaternion.Euler(pitch+landingNod*pulse,yaw,0)*Vector3.back;
+            float wanted=radius*distanceInRadii*(1+speedPullback*speedBlend+accelerationPullback*accelerationBlend);
             float castRadius=Mathf.Clamp(radius*0.12f,0.06f,0.25f);
-            int count=Physics.SphereCastNonAlloc(pivot,castRadius,away,hits,wanted,~(1<<31),QueryTriggerInteraction.Ignore);
+            int count=Physics.SphereCastNonAlloc(origin,castRadius,away,hits,wanted,~(1<<31),QueryTriggerInteraction.Ignore);
             for(int i=0;i<count;i++)
             {
                 var hit=hits[i];
@@ -149,12 +180,13 @@ namespace MoonThemedGame.Scavenger
             // Pull in immediately at walls; restore the normal distance smoothly afterwards.
             if(snap || wanted<distance) { distance=wanted; distanceVelocity=0; }
             else distance=Mathf.SmoothDamp(distance,wanted,ref distanceVelocity,0.2f,Mathf.Infinity,dt);
-            transform.SetPositionAndRotation(pivot+away*distance,Quaternion.LookRotation(-away,Vector3.up)*Quaternion.AngleAxis(cornerBank,Vector3.forward));
+            transform.SetPositionAndRotation(origin+away*distance,Quaternion.LookRotation(-away,Vector3.up)*Quaternion.AngleAxis(cornerBank,Vector3.forward));
         }
 
+        float PlanarSpeed=>drive&&drive.Body?Vector3.ProjectOnPlane(drive.Body.linearVelocity,Vector3.up).magnitude:0;
         float SpeedRatio => drive && drive.Body && !drive.IsOverturned ?
             Mathf.Clamp01(Vector3.ProjectOnPlane(drive.Body.linearVelocity,Vector3.up).magnitude/Mathf.Max(0.01f,drive.MaximumForwardSpeed)) : 0;
         void UpdateLens()
-        { if(viewCamera)viewCamera.fieldOfView=baseFieldOfView+speedFieldOfView*Mathf.SmoothStep(0,1,speedBlend); }
+        { if(viewCamera)viewCamera.fieldOfView=baseFieldOfView+speedFieldOfView*Mathf.SmoothStep(0,1,speedBlend)+accelerationFieldOfView*accelerationBlend; }
     }
 }
