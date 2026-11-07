@@ -16,7 +16,6 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public int startPieces = 6;
         public Vector2 respawnInterval = new Vector2(25, 40);
         public Vector2 spawnDistance = new Vector2(12, 55);
-        [Min(0)] public int creditsPerPart = 3;
         public LayerMask groundLayers = ~0;
 
         ScavengerLink link;
@@ -257,10 +256,10 @@ namespace MoonThemedGame.Scavenger
             }
             if(count==0)return;
             if (link.state) link.state.Cargo = cargo.Count;
-            int credits = count * creditsPerPart;
-            if (link.terminal && credits > 0) link.terminal.SetCredits(link.terminal.Credits + credits);
             var hud = link.GetComponent<ScavengerFeedHud>();
-            if (hud) hud.Notify(Loc.F("UNLOADED {0} PARTS TO THE REPAIR BAY  +{1} CR", count, credits));
+            if (hud) hud.Notify(Loc.Russian
+                ? $"ВЫГРУЖЕНО ДЕТАЛЕЙ: {count} - В РЕМОНТНЫЙ ОТСЕК"
+                : $"UNLOADED {count} PARTS TO THE REPAIR BAY");
         }
     }
 }
