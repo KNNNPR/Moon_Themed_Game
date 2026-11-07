@@ -353,6 +353,14 @@ namespace MoonThemedGame.Repair
             slot.restPosition = slot.tool.transform.localPosition;
             slot.restRotation = slot.tool.transform.localRotation;
         }
+        public bool CanStowCarriedTool=>!open&&RepairCarryable.Current&&SlotOf(RepairCarryable.Current)!=null;
+        public bool TryStowCarriedTool()
+        {
+            if(!CanStowCarriedTool)return false;
+            var slot=SlotOf(RepairCarryable.Current);Stow(slot);slot.blend=0;
+            foreach(var renderer in slot.tool.GetComponentsInChildren<Renderer>(true))renderer.enabled=kitVisible;
+            return true;
+        }
 
         void ShowKit(bool visible)
         {
@@ -629,11 +637,11 @@ namespace MoonThemedGame.Repair
 
         void OnGUI()
         {
-            if (GameSettingsMenu.IsOpen || open) return;
+            if (GameSettingsMenu.BlockGameplayInput || open) return;
             if (message != null && Time.time < messageUntil)
                 RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 60, message);
-            if (CanOpen() && RepairCarryable.Current && !(RepairCarryable.Current is RepairPartProp))
-                RepairHud.Corner(Loc.T("Hold mouse wheel — toolbox"));
+            if (CanOpen())
+                RepairHud.Corner(Loc.Russian?"[СКМ: удерживать] Тулбокс":"[MMB HOLD] Toolbox");
         }
 
         void OnEnable()

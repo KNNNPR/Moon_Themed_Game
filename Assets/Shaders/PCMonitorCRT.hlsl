@@ -83,7 +83,11 @@ half3 CrtDisplay(float2 meshUV, half3 normalWS, float3 positionWS)
         // A powered tube is never pitch black: the phosphor glows faintly behind the image.
         color += _BlackLevel.rgb * scanline * flicker;
     #endif
-    float3 view = GetWorldSpaceNormalizeViewDir(positionWS);
+    #if defined(MOON_CRT_FIXED_VIEW)
+        float3 view = float3(0, 0, 1);
+    #else
+        float3 view = GetWorldSpaceNormalizeViewDir(positionWS);
+    #endif
     half fresnel = pow(1.0 - saturate(dot(normalWS, view)), 3.0);
     half sheen = pow(saturate(1.0 - length((meshUV - float2(0.19, 0.93)) * float2(1.0, 1.8))), 6.0);
     half edgeShade = 1.0 - 0.18 * dot(meshUV * 2.0 - 1.0, meshUV * 2.0 - 1.0);

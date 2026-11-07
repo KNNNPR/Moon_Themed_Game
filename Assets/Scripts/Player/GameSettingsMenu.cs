@@ -16,7 +16,7 @@ namespace MoonThemedGame.Interactions
     {
         public static bool IsOpen { get; private set; }
         static int consumedFrame = -1;
-        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying;
+        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying || StationStoryFlow.IsBlocking;
         FirstPersonController player;
         bool restorePlayer, visible;
         CursorLockMode cursorLock;
@@ -53,6 +53,7 @@ namespace MoonThemedGame.Interactions
         }
         void Update()
         {
+            if(StationStoryFlow.IsBlocking)return;
             if(OperatorWakeUp.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue)
@@ -90,6 +91,7 @@ namespace MoonThemedGame.Interactions
         }
         public void Open()
         {
+            if(StationStoryFlow.IsBlocking)return;
             if(OperatorWakeUp.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if (IsOpen) return;

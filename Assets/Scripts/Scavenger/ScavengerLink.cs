@@ -524,8 +524,9 @@ namespace MoonThemedGame.Scavenger
 
         void TryEvacuate()
         {
-            if (state.OrderEvacuation(terminal)) hud.Notify(Loc.F("EVACUATION ORDERED  -{0} CR", state.evacuationCost));
-            else hud.Notify(Loc.F("NOT ENOUGH CREDITS  ({0}/{1} CR)", terminal.Credits, state.evacuationCost));
+            int price=state.EvacuationPrice;
+            if (state.OrderEvacuation(terminal)) hud.Notify(price==0?(Loc.Russian?"ПЕРВАЯ ЭВАКУАЦИЯ БЕСПЛАТНО":"FIRST EVACUATION FREE"):Loc.F("EVACUATION ORDERED  -{0} CR", price));
+            else hud.Notify(Loc.F("NOT ENOUGH CREDITS  ({0}/{1} CR)", terminal.Credits, price));
         }
 
         public void RefreshUplink()
@@ -583,7 +584,7 @@ namespace MoonThemedGame.Scavenger
 
         public void Connect()
         {
-            if (Connected || !robotCamera) return;
+            if (Connected || !robotCamera || StationStoryFlow.BotUnavailable || StationStoryFlow.IsBlocking) return;
             terminal.ExitFocus(true);
             operatorCamera = Camera.main;
             if (operatorCamera)

@@ -40,7 +40,7 @@ public static class SalvageLayoutSetup
         var root=new GameObject("Salvage Spawn Points");
         try
         {
-            root.AddComponent<SalvageSpawnLayout>().balanceNotes="50 part spawns: 12 four-part routes plus two optional points inside Cube.064. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative route speed 4.55 m/s. Six story orders request six safe routes, advancing after each successful repair and capped by available power upgrades. Gates and bridge caches remain optional. Edit child positions and progression fields in this prefab or its scene instance.";
+            root.AddComponent<SalvageSpawnLayout>().balanceNotes=SalvageVariationSetup.Notes;
             int sequence=0;var errors=new List<string>();
             void Group(string name,string notes,params Spot[] spots)
             {
@@ -82,8 +82,9 @@ public static class SalvageLayoutSetup
             Group("12 FAR EAST - perimeter haul", "Late-game perimeter route, 456-536m from the base. Arm/gate unlock and improved capacity/efficiency; gather on the outward route, not on stock battery. Spread between the depot exit and the far eastern road.",
                 P("Back_Body_Robot",184.9f,-11.6f,-417.5f),P("Battery",174.4f,-9.4f,-409.8f),P("Wheel",142.6f,-7.6f,-507.6f),P("Headlights",147.6f,-5.2f,-488));
             if(errors.Count>0)throw new InvalidOperationException(string.Join("\n",errors));
-            SalvageOrderProgressionSetup.Annotate(root);
             SalvageShipSpawnSetup.AddTo(root);
+            SalvageVariationSetup.AddTo(root);
+            SalvageOrderProgressionSetup.Annotate(root);
             PrefabUtility.SaveAsPrefabAsset(root,PrefabPath);AssetDatabase.SaveAssets();Debug.Log("Balanced salvage layout: "+root.GetComponentsInChildren<SalvageSpawnPoint>().Length+" fixed points.");
         }
         finally{Object.DestroyImmediate(root);}

@@ -13,6 +13,7 @@ namespace MoonThemedGame.Scavenger
     {
         const string Company = "PALE HORSE CO.";
         const int CreditsPerMissingPart = 2;
+        const int StoryOrderCount=7;
         static readonly int[] StoryRewards = { 15, 20, 25, 30, 40, 50 };
         static readonly (string part, int count)[][] InitialOrders =
         {
@@ -31,6 +32,7 @@ namespace MoonThemedGame.Scavenger
             public int[] missingCounts;
             public Wireframe frame;
             public bool completed;
+            public bool dismantle;
             public int storyReward = -1;
             public int Reward => storyReward >= 0 ? storyReward : missingSlots.Length * CreditsPerMissingPart;
         }
@@ -42,21 +44,23 @@ namespace MoonThemedGame.Scavenger
         readonly List<Order> orders = new List<Order>();
         VisualElement desktopRoot, window, preview, endlessSection;
         Label heading, queueHeading, close, customer, parts, description, reward, accept, endlessHeading, endlessRow, reroll;
-        readonly Label[] rows = new Label[InitialOrders.Length];
-        readonly VisualElement[] strikes = new VisualElement[InitialOrders.Length];
+        readonly Label[] rows = new Label[StoryOrderCount];
+        readonly VisualElement[] strikes = new VisualElement[StoryOrderCount];
         int selected;
         readonly System.Random endlessRandom = new System.Random();
-        int EndlessIndex => InitialOrders.Length;
+        int EndlessIndex => StoryOrderCount;
+        bool finaleCollected;
         bool HasEndless => orders.Count > EndlessIndex;
         [SerializeField,Min(0)] int completedOrders;
         public int CompletedOrders=>completedOrders;
         public bool HasActiveOrder=>accepted!=null && delivery;
+        public bool HasSalvageOrder=>isActiveAndEnabled&&HasActiveOrder&&!accepted.dismantle;
         float yaw = 30f;
 
         public bool IsOrderUnlocked(int index)
         {
             if (index < 0 || index >= orders.Count) return false;
-            for (int i = 0; i < Mathf.Min(index, InitialOrders.Length); i++)
+            for (int i = 0; i < Mathf.Min(index, StoryOrderCount); i++)
                 if (!orders[i].completed) return false;
             return true;
         }
@@ -77,7 +81,7 @@ namespace MoonThemedGame.Scavenger
         internal void GetSalvageNeeds(Dictionary<GameObject,int> counts)
         {
             counts.Clear();
-            if(accepted==null || !delivery)return;
+            if(accepted==null || accepted.dismantle || !delivery)return;
             delivery.FillMissingParts(counts);
         }
         internal void GetUnstockedSalvageNeeds(Dictionary<GameObject,int> counts)
@@ -183,6 +187,15 @@ namespace MoonThemedGame.Scavenger
                         var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
                         if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot, StoryRewards[i]));
                     }
+                    if(orders.Count==InitialOrders.Length)
+                    {
+                        var final=BuildOrder(Array.Empty<int>(),dropper.DefaultDefinition,0);final.dismantle=true;orders.Add(final);
+                        if(StationRun.Mode==StationGameMode.Endless)
+                        {
+                            foreach(var order in orders)order.completed=true;
+                            completedOrders=StoryOrderCount;finaleCollected=true;UnlockEndlessIfReady();
+                        }
+                    }
                 }
             }
             window.style.display = DisplayStyle.Flex;
@@ -281,17 +294,24 @@ namespace MoonThemedGame.Scavenger
             delivery = dropper.TryDropOrder(orders[selected].missingSlots, orders[selected].robot);
             if (!delivery) return;
             accepted = orders[selected];
-            GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
+            if(accepted.dismantle)
+            {
+                GetComponent<ScavengerLink>()?.Salvage?.ClearOrderSupply();
+                delivery.gameObject.AddComponent<AurinkoDismantling>().Configure(delivery);
+            }
+            else GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
             Refresh();
         }
 
         void TrackDelivery()
         {
-            if (accepted == null || (delivery && !delivery.IsRepaired)) return;
+            if (accepted == null || (delivery && !(accepted.dismantle?delivery.GetComponent<AurinkoDismantling>().Complete:delivery.IsRepaired))) return;
             var completed = accepted;
             bool repaired = delivery;
             accepted = null;
             delivery = null;
+            GetComponent<ScavengerLink>()?.Salvage?.ClearOrderSupply();
+            if(completed.dismantle&&!repaired)StationStoryFlow.Active.CancelAurinko();
             if (repaired && !completed.completed)
             {
                 completed.completed = true;
@@ -312,9 +332,38 @@ namespace MoonThemedGame.Scavenger
 
         void UnlockEndlessIfReady()
         {
-            if (!dropper || orders.Count != InitialOrders.Length || !orders.TrueForAll(order => order.completed)) return;
+            if (!dropper || !finaleCollected || orders.Count != StoryOrderCount || !orders.TrueForAll(order => order.completed)) return;
             orders.Add(GenerateEndless(null));
             selected = EndlessIndex;
+        }
+        internal void FinaleCollected(){finaleCollected=true;UnlockEndlessIfReady();Refresh();}
+
+        public bool DebugStartFinalOrder(out string result)
+        {
+            result="Use end in the Operator scene.";
+            if(!Application.isPlaying||gameObject.scene.name!="Operator"||StationStoryFlow.IsBlocking)return false;
+            Open();
+            if(!dropper||orders.Count<StoryOrderCount){result="Repair orders are not ready yet.";return false;}
+            var crane=FindFirstObjectByType<RepairCranePickup>();
+            if((crane&&crane.IsBusy)||(dropper.CurrentRobot&&dropper.CurrentRobot.IsBeingCollected))
+            {result="Wait for the crane to finish collecting the current robot.";return false;}
+            if(dropper.CurrentRobot&&dropper.CurrentRobot.IsDismantling)
+            {
+                selected=StoryOrderCount-1;Refresh();
+                result="Seventh order AURINKO is already in the repair bay.";return true;
+            }
+            var final=orders[StoryOrderCount-1];
+            var replacement=dropper.ReplaceOrderForDebug(final.missingSlots,final.robot);
+            if(!replacement){result="Could not deliver AURINKO. The current order was kept.";return false;}
+            if(StationStoryFlow.BotUnavailable)StationStoryFlow.Active.CancelAurinko();
+            accepted=final;delivery=replacement;final.completed=false;finaleCollected=false;
+            GetComponent<ScavengerLink>()?.Salvage?.ClearOrderSupply();
+            if(orders.Count>StoryOrderCount)orders.RemoveRange(StoryOrderCount,orders.Count-StoryOrderCount);
+            for(int i=0;i<StoryOrderCount-1;i++)orders[i].completed=true;
+            completedOrders=StoryOrderCount-1;selected=StoryOrderCount-1;
+            StationRun.DebugReplayStory();
+            replacement.gameObject.AddComponent<AurinkoDismantling>().Configure(replacement);
+            Refresh();result="Seventh order AURINKO started. Wait for landing. Use dismantle for instant disassembly.";return true;
         }
 
         [ContextMenu("Debug/Complete Main Orders and Open Endless")]
@@ -322,14 +371,14 @@ namespace MoonThemedGame.Scavenger
         {
             if (!Application.isPlaying) return;
             Open();
-            if (!dropper || orders.Count < InitialOrders.Length)
+            if (!dropper || orders.Count < StoryOrderCount)
             {
                 Debug.LogWarning("Repair orders are unavailable in this scene.", this);
                 return;
             }
-            for (int i = 0; i < InitialOrders.Length; i++)
+            for (int i = 0; i < StoryOrderCount; i++)
                 orders[i].completed = true;
-            completedOrders=Math.Max(completedOrders,InitialOrders.Length);
+            completedOrders=Math.Max(completedOrders,StoryOrderCount);finaleCollected=true;StationRun.UnlockEndless();
             UnlockEndlessIfReady();
             selected = EndlessIndex;
             Refresh();
@@ -382,8 +431,8 @@ namespace MoonThemedGame.Scavenger
             {
                 var row = rows[i] = MakeLabel("", 15, Text);
                 row.style.paddingLeft = 8;
-                row.style.height = 42;
-                row.style.marginBottom = 6;
+                row.style.height = 36;
+                row.style.marginBottom = 4;
                 row.style.unityTextAlign = TextAnchor.MiddleLeft;
                 Border(row, Edge);
                 var strike = strikes[i] = Box();
@@ -391,7 +440,7 @@ namespace MoonThemedGame.Scavenger
                 strike.style.left = 7;
                 strike.style.width = 169;
                 strike.style.height = 2;
-                strike.style.top = 19;
+                strike.style.top = 16;
                 strike.style.backgroundColor = new Color(0.55f, 1f, 0.6f, 0.75f);
                 row.Add(strike);
                 queue.Add(row);
@@ -458,14 +507,15 @@ namespace MoonThemedGame.Scavenger
             bool ru = Loc.Russian;
             heading.text = ru ? "СООБЩЕНИЯ // ЗАКАЗЫ НА РЕМОНТ" : "MESSAGES // REPAIR ORDERS";
             queueHeading.text = ru ? "ОСНОВНЫЕ ЗАКАЗЫ" : "MAIN ORDERS";
+            if(StationRun.Mode==StationGameMode.Endless)queueHeading.text=ru?"ПОТОК ЗАКАЗОВ":"CONTRACT STREAM";
             for (int i = 0; i < rows.Length; i++)
             {
                 int index = i;
-                bool present = OrderVisible(index);
+                bool present = StationRun.Mode!=StationGameMode.Endless && OrderVisible(index);
                 rows[i].style.display = present ? DisplayStyle.Flex : DisplayStyle.None;
                 if (!present) continue;
                 bool done = orders[index].completed;
-                rows[i].text = $"{index + 1:00}  {Company}";
+                rows[i].text = $"{index + 1:00}  "+(orders[index].dismantle?FinalContent.customer:Company);
                 rows[i].style.color = done ? Muted : Text;
                 strikes[i].style.display = done ? DisplayStyle.Flex : DisplayStyle.None;
                 rows[i].style.backgroundColor = index == selected ? new Color(1, 1, 1, 0.12f) : Color.clear;
@@ -473,7 +523,7 @@ namespace MoonThemedGame.Scavenger
             endlessSection.style.display = HasEndless && IsOrderUnlocked(EndlessIndex) ? DisplayStyle.Flex : DisplayStyle.None;
             if (HasEndless)
             {
-                endlessHeading.text = "ENDLESS MODE";
+                endlessHeading.text = ru?"БЕСКОНЕЧНЫЙ РЕЖИМ":"ENDLESS MODE";
                 endlessRow.text = ru ? "СЛУЧАЙНЫЙ ЗАКАЗ" : "RANDOM ORDER";
                 Border(endlessRow, selected == EndlessIndex ? Text : Edge);
                 endlessRow.style.backgroundColor = selected == EndlessIndex ? new Color(1, 1, 1, 0.12f) : Color.clear;
@@ -492,7 +542,10 @@ namespace MoonThemedGame.Scavenger
                 return;
             }
             var order = orders[selected];
+            if(order.dismantle)customer.text=(ru?"ЗАКАЗЧИК   ":"CUSTOMER   ")+FinalContent.customer;
             customer.text += "  /  " + order.robot.DisplayName;
+            preview.style.height=order.dismantle?95:218;
+            reward.style.display=order.dismantle?DisplayStyle.None:DisplayStyle.Flex;
             var items = new List<string>();
             for (int i = 0; i < order.missingCounts.Length; i++)
                 if (order.missingCounts[i] > 0)
@@ -502,9 +555,15 @@ namespace MoonThemedGame.Scavenger
             description.text = ru
                 ? "Съешь ещё этих мягких французских булок, да выпей чаю. Пример короткого описания для проверки шрифта."
                 : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. The quick brown fox jumps over the lazy dog.";
+            if(order.dismantle)
+            {
+                parts.text=ru?"РАЗБЕРИТЕ БОТА\nВаш SCAV_BOT недоступен во время этого заказа.":"DISMANTLE THE ROBOT\nYour SCAV_BOT is unavailable during this order.";
+                description.text=ru?FinalContent.russian:FinalContent.english;
+            }
             preview.MarkDirtyRepaint();
             RefreshAction();
         }
+        StoryFinaleContent FinalContent=>StationStoryFlow.Active.content;
 
         void RefreshAction()
         {

@@ -11,9 +11,16 @@ public static class SalvageOrderProgressionSetup
         {
             var group=point.transform.parent;
             if(!group || group.name.Length<2 || !int.TryParse(group.name.Substring(0,2),out int number))continue;
+            if(number>=14 && number<=19)
+            {
+                point.progressionTier=number-14;point.estimatedLoopSeconds=new[]{48,68,80,112,160,210}[number-14];
+                point.orderRoute=true;point.requiresManipulator=false;continue;
+            }
             point.progressionTier=number switch{1=>0,2=>1,3=>2,4=>3,5=>4,6 or 7 or 9=>5,8 or 10=>6,_=>7};
             point.estimatedLoopSeconds=number switch{1=>42,2=>68,3=>79,4=>108,5=>159,6=>199,7=>211,8=>254,9=>208,10=>230,11=>290,13=>300,_=>260};
             point.orderRoute=number==1 || number==2 || number==3 || number==4 || number==5 || number==9;
+            point.requiresManipulator=!point.orderRoute;
+            point.minimumOrderTier=number==6 || number==7?4:5;
         }
     }
     [MenuItem("Tools/Moon Game/Salvage/Prepare Order Progression")]

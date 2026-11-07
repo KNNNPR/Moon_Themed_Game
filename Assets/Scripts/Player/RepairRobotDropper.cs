@@ -81,9 +81,18 @@ namespace MoonThemedGame.Repair
 
         internal RepairRobotTarget TryDropOrder(int[] missingSlots, RepairRobotDefinition definition)
         {
-            if (!CanDropOrder || missingSlots == null || missingSlots.Length == 0) return null;
+            if (!CanDropOrder || missingSlots == null) return null;
             orderRobot = SpawnRobot(missingSlots, definition);
             return orderRobot;
+        }
+        internal RepairRobotTarget ReplaceOrderForDebug(int[] missingSlots,RepairRobotDefinition definition)
+        {
+            if(!isActiveAndEnabled||activeDropper!=this||(CurrentRobot&&CurrentRobot.IsBeingCollected))return null;
+            var previous=orderRobot;int previousFrame=lastDropFrame;
+            orderRobot=null;lastDropFrame=-1;
+            var replacement=TryDropOrder(missingSlots,definition);
+            if(!replacement){orderRobot=previous;lastDropFrame=previousFrame;}
+            return replacement;
         }
         public RepairRobotTarget CurrentRobot => spawned ? spawned.GetComponent<RepairRobotTarget>() : null;
         public void ForgetCollectedRobot(RepairRobotTarget robot)

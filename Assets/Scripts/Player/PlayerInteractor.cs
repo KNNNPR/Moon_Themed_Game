@@ -17,6 +17,7 @@ namespace MoonThemedGame.Interactions
         static readonly HashSet<PlayerInteractor> active = new HashSet<PlayerInteractor>();
         FirstPersonController movement;
         Interactable target;
+        public Interactable CurrentTarget=>target;
         Texture2D dot;
         float promptOpacity;
 
@@ -40,6 +41,11 @@ namespace MoonThemedGame.Interactions
             SetTarget(FindTarget());
             promptOpacity=Mathf.MoveTowards(promptOpacity,target?1:0,Time.unscaledDeltaTime*10);
             if (target is HeldProp prop) prop.RadioInput();
+            HandleInteractionInput();
+        }
+
+        internal void HandleInteractionInput()
+        {
             if (target && Keyboard.current != null &&
                 GameControls.Pressed(GameCommand.Interact))
             {
@@ -55,7 +61,11 @@ namespace MoonThemedGame.Interactions
         Interactable FindTarget()
         {
             if (!CanUseInput()) return null;
-            Ray ray = viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            return TargetAlong(viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f)));
+        }
+
+        internal Interactable TargetAlong(Ray ray)
+        {
             // RaycastAll lets us ignore our own colliders without ignoring walls.
             var hits = Physics.RaycastAll(ray, maxDistance, raycastLayers,
                 QueryTriggerInteraction.Collide);
@@ -105,7 +115,7 @@ namespace MoonThemedGame.Interactions
             GUI.color = Color.white;
             GUI.DrawTexture(new Rect((Screen.width - dotSize) / 2f,
                 (Screen.height - dotSize) / 2f, dotSize, dotSize), dot);
-            if (showPrompt && !MoonThemedGame.Repair.RepairCarryable.Current)
+            if (showPrompt && (!MoonThemedGame.Repair.RepairCarryable.Current || target is MoonThemedGame.Repair.AurinkoModule module && module.CanRemove))
             {
                 InteractionHud.Prompt(Screen.width/2f,Screen.height/2f+24,Loc.T(target.Prompt),17,promptOpacity);
             }

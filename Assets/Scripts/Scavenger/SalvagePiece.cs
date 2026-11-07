@@ -17,9 +17,11 @@ namespace MoonThemedGame.Scavenger
         Transform target;
         Vector3 startPosition, startScale;
         float collectTime = -1, phase;
+        Vector3 pickupLocal;
         const float CollectDuration = 0.5f;
 
         public bool Collected => collectTime >= 0;
+        public Vector3 PickupPosition=>transform.TransformPoint(pickupLocal);
 
         public static SalvagePiece Create(GameObject prefab, Vector3 ground, Vector3 normal, float scale)
         {
@@ -39,10 +41,12 @@ namespace MoonThemedGame.Scavenger
                 foreach (var r in renderers) bounds.Encapsulate(r.bounds);
             }
             // Half buried in the dust.
-            instance.transform.position += Vector3.up * (ground.y - bounds.min.y - bounds.size.y * 0.25f);
+            var lift=Vector3.up * (ground.y - bounds.min.y - bounds.size.y * 0.25f);
+            instance.transform.position += lift;
 
             var piece = instance.AddComponent<SalvagePiece>();
             piece.prefab = prefab;
+            piece.pickupLocal=instance.transform.InverseTransformPoint(bounds.center+lift);
             piece.radius = Mathf.Max(0.15f, new Vector2(bounds.extents.x, bounds.extents.z).magnitude);
             var light = new GameObject("Beacon").AddComponent<Light>();
             light.transform.SetParent(instance.transform, false);

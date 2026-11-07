@@ -379,7 +379,7 @@ namespace MoonThemedGame.Scavenger
                         break;
                     case RobotStatus.Offline:
                         Alert(center, Loc.T("ROBOT OFFLINE"), warning, 31);
-                        Draw(below, Loc.F("[E] ORDER EVACUATION - {0} CR   BALANCE {1} CR", state.evacuationCost, link.terminal.Credits), phosphor, 32, Centered(text));
+                        Draw(below, state.EvacuationPrice==0?(Loc.Russian?"[E] ПЕРВАЯ ЭВАКУАЦИЯ БЕСПЛАТНО":"[E] FIRST EVACUATION FREE"):Loc.F("[E] ORDER EVACUATION - {0} CR   BALANCE {1} CR", state.EvacuationPrice, link.terminal.Credits), phosphor, 32, Centered(text));
                         break;
                     case RobotStatus.Evacuating:
                         Alert(center, Loc.F("EVACUATION EN ROUTE  {0}", Mathf.CeilToInt(state.TimeLeft)), phosphor, 33);

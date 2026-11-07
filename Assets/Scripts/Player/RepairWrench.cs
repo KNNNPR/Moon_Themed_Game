@@ -16,7 +16,7 @@ namespace MoonThemedGame.Repair
         RepairBolt target, working;
         float engage, strokeAngle, highWater, screwAngle, releaseLookUntil;
         int strokeDirection = 1;
-        bool session, wasHeld, hasTangent;
+        bool session, wasHeld, hasTangent, legacyReverseStroke;
         Vector2 tangent;
         public bool Engaged => engage > .01f && working;
         public bool Working => session;
@@ -55,7 +55,7 @@ namespace MoonThemedGame.Repair
         bool InputAllowed => IsCarried && hand && hand.enabled && Cursor.lockState == CursorLockMode.Locked &&
             !GameSettingsMenu.BlockGameplayInput && !DeveloperConsole.BlockGameplayInput && !PlayerBody.BeltOpen &&
             (!hand.GetComponentInParent<FirstPersonController>() || hand.GetComponentInParent<FirstPersonController>().enabled);
-        bool Valid(RepairBolt bolt) => bolt && bolt.Kind == drives && bolt.Seated;
+        bool Valid(RepairBolt bolt) => bolt && bolt.isActiveAndEnabled && bolt.Kind == drives && bolt.Seated;
         bool Near(RepairBolt bolt) => bolt && hand && Vector3.Distance(bolt.transform.position, hand.transform.position) <= WorkReach;
         static string T(string en, string ru) => Loc.Russian ? ru : en;
 
@@ -100,13 +100,19 @@ namespace MoonThemedGame.Repair
                     return 0;
                 }
                 strokeAngle = highWater = screwAngle = 0; hasTangent = false;
-                strokeDirection = reverse ? -1 : 1; wasHeld = true;
+                legacyReverseStroke=reverse;
+                strokeDirection = reverse ? -1 : 0; wasHeld = true;
             }
             delta = Vector2.ClampMagnitude(delta, 800 * dt);
             float before = working.Progress;
             if (drives == Fastener.Bolt)
             {
-                float raw = delta.x / pixelsPerDegree;
+                if(strokeDirection==0)
+                {
+                    if(Mathf.Abs(delta.x)<.15f)return 0;
+                    strokeDirection=delta.x<0?-1:1;
+                }
+                float raw = delta.x * (legacyReverseStroke?1:strokeDirection) / pixelsPerDegree;
                 float free = Mathf.Min(Mathf.Max(0, raw), Mathf.Max(0, highWater - strokeAngle));
                 float motion = raw < 0 ? raw : free + TorqueMotion(raw - free, strokeDirection);
                 float desired = Mathf.Clamp(strokeAngle + motion, 0, strokeDegrees);
@@ -200,19 +206,31 @@ namespace MoonThemedGame.Repair
                 if (target.Kind != drives) return T("Use the matching tool", "Возьмите подходящий инструмент");
                 if (!target.Seated) return T("Wait for fitting / seat the part with the hammer", "Дождитесь установки / подбейте деталь молотком");
                 if (!Near(target)) return T("Move closer to the fastener", "Подойдите ближе к креплению");
+                if(target.Dismantling && target.Progress<=.0001f)
+                {
+                    var module=target.GetComponentInParent<AurinkoModule>();
+                    return module && module.CanRemove?$"[{GameControls.Label(GameCommand.Interact)}] "+T("Remove module / tool returns to toolbox","Снять деталь / инструмент вернётся в тулбокс"):
+                        T("LOOSE / [RMB] Move to the next fastener","ОТКРУЧЕНО / [ПКМ] Перейдите к следующему креплению");
+                }
                 string stage = target.Tight ? T("TIGHT", "ЗАТЯНУТО") : target.Progress >= target.ProgressLimit - .0001f && target.ProgressLimit < .999f
                     ? T("TACK THE OPPOSITE FASTENER (amber point)", "ПРИХВАТИТЕ ПРОТИВОПОЛОЖНОЕ КРЕПЛЕНИЕ (жёлтая точка)") :
                     target.Progress >= RepairBolt.FinalProgress ? T("FINAL TURN / RESISTANCE", "ПОСЛЕДНИЙ ДОРОВОТ / СОПРОТИВЛЕНИЕ") :
                     target.Progress >= RepairBolt.SnugProgress ? T("CLAMP THE MODULE", "ПРИЖМИТЕ ДЕТАЛЬ") : T("CATCH THE THREAD", "ПРИХВАТИТЕ РЕЗЬБУ");
+                if(target.Dismantling)stage=T("DISMANTLE / ","РАЗБОРКА / ")+(drives==Fastener.Bolt?T("DRAG LEFT TO LOOSEN","ВЕДИТЕ ВЛЕВО, ЧТОБЫ ОТКРУТИТЬ"):T("TURN COUNTER-CLOCKWISE TO LOOSEN","КРУТИТЕ ПРОТИВ ЧАСОВОЙ СТРЕЛКИ"));
                 string action = !session ? T("[LMB] Engage tool", "[ЛКМ] Установить инструмент") : drives == Fastener.Bolt
-                    ? T("[LMB] Drag right / release to reset", "[ЛКМ] Ведите вправо / отпустите для возврата")
+                    ? T("[LMB] Right: tighten / left: loosen / release to reset", "[ЛКМ] Вправо: затянуть / влево: открутить / отпустите для возврата")
                     : T("[LMB] Circle: clockwise tighten / counter-clockwise loosen", "[ЛКМ] Круг: по часовой затянуть / против открутить");
-                string reverse = drives == Fastener.Bolt ? $"[{GameControls.Label(GameCommand.Sprint)}] " + T("Loosen   ", "Открутить   ") : "";
-                return action + "\n" + stage + $"  {Mathf.RoundToInt(target.Progress * 100)}%" + (session ? "\n" + reverse + T("[RMB] Leave", "[ПКМ] Отойти") : "");
+                return action + "\n" + stage + $"  {Mathf.RoundToInt(target.Progress * 100)}%" + (session ? "\n" + T("[RMB] Leave", "[ПКМ] Отойти") : "");
             }
         }
         protected override void OnGUI()
         {
+            var interactor=hand?hand.GetComponentInParent<PlayerInteractor>():null;
+            if(IsCarried&&interactor&&interactor.CurrentTarget is AurinkoModule ready&&ready.CanRemove)
+            {
+                if(!GameSettingsMenu.BlockGameplayInput&&!PlayerBody.BeltOpen)InteractionHud.Footer(Loc.F("[{0}] Drop",GameControls.Label(GameCommand.Throw)));
+                return; // The module's [E] prompt takes priority over the tool hint.
+            }
             base.OnGUI();
             if (!IsCarried || GameSettingsMenu.BlockGameplayInput || DeveloperConsole.BlockGameplayInput || PlayerBody.BeltOpen || !target || !hand) return;
             var next = target.NextFastener;

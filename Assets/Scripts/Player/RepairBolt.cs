@@ -41,7 +41,9 @@ namespace MoonThemedGame.Repair
         public int Turns => Kind == Fastener.Bolt ? 6 : 5;
         public int TurnsDone => Mathf.FloorToInt(turns + .0001f);
         public bool Tight => Progress >= .9999f;
-        public bool NeedsHighlight => !Tight || IsTurning;
+        public bool Dismantling=>robot && robot.IsDismantling;
+        public bool NeedsHighlight => (Dismantling?Progress>.0001f:!Tight) || IsTurning;
+        internal void PrepareForDismantling(){turns=visualTurns=Turns;RefreshHighlightState();}
         public bool Seated => !robot || (robot.Accepts && robot.Seated(part));
 
         public static Fastener KindFor(GameObject part)

@@ -17,8 +17,8 @@ namespace MoonThemedGame.Repair
                 var robot = crane.dropper.CurrentRobot;
                 if (!robot) return ru ? "На посту нет робота" : "No robot in the bay";
                 if (!robot.IsSettled) return ru ? "Дождитесь приземления" : "Wait for the robot to land";
-                if (!robot.IsRepaired) return ru ? "Сначала завершите ремонт" : "Finish repairing the robot";
-                return ru ? "E — Вызвать кран" : "E — Call crane";
+                if (!robot.ReadyForCollection) return robot.IsDismantling?(ru?"Сначала разберите бота":"Dismantle the robot first"):(ru ? "Сначала завершите ремонт" : "Finish repairing the robot");
+                return ru ? "[E] Вызвать кран" : "[E] Call crane";
             }
         }
         public override void Interact()
