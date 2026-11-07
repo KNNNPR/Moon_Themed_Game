@@ -30,6 +30,9 @@ namespace MoonThemedGame.World
         public static bool IsSurface(string name) => name.Equals("LAND",StringComparison.OrdinalIgnoreCase) ||
             name.StartsWith("LAND.",StringComparison.OrdinalIgnoreCase) || name.Equals("Terrain",StringComparison.OrdinalIgnoreCase);
 
+        public static bool IsChargeBuilding(GameObject target) =>
+            target.name.Equals("Cube.026", StringComparison.OrdinalIgnoreCase);
+
         public static bool UsesBox(MeshFilter filter)
         {
             if(!filter || !filter.sharedMesh || IsCargoShip(filter))return false;
@@ -79,7 +82,7 @@ namespace MoonThemedGame.World
                         if(EnsureBox(filter,add,remove))count++;
                         continue;
                     }
-                    if(!meshes.Contains(filter.sharedMesh))continue;
+                    if(IsChargeBuilding(filter.gameObject) || !meshes.Contains(filter.sharedMesh))continue;
                     // Respect existing colliders, including disabled/trigger and compound setups.
                     if(filter.GetComponentsInChildren<Collider>(true).Length>0 || HasParentCollision(filter.transform))continue;
                     var body=filter.GetComponentInParent<Rigidbody>();

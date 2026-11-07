@@ -14,7 +14,7 @@ using UnityEngine.InputSystem;
 namespace MoonThemedGame.Scavenger
 {
     // Clicking SCAVENGER (or E over it) on the PC switches to the SCAV_BOT camera and robotStyle,
-    // Escape returns to the PC. Installs itself at runtime, so Operator.unity stays untouched.
+    // Escape returns to the PC.
     public enum LinkPhase { Off, Connecting, Live, Terminating }
 
     [DisallowMultipleComponent]
@@ -157,6 +157,7 @@ namespace MoonThemedGame.Scavenger
             cameraSize = Mathf.Max(bounds.extents.x, bounds.extents.y, bounds.extents.z);
             cameraTarget = robot.InverseTransformPoint(bounds.center);
             if (!robotCamera) robotCamera = CreateCamera();
+            robotCamera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
             sceneMask = robotCamera.cullingMask | 1 << OverlayLayer;
             sceneClear = CameraClearFlags.SolidColor;
             robotCamera.backgroundColor = Color.black;
@@ -337,7 +338,6 @@ namespace MoonThemedGame.Scavenger
             camera.farClipPlane = 3000;
             camera.fieldOfView = 65;
             camera.enabled = false;
-            camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
             host.AddComponent<AudioListener>().enabled = false;
             return camera;
         }
@@ -363,7 +363,9 @@ namespace MoonThemedGame.Scavenger
         {
             if (!building.TryGetComponent(out Collider collider))
             {
-                var mesh = building.GetComponent<MeshFilter>().sharedMesh;
+                if (MoonThemedGame.World.LandscapeCollisions.IsChargeBuilding(building.gameObject)) return;
+                if (!building.TryGetComponent<MeshFilter>(out var filter)) return;
+                var mesh = filter.sharedMesh;
                 if (!mesh) return;
                 var meshCollider = building.gameObject.AddComponent<MeshCollider>();
                 meshCollider.sharedMesh = mesh;

@@ -46,14 +46,19 @@ namespace MoonThemedGame.Computer
                 if (!notes.GetComponent<NoteInspectable>()) notes.gameObject.AddComponent<NoteInspectable>();
         }
 
+        [SerializeField] BoxCollider paperCollider;
+
         void Awake()
         {
             notes = GetComponent<NotesCredentials>();
-            interactionDistance = 2.2f;
-            if (GetComponentInChildren<Collider>()) return;
+            if (!paperCollider)
+            {
+                interactionDistance = 2.2f;
+                if (GetComponentInChildren<Collider>()) return;
+            }
             // The paper has no collider of its own; a thin box lets the player's ray find it.
             var filter = GetComponent<MeshFilter>();
-            var box = gameObject.AddComponent<BoxCollider>();
+            var box = paperCollider ? paperCollider : gameObject.AddComponent<BoxCollider>();
             if (!filter || !filter.sharedMesh) return;
             var bounds = filter.sharedMesh.bounds;
             var size = bounds.size;
@@ -61,6 +66,7 @@ namespace MoonThemedGame.Computer
             for (int i = 0; i < 3; i++) size[i] = Mathf.Max(size[i], 0.01f / Mathf.Max(1e-4f, Mathf.Abs(scale[i])));
             box.center = bounds.center;
             box.size = size;
+            box.enabled = true;
         }
 
         public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !viewing && Time.frameCount != closedFrame;

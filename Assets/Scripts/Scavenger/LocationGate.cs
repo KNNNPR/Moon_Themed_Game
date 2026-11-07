@@ -17,7 +17,14 @@ namespace MoonThemedGame.Scavenger
 
         const float OpenAngle = 95, SwingTime = 2.4f, LockDropTime = 0.7f;
 
+        [SerializeField] Transform[] gateLeaves;
         Transform lockPart;
+
+        void Start()
+        {
+            if (!lockPart && gateLeaves != null && gateLeaves.Length > 0)
+                Setup(transform, gateLeaves);
+        }
         Leaf[] leaves = new Leaf[0];
         Vector3 lockStart, lockCenter;
         Quaternion lockRotation;
@@ -26,6 +33,7 @@ namespace MoonThemedGame.Scavenger
 
         public void Setup(Transform lockTransform, Transform[] leafTransforms)
         {
+            gateLeaves = leafTransforms;
             lockPart = lockTransform;
             lockStart = lockPart.position;
             lockRotation = lockPart.rotation;

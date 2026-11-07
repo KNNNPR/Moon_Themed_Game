@@ -52,17 +52,21 @@ namespace MoonThemedGame.Interactions
             propColliders = GetComponentsInChildren<Collider>();
             var filter = GetComponent<MeshFilter>(); center = filter.sharedMesh.bounds.center;
             radius = GetComponent<Renderer>().bounds.extents.magnitude;
-            // Nearby authored furniture needs solid surfaces for the newly physical props.
+            if (IsRadio) EnsureRadioAudio();
+        }
+
+        // Used by the editor to serialize nearby furniture colliders.
+        public void ConfigureSupportColliders(System.Collections.Generic.IEnumerable<MeshRenderer> renderers)
+        {
             var supportArea = GetComponent<Renderer>().bounds; supportArea.Expand(new Vector3(1,2,1));
-            foreach (var surface in FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            foreach (var surface in renderers)
             {
                 if (surface == GetComponent<Renderer>() || surface.GetComponentInParent<Rigidbody>() || surface.GetComponent<Collider>() ||
                     !surface.bounds.Intersects(supportArea) || surface.name.ToLowerInvariant().Contains("monitor") ||
                     !surface.sharedMaterial || surface.sharedMaterial.renderQueue >= 2500) continue;
                 var supportMesh = surface.GetComponent<MeshFilter>();
-                if (supportMesh && supportMesh.sharedMesh) surface.gameObject.AddComponent<MeshCollider>().sharedMesh = supportMesh.sharedMesh;
+                if (supportMesh && supportMesh.sharedMesh && !MoonThemedGame.World.LandscapeCollisions.IsChargeBuilding(surface.gameObject)) surface.gameObject.AddComponent<MeshCollider>().sharedMesh = supportMesh.sharedMesh;
             }
-            if (IsRadio)EnsureRadioAudio();
         }
         void RefreshStations()
         {

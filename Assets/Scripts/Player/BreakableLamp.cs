@@ -11,6 +11,7 @@ namespace MoonThemedGame.Repair
         public Renderer glass;
         public Light[] lights = Array.Empty<Light>();
         public bool IsBroken { get; private set; }
+        [SerializeField] bool authored;
         Collider glassCollider;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -21,12 +22,16 @@ namespace MoonThemedGame.Repair
             Install();
         }
         static void SceneLoaded(Scene scene, LoadSceneMode mode) => Install();
-        public static void Install()
+        public static void Install() => Install(
+            FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None),
+            FindObjectsByType<Light>(FindObjectsSortMode.None));
+
+        public static void Install(IEnumerable<MeshRenderer> renderers, IEnumerable<Light> sceneLights)
         {
             // Some point lights are parented under a different ceiling lamp in the model.
             // Associate by distance, assigning each light to exactly one glowing glass.
             var lamps = new List<BreakableLamp>();
-            foreach (var renderer in FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            foreach (var renderer in renderers)
             {
                 if (!string.Equals(renderer.name.Split('.')[0].Split('(')[0].Trim(), "lamp", StringComparison.OrdinalIgnoreCase)) continue;
                 bool emissive = false;
@@ -43,7 +48,7 @@ namespace MoonThemedGame.Repair
             }
             var associations = new Dictionary<BreakableLamp, List<Light>>();
             foreach (var lamp in lamps) associations[lamp] = new List<Light>();
-            foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+            foreach (var light in sceneLights)
             {
                 if (light.TryGetComponent<MoonThemedGame.Rendering.StationLampSource>(out var source))
                 {
@@ -61,7 +66,12 @@ namespace MoonThemedGame.Repair
                 }
                 if (nearest) associations[nearest].Add(light);
             }
-            foreach (var lamp in lamps) lamp.lights = associations[lamp].ToArray();
+            foreach (var lamp in lamps)
+            {
+                if (!Application.isPlaying) lamp.authored = true;
+                if (!Application.isPlaying || !lamp.authored)
+                    lamp.lights = associations[lamp].ToArray();
+            }
         }
         void Start() => Configure();
         void Configure()
