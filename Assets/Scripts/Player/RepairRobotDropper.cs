@@ -1,7 +1,6 @@
 using System;
 using MoonThemedGame.Scavenger;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace MoonThemedGame.Repair
@@ -11,6 +10,46 @@ namespace MoonThemedGame.Repair
     {
         public GameObject robotPrefab;
         public RepairPartDefinition[] parts;
+        [Tooltip("Optional override; otherwise loads Resources/RepairRobotCatalog.")]
+        public RepairRobotCatalog robotCatalog;
+        RepairRobotDefinition defaultDefinition;
+        public RepairRobotDefinition DefaultDefinition
+        {
+            get
+            {
+                if (!defaultDefinition)
+                {
+                    defaultDefinition = ScriptableObject.CreateInstance<RepairRobotDefinition>();
+                    defaultDefinition.hideFlags = HideFlags.HideAndDontSave;
+                }
+                defaultDefinition.displayName = "SCAV_BOT";
+                defaultDefinition.prefab = robotPrefab;
+                defaultDefinition.parts = parts;
+                return defaultDefinition;
+            }
+        }
+        public System.Collections.Generic.List<RepairRobotDefinition> RobotTypes
+        {
+            get
+            {
+                var result = new System.Collections.Generic.List<RepairRobotDefinition>();
+                if (DefaultDefinition.IsValid) result.Add(DefaultDefinition);
+                var catalog = robotCatalog ? robotCatalog : Resources.Load<RepairRobotCatalog>("RepairRobotCatalog");
+                if (catalog && catalog.robots != null)
+                    foreach (var robot in catalog.robots)
+                        if (robot && robot.IsValid && robot.prefab != robotPrefab && !result.Contains(robot)) result.Add(robot);
+                return result;
+            }
+        }
+        public GameObject[] AllParts
+        {
+            get
+            {
+                var result = new System.Collections.Generic.List<GameObject>();
+                foreach (var robot in RobotTypes) RepairRobotDefinition.AppendParts(result, robot.parts);
+                return result.ToArray();
+            }
+        }
         [Tooltip("This transform marks the landing surface, not the robot pivot.")]
         public Transform landingPoint;
         [Min(0.1f)] public float dropHeight = 5f;
@@ -38,9 +77,12 @@ namespace MoonThemedGame.Repair
             (!CurrentRobot || !CurrentRobot.IsBeingCollected);
 
         internal RepairRobotTarget TryDropOrder(int[] missingSlots)
+            => TryDropOrder(missingSlots, DefaultDefinition);
+
+        internal RepairRobotTarget TryDropOrder(int[] missingSlots, RepairRobotDefinition definition)
         {
             if (!CanDropOrder || missingSlots == null || missingSlots.Length == 0) return null;
-            orderRobot = SpawnRobot(missingSlots);
+            orderRobot = SpawnRobot(missingSlots, definition);
             return orderRobot;
         }
         public RepairRobotTarget CurrentRobot => spawned ? spawned.GetComponent<RepairRobotTarget>() : null;
@@ -49,21 +91,15 @@ namespace MoonThemedGame.Repair
             if (spawned && robot && spawned == robot.gameObject) spawned = null;
             if (orderRobot == robot) orderRobot = null;
         }
-        FirstPersonController player;
         System.Random random;
 
-        void Awake()
-        {
-            random = new System.Random();
-            player = FindAnyObjectByType<FirstPersonController>();
-
-        }
+        void Awake() => random = new System.Random();
 
         void OnEnable()
         {
             if (activeDropper && activeDropper != this)
             {
-                Debug.LogWarning("Duplicate Repair Robot Drop Point disabled; only one handles F.", this);
+                Debug.LogWarning("Duplicate Repair Robot Drop Point disabled; only one handles repair deliveries.", this);
                 enabled = false;
                 return;
             }
@@ -79,41 +115,27 @@ namespace MoonThemedGame.Repair
 
         void Start()=>MoonThemedGame.Scavenger.RepairBayFogVolume.EnsureFor(this);
 
-        void Update()
-        {
-            if (Keyboard.current != null && MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Repair) &&
-                Time.timeScale > 0f && Cursor.lockState == CursorLockMode.Locked &&
-                player && player.isActiveAndEnabled)
-                DropRobot();
-
-
-        }
-
-        public void DropRobot()
-        {
-            if (!orderRobot) SpawnRobot(null);
-        }
-
-        RepairRobotTarget SpawnRobot(int[] missingSlots)
+        RepairRobotTarget SpawnRobot(int[] missingSlots, RepairRobotDefinition definition)
         {
             if (!isActiveAndEnabled || activeDropper != this || lastDropFrame == Time.frameCount) return null;
             if (CurrentRobot && CurrentRobot.IsBeingCollected) return null;
-            if (!robotPrefab || parts == null || parts.Length == 0)
+            if (!definition || !definition.IsValid)
             {
                 Debug.LogError("Configure the robot prefab and parts on the drop point.", this);
                 return null;
             }
             lastDropFrame = Time.frameCount;
             Transform anchor = landingPoint ? landingPoint : transform;
-            var replacement = Instantiate(robotPrefab, anchor.position, anchor.rotation);
-            replacement.transform.localScale = Vector3.one * 0.5f;
+            var replacement = Instantiate(definition.prefab, anchor.position, anchor.rotation);
+            replacement.transform.localScale = Vector3.one * definition.deliveryScale;
             SceneManager.MoveGameObjectToScene(replacement, gameObject.scene);
-            replacement.name = "Repair robot / current delivery";
+            replacement.name = "Repair robot / " + definition.DisplayName;
             var target = replacement.GetComponent<RepairRobotTarget>();
             if (!target) target = replacement.AddComponent<RepairRobotTarget>();
             try
             {
-                target.Initialize(parts, minimumMissingParts, maximumMissingParts,
+                target.Definition = definition;
+                target.Initialize(definition.parts, minimumMissingParts, maximumMissingParts,
                     fixedSeed != 0 ? fixedSeed : random.Next(), missingSlots);
                 // Land the remaining geometry on the chosen delivery surface.
                 var renderers = replacement.GetComponentsInChildren<MeshRenderer>();
@@ -164,6 +186,7 @@ namespace MoonThemedGame.Repair
         void OnDestroy()
         {
             if (spawned) Destroy(spawned);
+            if (defaultDefinition) Destroy(defaultDefinition);
         }
     }
 }

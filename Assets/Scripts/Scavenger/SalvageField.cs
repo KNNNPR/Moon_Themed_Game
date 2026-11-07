@@ -41,12 +41,14 @@ namespace MoonThemedGame.Scavenger
         {
             if (!prefab) return "";
             string name = prefab.name.ToLowerInvariant();
-            return Loc.T(name.Contains("wheel") ? "WHEEL"
+            string label = Loc.T(name.Contains("wheel") ? "WHEEL"
                 : name.Contains("battery") ? "BATTERY"
                 : name.Contains("headlight") ? "HEADLIGHTS"
                 : name.Contains("body") ? "BODY PANEL"
                 : name.Contains("window") ? "WINDOW"
                 : prefab.name.ToUpperInvariant());
+            var variant = prefab.GetComponent<RepairPartVariant>();
+            return variant ? label + " / " + variant.robotName : label;
         }
 
         public void Setup(ScavengerLink owner, Vector3 home)
@@ -74,8 +76,7 @@ namespace MoonThemedGame.Scavenger
             if (bay && bay.Parts.Length > 0) return bay.Parts;
             var dropper = FindAnyObjectByType<RepairRobotDropper>();
             var list = new List<GameObject>();
-            if (dropper && dropper.parts != null)
-                foreach (var part in dropper.parts) if (part != null && part.prefab) list.Add(part.prefab);
+            if (dropper) list.AddRange(dropper.AllParts);
             if (list.Count == 0)
             {
                 var catalog = Resources.Load<ShopCatalog>("ShopCatalog");

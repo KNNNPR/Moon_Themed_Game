@@ -54,10 +54,7 @@ namespace MoonThemedGame.Repair
         {
             get
             {
-                var parts = new List<GameObject>();
-                if (dropper && dropper.parts != null)
-                    foreach (var part in dropper.parts) if (part != null && part.prefab) parts.Add(part.prefab);
-                return parts.ToArray();
+                return dropper ? dropper.AllParts : System.Array.Empty<GameObject>();
             }
         }
 

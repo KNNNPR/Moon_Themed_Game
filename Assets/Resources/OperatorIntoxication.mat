@@ -25,8 +25,8 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _Phase: 112.87072
-    - _Strength: 0.4705745
+    - _Phase: 144.99576
+    - _Strength: 0.00034642732
     m_Colors: []
   m_BuildTextureStacks: []
   m_AllowLocking: 1

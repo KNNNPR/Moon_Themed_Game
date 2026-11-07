@@ -105,6 +105,7 @@ namespace MoonThemedGame.Computer
             GetComponent<ShopApp>()?.Close();GetComponent<SatelliteConsoleApp>()?.Close();
             GetComponent<RepairMessagesApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
+            GetComponent<CrazyCosmonautsApp>()?.Close();
             window.BringToFront();terminal.Root.Q("screen-cursor")?.BringToFront();
             if(selected==null && content.profiles.Length>0)SelectProfile(content.profiles[0].id);else Refresh();
         }
@@ -116,7 +117,7 @@ namespace MoonThemedGame.Computer
             {
                 icon?.RemoveFromHierarchy();window?.RemoveFromHierarchy();icon=null;window=null;buttons.Clear();portraits.Clear();Build();
             }
-            if(GameSettingsMenu.BlockGameplayInput)return;
+            if(GameSettingsMenu.BlockGameplayInput || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
             bool pointer=terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point=terminal.PointerPosition;
             bool desktopFree=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false) && !(GetComponent<MoneyGetApp>()?.IsOpen??false);

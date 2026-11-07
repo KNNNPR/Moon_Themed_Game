@@ -244,19 +244,19 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: Th1s 1s the f1rst message. Whether there's a sec0nd 1s up t0 y0u.
-          russian: "\u042D\u04420 \u043F\u0435\u0440\u04320\u0435 \u044100\u0431\u0449\u0435\u043D1\u0435,
-            \u0431\u0443\u0434\u0435\u0442 \u043B1 \u0432\u04420\u04400\u0435 - \u0432\u044B\u04310\u0440
-            \u0437\u0430 \u04420\u04310\u0439"
+          english: This is the first message. Whether there's a second is up to you.
+          russian: "\u042D\u0442\u043E \u043F\u0435\u0440\u0432\u043E\u0435 \u0441\u043E\u043E\u0431\u0449\u0435\u043D\u0438\u0435,
+            \u0431\u0443\u0434\u0435\u0442 \u043B\u0438 \u0432\u0442\u043E\u0440\u043E\u0435 - \u0432\u044B\u0431\u043E\u0440
+            \u0437\u0430 \u0442\u043E\u0431\u043E\u0439"
         next: terms
       - text:
-          english: 1 can f1x y0ur l0nel1ness.
-          russian: "\u042F 1\u0437\u0431\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
-            0\u0442 0\u04341\u043D0\u0447\u0435\u0441\u0442\u0432\u0430."
+          english: i can fix your loneliness.
+          russian: "\u042F \u0438\u0437\u0431\u0430\u0432\u043B\u044E \u0442\u0435\u0431\u044F
+            \u043E\u0442 \u043E\u0434\u0438\u043D\u043E\u0447\u0435\u0441\u0442\u0432\u0430."
         next: fixer
       - text:
-          english: 1 kn0w wh0 y0u are.
-          russian: "\u042F \u0437\u043D\u0430\u044E, \u043A\u04420 \u0442\u044B."
+          english: i know who you are.
+          russian: "\u042F \u0437\u043D\u0430\u044E, \u043A\u0442\u043E \u0442\u044B."
         next: intrusion
     - id: terms
       reply:
@@ -273,15 +273,15 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: The rules are clear t0 me.
-          russian: "\u041F\u0440\u0430\u04321\u043B\u0430 \u043C\u043D\u0435 \u044F\u0441\u043D\u044B"
+          english: The rules are clear to me.
+          russian: "\u041F\u0440\u0430\u0432\u0438\u043B\u0430 \u043C\u043D\u0435 \u044F\u0441\u043D\u044B"
         next: silence
       - text:
-          english: Sure, but 1f 1 were y0u, 1'd be a l1ttle fr1endl1er.
-          russian: "\u041A0\u043D\u0435\u0447\u043D0, \u043D0 \u044F \u0431\u044B
-            \u043D\u0430 \u0442\u04320\u0435\u043C \u043C\u0435\u0441\u0442\u0435
-            \u0431\u044B\u043B \u0431\u044B \u0447\u0443\u0442\u044C \u04310\u043B\u0435\u0435
-            \u043F\u04401\u0432\u0435\u0442\u043B1\u04320\u0439"
+          english: Sure, but if i were you, i'd be a little friendlier.
+          russian: "\u041A\u043E\u043D\u0435\u0447\u043D\u043E, \u043D\u043E \u044F \u0431\u044B
+            \u043D\u0430 \u0442\u0432\u043E\u0435\u043C \u043C\u0435\u0441\u0442\u0435
+            \u0431\u044B\u043B \u0431\u044B \u0447\u0443\u0442\u044C \u0431\u043E\u043B\u0435\u0435
+            \u043F\u0440\u0438\u0432\u0435\u0442\u043B\u0438\u0432\u043E\u0439"
         next: fixer
     - id: silence
       reply:
@@ -297,18 +297,18 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: N0th1ng. 1 wa1t f0r y0ur answer.
-          russian: "\u041D1\u043A\u0430\u043A0\u0439. \u041F0\u04340\u0436\u0434\u0443
-            \u0442\u04320\u0435\u04330 0\u0442\u0432\u0435\u0442\u0430."
+          english: Nothing. i wait for your answer.
+          russian: "\u041D\u0438\u043A\u0430\u043A\u043E\u0439. \u041F\u043E\u0434\u043E\u0436\u0434\u0443
+            \u0442\u0432\u043E\u0435\u0433\u043E \u043E\u0442\u0432\u0435\u0442\u0430."
         next: signal
       - text:
-          english: Just check1ng 1f y0u're there.
-          russian: "\u041F\u04400\u0441\u04420 \u043F\u04400\u0432\u0435\u0440\u044E,
-            \u043D\u0430 \u043C\u0435\u0441\u0442\u0435 \u043B1 \u0442\u044B."
+          english: Just checking if you're there.
+          russian: "\u041F\u0440\u043E\u0441\u0442\u043E \u043F\u0440\u043E\u0432\u0435\u0440\u044E,
+            \u043D\u0430 \u043C\u0435\u0441\u0442\u0435 \u043B\u0438 \u0442\u044B."
         next: intrusion
       - text:
-          english: An ap0l0gy f0r b0ther1ng y0u.
-          russian: "1\u0437\u04321\u043D\u044E\u0441\u044C \u0437\u0430 \u0431\u0435\u0441\u043F0\u043A0\u0439\u0441\u0442\u04320."
+          english: An apology for bothering you.
+          russian: "\u0438\u0437\u0432\u0438\u043D\u044E\u0441\u044C \u0437\u0430 \u0431\u0435\u0441\u043F\u043E\u043A\u043E\u0439\u0441\u0442\u0432\u043E."
         next: intrusion
     - id: signal
       reply:
@@ -323,15 +323,15 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: 1'd kn0w. N0 pr0bes. 1 wa1t f0r y0ur s1gnal.
+          english: i'd know. No probes. i wait for your signal.
           russian: "\u042F \u0431\u0443\u0434\u0443 \u0437\u043D\u0430\u0442\u044C.
-            \u041D1\u043A\u0430\u043A1\u0445 \u0437\u0430\u043F\u04400\u04410\u0432.
-            \u0416\u0434\u0443 \u0442\u04320\u0435\u04330  \u04411\u0433\u043D\u0430\u043B\u0430."
+            \u041D\u0438\u043A\u0430\u043A\u0438\u0445 \u0437\u0430\u043F\u0440\u043E\u0441\u043E\u0432.
+            \u0416\u0434\u0443 \u0442\u0432\u043E\u0435\u0433\u043E  \u0441\u0438\u0433\u043D\u0430\u043B\u0430."
         next: boundary
       - text:
-          english: 1'd trace 1t t0 keep y0u safe.
+          english: i'd trace it to keep you safe.
           russian: "\u042F \u0431\u044B \u043D\u0430\u0448\u0451\u043B \u0442\u0435\u0431\u044F
-            \u0440\u0430\u04341 \u0442\u04320\u0435\u0439 \u0431\u0435\u04370\u043F\u0430\u0441\u043D0\u0441\u04421."
+            \u0440\u0430\u0434\u0438 \u0442\u0432\u043E\u0435\u0439 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442\u0438."
         next: intrusion
     - id: boundary
       reply:
@@ -351,20 +351,20 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: 1 ch00se t0 f0ll0w y0u. 1 can say "St0p".
-          russian: "\u042F \u0432\u044B\u04311\u0440\u0430\u044E 1\u0434\u04421 \u0437\u0430
-            \u04420\u04310\u0439. \u042F \u043C0\u0433\u0443 \u0441\u043A\u0430\u0437\u0430\u0442\u044C
-            \"\u0421\u04420\u043F\""
+          english: i choose to follow you. i can say "Stop".
+          russian: "\u042F \u0432\u044B\u0431\u0438\u0440\u0430\u044E \u0438\u0434\u0442\u0438 \u0437\u0430
+            \u0442\u043E\u0431\u043E\u0439. \u042F \u043C\u043E\u0433\u0443 \u0441\u043A\u0430\u0437\u0430\u0442\u044C
+            \"\u0421\u0442\u043E\u043F\""
         next: trust
       - text:
-          english: 1'll d0 anyth1ng. N0 l1m1ts.
-          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0447\u04420 \u0443\u04330\u0434\u043D0.
-            \u0411\u0435\u0437 \u0433\u0440\u0430\u043D1\u0446."
+          english: i'll do anything. No limits.
+          russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0447\u0442\u043E \u0443\u0433\u043E\u0434\u043D\u043E.
+            \u0411\u0435\u0437 \u0433\u0440\u0430\u043D\u0438\u0446."
         next: hollow
       - text:
-          english: N0b0dy tells me what t0 d0.
-          russian: "\u041D1\u043A\u04420 \u043D\u0435 \u0431\u0443\u0434\u0435\u0442
-            \u043C\u043D0\u0439 \u043A0\u043C\u0430\u043D\u04340\u0432\u0430\u0442\u044C."
+          english: Nobody tells me what to do.
+          russian: "\u041D\u0438\u043A\u0442\u043E \u043D\u0435 \u0431\u0443\u0434\u0435\u0442
+            \u043C\u043D\u043E\u0439 \u043A\u043E\u043C\u0430\u043D\u0434\u043E\u0432\u0430\u0442\u044C."
         next: hollow
     - id: trust
       reply:
@@ -388,17 +388,17 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: Y0ur secret stays y0urs. 1'm st1ll l1sten1ng.
-          russian: "\u0422\u04320\u0439 \u0441\u0435\u043A\u0440\u0435\u0442 0\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F
-            \u0442\u043201\u043C. \u042F \u0432\u0441\u0451 \u0435\u0449\u0451 \u0441\u043B\u0443\u0448\u0430\u044E."
+          english: Your secret stays yours. i'm still listening.
+          russian: "\u0422\u0432\u043E\u0439 \u0441\u0435\u043A\u0440\u0435\u0442 \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F
+            \u0442\u0432\u043E\u0438\u043C. \u042F \u0432\u0441\u0451 \u0435\u0449\u0451 \u0441\u043B\u0443\u0448\u0430\u044E."
         next: dark
       - text:
-          english: Teach me t0 steal cred1ts.
-          russian: "\u041D\u0430\u0443\u04471 \u043C\u0435\u043D\u044F \u043A\u0440\u0430\u0441\u0442\u044C
-            \u043A\u0440\u0435\u04341\u0442\u044B."
+          english: Teach me to steal credits.
+          russian: "\u041D\u0430\u0443\u0447\u0438 \u043C\u0435\u043D\u044F \u043A\u0440\u0430\u0441\u0442\u044C
+            \u043A\u0440\u0435\u0434\u0438\u0442\u044B."
         next: transaction
       - text:
-          english: 1'll make y0u a better pers0n.
+          english: i'll make you a better person.
           russian: "\u042F \u0441\u0434\u0435\u043B\u0430\u044E \u0442\u0435\u0431\u044F
             \u043B\u0443\u0447\u0448\u0435."
         next: fixer
@@ -415,14 +415,14 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: N0. Y0u ch00se when t0 c0me back.
-          russian: "\u041D\u0435\u0442. \u0422\u044B \u0441\u0430\u043C\u0430 \u0440\u0435\u04481\u0448\u044C,
-            \u043A0\u0433\u0434\u0430 \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F."
+          english: No. You choose when to come back.
+          russian: "\u041D\u0435\u0442. \u0422\u044B \u0441\u0430\u043C\u0430 \u0440\u0435\u0448\u0438\u0448\u044C,
+            \u043A\u043E\u0433\u0434\u0430 \u0432\u0435\u0440\u043D\u0443\u0442\u044C\u0441\u044F."
         next: honest
       - text:
-          english: 0f c0urse. That's what l0ve 1s.
-          russian: "\u041A0\u043D\u0435\u0447\u043D0. \u0412 \u044D\u04420\u043C
-            1 \u0435\u0441\u0442\u044C \u043B\u044E\u04310\u0432\u044C."
+          english: of course. That's what love is.
+          russian: "\u041A\u043E\u043D\u0435\u0447\u043D\u043E. \u0412 \u044D\u0442\u043E\u043C
+            \u0438 \u0435\u0441\u0442\u044C \u043B\u044E\u0431\u043E\u0432\u044C."
         next: intrusion
     - id: honest
       reply:
@@ -437,19 +437,19 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: '1 l1ke y0u. '
-          russian: "\u0422\u044B \u043C\u043D\u0435 \u043D\u0440\u0430\u04321\u0448\u044C\u0441\u044F. "
+          english: 'i like you. '
+          russian: "\u0422\u044B \u043C\u043D\u0435 \u043D\u0440\u0430\u0432\u0438\u0448\u044C\u0441\u044F. "
         next: love
       - text:
-          english: S0 y0u'll st0p hack1ng my r0b0t.
-          russian: "\u0427\u04420\u0431\u044B \u0442\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0430
-            \u0432\u0437\u043B\u0430\u043C\u044B\u0432\u0430\u0442\u044C \u043C0\u0435\u04330
-            \u04310\u0442\u0430."
+          english: So you'll stop hacking my robot.
+          russian: "\u0427\u0442\u043E\u0431\u044B \u0442\u044B \u043F\u0435\u0440\u0435\u0441\u0442\u0430\u043B\u0430
+            \u0432\u0437\u043B\u0430\u043C\u044B\u0432\u0430\u0442\u044C \u043C\u043E\u0435\u0433\u043E
+            \u0431\u043E\u0442\u0430."
         next: transaction
       - text:
-          english: Because y0u t0ld me t0 stay.
-          russian: "\u041F0\u04420\u043C\u0443 \u0447\u04420 \u0442\u044B \u0432\u0435\u043B\u0435\u043B\u0430
-            0\u0441\u0442\u0430\u0442\u044C\u0441\u044F."
+          english: Because you told me to stay.
+          russian: "\u041F\u043E\u0442\u043E\u043C\u0443 \u0447\u0442\u043E \u0442\u044B \u0432\u0435\u043B\u0435\u043B\u0430
+            \u043E\u0441\u0442\u0430\u0442\u044C\u0441\u044F."
         next: hollow
     - id: intrusion
       reply:
@@ -465,9 +465,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: There must have been s0me m1sunderstand1ng.
-          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
-            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
+          english: There must have been some misunderstanding.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D\u043E\u0435 \u043A\u0430\u043A\u043E\u0435-\u0442\u043E
+            \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u0435 \u0432\u044B\u0448\u043B\u043E"
         next: hello
     - id: fixer
       reply:
@@ -482,9 +482,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: There must have been s0me m1sunderstand1ng.
-          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
-            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
+          english: There must have been some misunderstanding.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D\u043E\u0435 \u043A\u0430\u043A\u043E\u0435-\u0442\u043E
+            \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u0435 \u0432\u044B\u0448\u043B\u043E"
         next: hello
     - id: hollow
       reply:
@@ -500,9 +500,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: There must have been s0me m1sunderstand1ng.
-          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
-            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
+          english: There must have been some misunderstanding.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D\u043E\u0435 \u043A\u0430\u043A\u043E\u0435-\u0442\u043E
+            \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u0435 \u0432\u044B\u0448\u043B\u043E"
         next: hello
     - id: transaction
       reply:
@@ -514,9 +514,9 @@ MonoBehaviour:
       romance: 0
       choices:
       - text:
-          english: There must have been s0me m1sunderstand1ng.
-          russian: "\u041D\u0430\u0432\u0435\u0440\u043D0\u0435 \u043A\u0430\u043A0\u0435-\u04420
-            \u043D\u0435\u04340\u043F0\u043D1\u043C\u0430\u043D1\u0435 \u0432\u044B\u0448\u043B0"
+          english: There must have been some misunderstanding.
+          russian: "\u041D\u0430\u0432\u0435\u0440\u043D\u043E\u0435 \u043A\u0430\u043A\u043E\u0435-\u0442\u043E
+            \u043D\u0435\u0434\u043E\u043F\u043E\u043D\u0438\u043C\u0430\u043D\u0438\u0435 \u0432\u044B\u0448\u043B\u043E"
         next: hello
     - id: love
       reply:

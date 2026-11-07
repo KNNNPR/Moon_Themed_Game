@@ -171,7 +171,9 @@ namespace MoonThemedGame.Scavenger
             }
             foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
             hull = gameObject.AddComponent<BoxCollider>();
-            float bottom = local.min.y + wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y);
+            // A repair delivery can be missing every wheel/track. In that case its
+            // surviving body must rest on the stand rather than falling through a raised hull.
+            float bottom = local.min.y + (wheels.Count > 0 ? wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y) : 0);
             hull.center = new Vector3(local.center.x, (bottom + local.max.y) * 0.5f, local.center.z);
             hull.size = new Vector3(local.size.x * 0.85f, Mathf.Max(0.01f, local.max.y - bottom), local.size.z * 0.85f);
             hull.sharedMaterial = new PhysicsMaterial("Scavenger hull")

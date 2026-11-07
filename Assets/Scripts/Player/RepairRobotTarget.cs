@@ -24,6 +24,7 @@ namespace MoonThemedGame.Repair
         public const int HammerHits = 3;
         RepairPartDefinition[] definitions;
         bool initialized;
+        public RepairRobotDefinition Definition { get; internal set; }
         public bool IsBeingCollected { get; private set; }
         public int MissingCount
         {

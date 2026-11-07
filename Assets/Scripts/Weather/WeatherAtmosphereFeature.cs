@@ -13,6 +13,7 @@ namespace MoonThemedGame.Weather
         public static Func<Camera, float> DensityScale;
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (renderingData.cameraData.camera.GetComponent<MoonThemedGame.Computer.CrazyCosmonautsCamera>()) return;
             var look = LunarAtmosphereSettings.Current;
             if (look) look.ApplyCelGlobals();
             else Shader.SetGlobalFloat("_LunarLookEnabled", 0);

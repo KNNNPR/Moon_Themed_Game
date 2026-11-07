@@ -9,6 +9,8 @@ namespace MoonThemedGame.Interactions
 
     public static class GameControls
     {
+        // Keep the retired Repair enum value so older binding indices remain stable.
+        public static bool IsAvailable(GameCommand command) => command != GameCommand.Repair;
         static readonly Key[] defaults = { Key.W,Key.S,Key.A,Key.D,Key.E,Key.G,Key.F,Key.F6,Key.LeftArrow,Key.RightArrow,Key.UpArrow,Key.DownArrow,Key.H,Key.Digit1,Key.Digit2,Key.Digit3,Key.Escape,Key.C,Key.Space,Key.R,Key.LeftCtrl,Key.Space,Key.LeftShift,Key.R,Key.Q,Key.E };
         static readonly string[] names = { "Move forward", "Move backward", "Move left", "Move right", "Interact / take", "Throw object", "Repair robot", "Retro / ASCII", "Previous station", "Next station", "Radio on", "Radio off", "Robot tuner", "Satellite 1", "Satellite 2", "Satellite 3", "Open settings", "Reset robot camera", "Robot handbrake", "Right overturned robot", "Crouch (hold)", "Jump (operator)", "Sprint (hold)", "Reload pistol", "Lean left (pistol)", "Lean right (pistol)" };
         static Key[] keys;
@@ -29,7 +31,7 @@ namespace MoonThemedGame.Interactions
                         if(candidate!=Key.None && candidate!=Key.Escape && !Occupied(candidate,command)) {keys[(int)command]=candidate;break;}
         }
         static bool Occupied(Key key,GameCommand except)
-        { for(int i=0;i<keys.Length;i++)if(i!=(int)except && keys[i]==key && !SeparateContexts((GameCommand)i,except))return true;return false; }
+        { for(int i=0;i<keys.Length;i++)if(IsAvailable((GameCommand)i) && i!=(int)except && keys[i]==key && !SeparateContexts((GameCommand)i,except))return true;return false; }
         static bool SeparateContexts(GameCommand a,GameCommand b)=>
             (a==GameCommand.Interact && (b==GameCommand.LeanLeft || b==GameCommand.LeanRight)) ||
             (b==GameCommand.Interact && (a==GameCommand.LeanLeft || a==GameCommand.LeanRight)) ||
@@ -54,19 +56,20 @@ namespace MoonThemedGame.Interactions
         static bool SharedLeanKey(Key key)=>key==Binding(GameCommand.LeanLeft) || key==Binding(GameCommand.LeanRight);
         public static bool Pressed(GameCommand command)
         {
-            if(DeveloperConsole.BlockGameplayInput || Keyboard.current==null)return false;
+            if(!IsAvailable(command) || DeveloperConsole.BlockGameplayInput || Keyboard.current==null)return false;
             var binding=Binding(command);
             if(command==GameCommand.Interact && MoonThemedGame.Repair.PlayerPistol.LeanControlsActive &&
                 !MoonThemedGame.Repair.PlayerPistol.InteractionModifierHeld && SharedLeanKey(binding))return false;
             return Keyboard.current[binding].wasPressedThisFrame;
         }
-        public static bool Held(GameCommand command) => !DeveloperConsole.BlockGameplayInput && Keyboard.current != null && Keyboard.current[Binding(command)].isPressed;
+        public static bool Held(GameCommand command) => IsAvailable(command) && !DeveloperConsole.BlockGameplayInput && Keyboard.current != null && Keyboard.current[Binding(command)].isPressed;
         public static Vector2 Movement => Vector2.ClampMagnitude(new Vector2((Held(GameCommand.Right)?1:0)-(Held(GameCommand.Left)?1:0), (Held(GameCommand.Forward)?1:0)-(Held(GameCommand.Backward)?1:0)),1);
         public static bool SetBinding(GameCommand command, Key key, out string message)
         {
             Load();
+            if (!IsAvailable(command)) { message=Loc.Russian?"Действие недоступно.":"This action is unavailable."; return false; }
             if (key == Key.None || key == Key.Escape) { message=Loc.T("ESC is reserved for back / cancel."); return false; }
-            for(int i=0;i<keys.Length;i++) if (i!=(int)command && keys[i]==key && !SeparateContexts((GameCommand)i,command))
+            for(int i=0;i<keys.Length;i++) if (IsAvailable((GameCommand)i) && i!=(int)command && keys[i]==key && !SeparateContexts((GameCommand)i,command))
             { message=Loc.F("Already assigned: {0}.", Name((GameCommand)i)); return false; }
             keys[(int)command]=key; PlayerPrefs.SetInt("controls."+command,(int)key);
             PlayerPrefs.Save(); Changed?.Invoke(); message=Loc.F("Saved: {0}  [{1}]", Name(command), Label(command)); return true;

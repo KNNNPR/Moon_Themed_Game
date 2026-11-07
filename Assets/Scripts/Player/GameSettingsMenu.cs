@@ -163,6 +163,7 @@ namespace MoonThemedGame.Interactions
             var scroll=new ScrollView(ScrollViewMode.Vertical) {name="key-bindings"}; scroll.AddToClassList("binding-scroll"); controlsPanel.Add(scroll);
             foreach(GameCommand command in Enum.GetValues(typeof(GameCommand)))
             {
+                if (!GameControls.IsAvailable(command)) continue;
                 var row=Box("binding-row"); scroll.Add(row);
                 var nameLabel=Text(GameControls.Name(command),"binding-name"); bindingNames[command]=nameLabel; row.Add(nameLabel);
                 var captured=command;
@@ -205,6 +206,7 @@ namespace MoonThemedGame.Interactions
         }
         public void BeginRebind(GameCommand command)
         {
+            if (!GameControls.IsAvailable(command)) return;
             ShowControls();
             capturing=command; captureFrame=Time.frameCount;
             bindingButtons[command].Blur();
