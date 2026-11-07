@@ -126,6 +126,9 @@ namespace MoonThemedGame.Scavenger
         public float CurrentSteeringAngle => steer * steeringAngle * Mathf.Lerp(1, 1-highSpeedSteeringReduction,
             Mathf.Clamp01(Mathf.Abs(ForwardSpeed)/Mathf.Max(0.01f, MaximumForwardSpeed)));
 
+        [SerializeField] BoxCollider chassisCollider;
+        [SerializeField] Rigidbody chassisBody;
+
         public void Setup(Vector3 forward)
         {
             localForward = forward;
@@ -170,7 +173,7 @@ namespace MoonThemedGame.Scavenger
                 wheel.rearAxle = Vector3.Dot(transform.TransformPoint(wheel.anchor)-world.center, Forward.normalized) <= rear+wheelBase*0.2f;
             }
             foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
-            hull = gameObject.AddComponent<BoxCollider>();
+            hull = chassisCollider ? chassisCollider : gameObject.AddComponent<BoxCollider>();
             // A repair delivery can be missing every wheel/track. In that case its
             // surviving body must rest on the stand rather than falling through a raised hull.
             float bottom = local.min.y + (wheels.Count > 0 ? wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y) : 0);
@@ -181,9 +184,10 @@ namespace MoonThemedGame.Scavenger
                 dynamicFriction = 0, staticFriction = 0,
                 frictionCombine = PhysicsMaterialCombine.Minimum, bounceCombine = PhysicsMaterialCombine.Minimum
             };
+            hull.enabled = true;
             own = new Collider[] { hull };
 
-            body = gameObject.AddComponent<Rigidbody>();
+            body = chassisBody ? chassisBody : gameObject.AddComponent<Rigidbody>();
             body.mass = mass;
             body.useGravity = false;
             body.interpolation = RigidbodyInterpolation.Interpolate;

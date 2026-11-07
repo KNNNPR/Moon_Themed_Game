@@ -29,20 +29,23 @@ namespace MoonThemedGame.Scavenger
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
-            Install();
+            OnSceneLoaded(SceneManager.GetActiveScene(), LoadSceneMode.Single);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetState() => Report = null;
 
-        static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => Install();
-
-        static void Install()
+        static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            if(MoonThemedGame.Computer.MainMenuController.IsMenuScene)return;
+            if (scene.name != "MENU") ConfigureScene(scene);
+        }
+
+        public static void ConfigureScene(Scene scene)
+        {
             var named = new Dictionary<string, Transform>(StringComparer.OrdinalIgnoreCase);
-            foreach (var t in UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None))
-                if (!named.ContainsKey(t.name)) named[t.name] = t;
+            foreach (var root in scene.GetRootGameObjects())
+                foreach (var t in root.GetComponentsInChildren<Transform>())
+                    if (!named.ContainsKey(t.name)) named[t.name] = t;
             named.TryGetValue(Platform,out var platform);
             var bridge = Find(named, "bridge") ?? Find(named, "Cube.080");
             var bridgeButton = Find(named, "Bridge Button") ?? Find(named, "Cylinder.049") ?? Find(named, "Cyllinder.049");
@@ -58,7 +61,7 @@ namespace MoonThemedGame.Scavenger
                 if(leaves.Count!=gate.leaves.Length)continue;
                 var mechanism = lockPart.gameObject.AddComponent<LocationGate>();
                 mechanism.Setup(lockPart, leaves.ToArray());
-                Wire(button, Find(named, gate.post), "GATE", lever => mechanism.Press(Presser));
+                MakeLever(button, Find(named, gate.post), "GATE").Bind(mechanism);
             }
 
             if (platform && !platform.GetComponent<LocationPlatform>() &&
@@ -66,8 +69,8 @@ namespace MoonThemedGame.Scavenger
             {
                 var lift = platform.gameObject.AddComponent<LocationPlatform>();
                 lift.Setup(top, bottom, Find(named, TopGround));
-                Wire(top, Find(named, TopPost), "PLATFORM", lever => lift.Press());
-                Wire(bottom, Find(named, BottomPost), "PLATFORM", lever => lift.Press());
+                MakeLever(top, Find(named, TopPost), "PLATFORM").Bind(lift);
+                MakeLever(bottom, Find(named, BottomPost), "PLATFORM").Bind(lift);
             }
             if(bridge && bridgeButton)
             {
@@ -75,8 +78,9 @@ namespace MoonThemedGame.Scavenger
                 if(mechanism && mechanism.IsInitialized)return;
                 if(!mechanism)mechanism=bridge.gameObject.AddComponent<LocationBridge>();
                 mechanism.Setup(bridgeButton);
-                if(bridgeButton.TryGetComponent<RobotLever>(out var existing))existing.Pulled+=lever=>mechanism.Press();
-                else Wire(bridgeButton,null,Loc.Russian?"МОСТ":"BRIDGE",lever=>mechanism.Press());
+                if (!bridgeButton.TryGetComponent<RobotLever>(out var lever))
+                    lever = MakeLever(bridgeButton, null, Loc.Russian ? "МОСТ" : "BRIDGE");
+                lever.Bind(mechanism);
                 if(!bridgeButton.GetComponent<BridgeButtonInteractable>())bridgeButton.gameObject.AddComponent<BridgeButtonInteractable>();
                 if(!bridgeButton.GetComponent<Collider>())
                 {
@@ -102,7 +106,7 @@ namespace MoonThemedGame.Scavenger
             return key;
         }
 
-        static void Wire(Transform button, Transform post, string label, Action<RobotLever> pressed)
+        static RobotLever MakeLever(Transform button, Transform post, string label)
         {
             var renderer = button.GetComponent<Renderer>();
             var size = renderer ? renderer.bounds.size : Vector3.one;
@@ -112,7 +116,7 @@ namespace MoonThemedGame.Scavenger
             var lever = button.gameObject.AddComponent<RobotLever>();
             lever.reach = 4 + Mathf.Max(size.x, size.z);
             lever.MakeButton(label, axis, Mathf.Min(size.x, size.z) * 0.3f);
-            lever.Pulled += pressed;
+            return lever;
         }
 
         public static float Ease(float t)

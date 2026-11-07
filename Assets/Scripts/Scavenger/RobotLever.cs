@@ -26,7 +26,14 @@ namespace MoonThemedGame.Scavenger
         public Vector3 pressAxis;
         public float pressDepth;
 
+        [SerializeField] LocationGate gate;
+        [SerializeField] LocationPlatform platform;
+        [SerializeField] LocationBridge bridge;
+
         public event Action<RobotLever> Pulled;
+        public void Bind(LocationGate target) => gate = target;
+        public void Bind(LocationPlatform target) => platform = target;
+        public void Bind(LocationBridge target) => bridge = target;
 
         float angle, pressed = 1;
         Vector3 rest;
@@ -39,6 +46,7 @@ namespace MoonThemedGame.Scavenger
         {
             all.Add(this);
             angle = on ? onAngle : offAngle;
+            if (button) rest = transform.position;
             Apply();
         }
 
@@ -72,6 +80,9 @@ namespace MoonThemedGame.Scavenger
         {
             if (button) pressed = 0;
             on = !on;
+            if (gate) gate.Press(LocationMechanisms.Presser);
+            if (platform) platform.Press();
+            if (bridge) bridge.Press();
             Pulled?.Invoke(this);
         }
 

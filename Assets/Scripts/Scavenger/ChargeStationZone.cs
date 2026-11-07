@@ -38,7 +38,11 @@ namespace MoonThemedGame.Scavenger
         public static void InstallScene()
         {
             foreach(var zone in FindObjectsByType<ChargeStationZone>(FindObjectsSortMode.None))if(!active.Contains(zone))active.Add(zone);
-            foreach(var renderer in FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None))
+            ConfigureZones(FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None));
+        }
+        public static void ConfigureZones(IEnumerable<MeshRenderer> renderers)
+        {
+            foreach(var renderer in renderers)
             {
                 if(ChargeMonitorDisplay.Normalize(renderer.name)!="CHARGESTATION2" || renderer.GetComponent<ChargeStationZone>())continue;
                 var zone=renderer.gameObject.AddComponent<ChargeStationZone>();
