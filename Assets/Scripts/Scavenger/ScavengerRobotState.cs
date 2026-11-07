@@ -47,7 +47,7 @@ namespace MoonThemedGame.Scavenger
         void Awake() => Charge = capacity;
 
         // Radiation outside the base eats the battery even while the robot stands idle.
-        public float RadiationMultiplier
+        public float WeatherEnergyMultiplier
         {
             get
             {
@@ -55,9 +55,10 @@ namespace MoonThemedGame.Scavenger
                 return weather ? weather.EnergyMultiplier(transform.position) : 1;
             }
         }
+        public float RadiationMultiplier=>MoonWeatherSystem.Active && MoonWeatherSystem.Active.Current==WeatherKind.Radiation?WeatherEnergyMultiplier:1;
 
-        public bool Irradiated => RadiationMultiplier > 1.05f;
-        float Drain => Active ? drainPerSecond * RadiationMultiplier : drainPerSecond * (RadiationMultiplier - 1);
+        public bool Irradiated => MoonWeatherSystem.Active && MoonWeatherSystem.Active.Current==WeatherKind.Radiation && RadiationMultiplier > 1.05f;
+        float Drain => Active ? drainPerSecond * WeatherEnergyMultiplier : drainPerSecond * (WeatherEnergyMultiplier - 1);
 
         void Update()
         {

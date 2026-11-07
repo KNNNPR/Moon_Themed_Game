@@ -24,7 +24,7 @@ namespace MoonThemedGame.Weather
             MoonThemedGame.Scavenger.RepairBayFogVolume.PublishGlobals();
             bool repairFog=Shader.GetGlobalInt("_RepairBayFogCount")>0;
             Shader.SetGlobalVector("_VisibleWeather",Vector4.zero);
-            if (!passMaterial || (!repairFog && !(look && look.lookEnabled) && (!weather || weather.Density < 0.00001f))) return;
+            if (!passMaterial || (!repairFog && !(look && look.lookEnabled) && (!weather || (weather.Density < 0.00001f && weather.NightIntensity<.0001f)))) return;
             int count = weather ? weather.ShelterCount : 0;
             for (int i = 0; i < count; i++)
             {
@@ -35,7 +35,7 @@ namespace MoonThemedGame.Weather
             passMaterial.SetVectorArray("_ShelterMaxs", maximums);
             float scale = DensityScale != null ? DensityScale(renderingData.cameraData.camera) : 1;
             bool ascii=VisualStyleSwitcher.CurrentStyle==VisualStyle.ColorAscii;
-            float weatherScale=Mathf.Max(0.65f,scale);
+            float weatherScale=Mathf.Clamp01(scale);
             Shader.SetGlobalVector("_VisibleWeather",ascii && weather?new Vector4(weather.Density*weatherScale,weather.OpacityLimit,0,0):Vector4.zero);
             Shader.SetGlobalColor("_VisibleWeatherTint",weather?weather.AtmosphereTint:Color.black);
             Shader.SetGlobalInt("_VisibleWeatherShelters",count);

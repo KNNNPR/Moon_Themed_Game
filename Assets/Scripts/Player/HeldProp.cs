@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace MoonThemedGame.Interactions
 {
@@ -8,6 +9,8 @@ namespace MoonThemedGame.Interactions
     public sealed class HeldProp : Interactable
     {
         public AudioClip radioTrack;
+        [Tooltip("Additional stations. The original Radio Track remains the first station; empty/duplicate slots are skipped.")]
+        public AudioClip[] radioStations=new AudioClip[0];
         public float throwSpeed = 5;
         public string displayName="Apple";
         Rigidbody body;
@@ -21,8 +24,14 @@ namespace MoonThemedGame.Interactions
         bool radioOn;
         EdibleProp edible;
         Coroutine collisionRestore;
-        public override string Prompt => radioTrack
-            ? Loc.F("[{0}] Take radio",GameControls.Label(GameCommand.Interact))+"\n"+Loc.F("[{0} / {1}] radio11\n[{2}] Play   [{3}] Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
+        readonly List<AudioClip> stations=new List<AudioClip>();
+        public int RadioStationIndex {get;private set;}
+        public int RadioStationCount {get{RefreshStations();return stations.Count;}}
+        public bool IsRadio=>RadioStationCount>0;
+        public bool RadioOn=>radioOn;
+        public string RadioStationName {get{RefreshStations();return stations.Count>0?stations[RadioStationIndex].name:"";}}
+        public override string Prompt => IsRadio
+            ? Loc.F("[{0}] Take radio",GameControls.Label(GameCommand.Interact))+"\n"+Loc.F("[{0} / {1}] {2}\n[{3}] Play   [{4}] Off", GameControls.Label(GameCommand.RadioPrevious), GameControls.Label(GameCommand.RadioNext), RadioStationName,GameControls.Label(GameCommand.RadioPlay), GameControls.Label(GameCommand.RadioOff))
             : displayName=="Apple"?"E — Take apple":Loc.F("E — Take {0}",Loc.T(displayName));
         public bool IsHeld => hand;
         public Camera HoldingCamera=>hand;
@@ -53,13 +62,45 @@ namespace MoonThemedGame.Interactions
                 var supportMesh = surface.GetComponent<MeshFilter>();
                 if (supportMesh && supportMesh.sharedMesh) surface.gameObject.AddComponent<MeshCollider>().sharedMesh = supportMesh.sharedMesh;
             }
-            if (radioTrack)
+            if (IsRadio)EnsureRadioAudio();
+        }
+        void RefreshStations()
+        {
+            stations.Clear();if(radioTrack)stations.Add(radioTrack);
+            if(radioStations!=null)foreach(var track in radioStations)if(track && !stations.Contains(track))stations.Add(track);
+            RadioStationIndex=stations.Count>0?Mathf.Clamp(RadioStationIndex,0,stations.Count-1):0;
+        }
+        void EnsureRadioAudio()
+        {
+            if (!audioSource)
             {
-                audioSource = gameObject.AddComponent<AudioSource>(); audioSource.clip = radioTrack;
+                audioSource = gameObject.AddComponent<AudioSource>();
                 audioSource.loop = true; audioSource.playOnAwake = false; audioSource.spatialBlend = 1;
                 audioSource.minDistance = 2; audioSource.maxDistance = 22; audioSource.rolloffMode = AudioRolloffMode.Linear;
                 audioSource.volume = 0.65f;
             }
+        }
+        public bool CycleRadioStation(int direction=1)
+        {
+            RefreshStations();if(stations.Count==0 || direction==0)return false;
+            RadioStationIndex=(RadioStationIndex+(direction>0?1:-1)+stations.Count)%stations.Count;
+            PlayRadio(true);return true;
+        }
+        public void PlayRadio(bool restart=false)
+        {
+            RefreshStations();if(stations.Count==0)return;EnsureRadioAudio();
+            var track=stations[RadioStationIndex];
+            if(!restart && radioOn && audioSource.clip==track && audioSource.isPlaying)return;
+            audioSource.Stop();audioSource.clip=track;audioSource.time=0;audioSource.Play();radioOn=true;
+        }
+        public void StopRadio(){if(audioSource)audioSource.Stop();radioOn=false;}
+        // The shot is dispatched only after the pistol's wall/obstruction raycasts succeed.
+        public bool ReactToPistolHit(Vector3 direction,Material particleMaterial)
+        {
+            if(!isActiveAndEnabled)return false;
+            if(IsRadio){CycleRadioStation();return false;}
+            if(!edible)edible=GetComponent<EdibleProp>();
+            return edible && edible.ShatterFromShot(direction,particleMaterial);
         }
         public override bool CanInteract(Camera camera) => base.CanInteract(camera) && !held && !MoonThemedGame.Repair.RepairCarryable.Current;
         void Start() => body.Sleep();
@@ -76,11 +117,11 @@ namespace MoonThemedGame.Interactions
         }
         public void RadioInput()
         {
-            if (!radioTrack || GameSettingsMenu.BlockGameplayInput || Keyboard.current == null) return;
-            var key = Keyboard.current;
-            if (GameControls.Pressed(GameCommand.RadioPrevious) || GameControls.Pressed(GameCommand.RadioNext) || GameControls.Pressed(GameCommand.RadioPlay))
-            { if (!radioOn) { audioSource.Play(); radioOn = true; } }
-            if (GameControls.Pressed(GameCommand.RadioOff)) { audioSource.Stop(); radioOn = false; }
+            if (!IsRadio || GameSettingsMenu.BlockGameplayInput || Keyboard.current == null) return;
+            if(GameControls.Pressed(GameCommand.RadioNext))CycleRadioStation(1);
+            else if(GameControls.Pressed(GameCommand.RadioPrevious))CycleRadioStation(-1);
+            else if(GameControls.Pressed(GameCommand.RadioPlay))PlayRadio();
+            if (GameControls.Pressed(GameCommand.RadioOff))StopRadio();
         }
         void LateUpdate()
         {
@@ -135,7 +176,7 @@ namespace MoonThemedGame.Interactions
             if(!hand || GameSettingsMenu.BlockGameplayInput)return;
             string hint=Loc.F("[{0}] Throw",GameControls.Label(GameCommand.Throw));
             if(edible)hint=(edible.IsEating?Loc.T("Eating..."):Loc.T("[LMB] Eat"))+"   "+hint;
-            if(radioTrack)hint+="\n"+Loc.F("[{0}] Play   [{1}] Off",GameControls.Label(GameCommand.RadioPlay),GameControls.Label(GameCommand.RadioOff));
+            if(IsRadio)hint+="\n"+Loc.F("[{0} / {1}] {2}\n[{3}] Play   [{4}] Off",GameControls.Label(GameCommand.RadioPrevious),GameControls.Label(GameCommand.RadioNext),RadioStationName,GameControls.Label(GameCommand.RadioPlay),GameControls.Label(GameCommand.RadioOff));
             InteractionHud.Footer(hint);
         }
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState()=>held=null;

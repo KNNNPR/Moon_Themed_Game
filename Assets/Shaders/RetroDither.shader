@@ -33,6 +33,8 @@ Shader "Old Tech/Retro Dither"
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "MoonWeatherOverlay.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 float _Intensity, _PixelHeight, _ColorLevels, _DitherStrength;
@@ -98,7 +100,7 @@ Shader "Old Tech/Retro Dither"
                 #if !defined(UNITY_COLORSPACE_GAMMA)
                     color = SRGBToLinear(color);
                 #endif
-                return half4(lerp(original.rgb, color, _Intensity), original.a);
+                return half4(MoonWeatherFinish(lerp(original.rgb, color, _Intensity),input.texcoord), original.a);
             }
             ENDHLSL
         }

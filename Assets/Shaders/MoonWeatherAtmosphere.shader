@@ -15,6 +15,7 @@ Shader "Moon Game/Exterior Weather Atmosphere"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "MoonWeatherLighting.hlsl"
             float4 _ShelterMins[4], _ShelterMaxs[4];
             int _ShelterCount;
             float _Density, _OpacityLimit;
@@ -125,6 +126,7 @@ Shader "Moon Game/Exterior Weather Atmosphere"
                 float bright = smoothstep(0.25, 1.2, luma);
                 float saturation = lerp(_Palette.x, 1, bright * 0.65);
                 float3 color = lerp(luma.xxx, source.rgb, saturation);
+                if(sky)color*=1-_MoonDeepNight*.995;
                 color *= lerp(_Palette.y, 1, smoothstep(0.015, 0.18, luma));
                 // Small bright emitters remain useful landmarks through the haze.
                 color = lerp(color, _HazeColor.rgb, baseFog * (1 - bright * 0.22));

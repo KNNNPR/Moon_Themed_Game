@@ -178,7 +178,7 @@ namespace MoonThemedGame.Computer
             if (focused)
             {
                 UpdateHighlight();
-                if (escape) { ExitFocus(); return; }
+                if (escape) { Back(); return; }
                 if (camera && TryGetPanelPosition(camera, position, out var panelPoint)) SetPointer(panelPoint);
                 else HidePointer();
                 return;
@@ -276,6 +276,7 @@ namespace MoonThemedGame.Computer
         {
             if (focused || !Camera.main) return;
             focusedCamera = Camera.main;
+            focusedCamera.GetComponentInParent<FirstPersonCameraEffects>()?.ResetWeaponMotion();
             previousPosition = focusedCamera.transform.position;
             previousRotation = focusedCamera.transform.rotation;
             previousFov = focusedCamera.fieldOfView;
@@ -292,6 +293,23 @@ namespace MoonThemedGame.Computer
             transition = 0;
             transitionDirection = 1;
             if (instant || focusDuration <= 0) { transition = 1; FinishTransition(); }
+        }
+
+        // One Escape belongs to one layer: application, desktop, then the room.
+        public void Back()
+        {
+            if (!focused || IsTransitioning) return;
+            var money = GetComponent<MoneyGetApp>();
+            if (money && money.IsOpen) { money.Close(); return; }
+            var moon = GetComponent<MoonFinderApp>();
+            if (moon && moon.IsOpen) { moon.Close(); return; }
+            var shop = GetComponent<MoonThemedGame.Scavenger.ShopApp>();
+            if (shop && shop.IsOpen) { shop.Close(); return; }
+            var messages = GetComponent<MoonThemedGame.Scavenger.RepairMessagesApp>();
+            if (messages && messages.IsOpen) { messages.Close(); return; }
+            var satellites = GetComponent<MoonThemedGame.Scavenger.SatelliteConsoleApp>();
+            if (satellites && satellites.IsOpen) { satellites.Close(); return; }
+            ExitFocus();
         }
 
         public void ExitFocus(bool instant = false)

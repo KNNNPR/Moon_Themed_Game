@@ -10,7 +10,9 @@ namespace MoonThemedGame.Scavenger
     [DisallowMultipleComponent]
     public sealed class SalvageField : MonoBehaviour
     {
+        [Tooltip("Random fallback limit. An authored layout populates its own fixed points.")]
         [Min(0)] public int maxPieces = 8;
+        [Tooltip("Random fallback count, used only when there are no authored spawn points.")]
         [Min(0)] public int startPieces = 6;
         public Vector2 respawnInterval = new Vector2(25, 40);
         public Vector2 spawnDistance = new Vector2(12, 55);
@@ -20,7 +22,13 @@ namespace MoonThemedGame.Scavenger
         GameObject[] kinds;
         Vector3 center;
         float nextSpawn;
+        float nextSupplyCheck;
+        int orderNumber=1;
+        RepairMessagesApp messages;
+        public int OrderTier {get;private set;}
+        readonly Dictionary<GameObject,int> orderNeeds=new Dictionary<GameObject,int>();
         readonly List<GameObject> cargo = new List<GameObject>();
+        readonly List<SalvageSpawnPoint> spawnPoints=new List<SalvageSpawnPoint>();
         readonly RaycastHit[] hits = new RaycastHit[32];
 
         public IReadOnlyList<GameObject> Cargo => cargo;
@@ -44,12 +52,17 @@ namespace MoonThemedGame.Scavenger
         public void Setup(ScavengerLink owner, Vector3 home)
         {
             link = owner;
+            messages=owner.GetComponent<RepairMessagesApp>();
             var weather = MoonWeatherSystem.Active;
             center = weather ? weather.shelterCenter : home;
             kinds = FindKinds();
             if (kinds.Length == 0) { Debug.LogWarning("[Scavenger] No part prefabs for salvage.", this); return; }
-            if (SalvageSpawnPoint.All.Count > 0)
-                foreach (var point in SalvageSpawnPoint.All) SpawnAt(point);
+            var layout=SalvageSpawnLayout.Ensure(gameObject.scene);
+            spawnPoints.Clear();
+            if(layout)spawnPoints.AddRange(layout.GetComponentsInChildren<SalvageSpawnPoint>());
+            else spawnPoints.AddRange(SalvageSpawnPoint.All);
+            if (spawnPoints.Count > 0)
+                foreach (var point in spawnPoints) SpawnAt(point);
             else
                 for (int i = 0; i < startPieces; i++) TrySpawn();
             nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
@@ -75,6 +88,55 @@ namespace MoonThemedGame.Scavenger
 
         void SpawnAt(SalvageSpawnPoint point)
         {
+            SpawnAt(point,null);
+        }
+        bool Allowed(SalvageSpawnPoint point)=>point && point.isActiveAndEnabled && point.progressionTier>=OrderTier;
+        public bool IsOrderTarget(SalvagePiece piece)=>messages && messages.HasActiveOrder && piece && piece.SpawnPoint &&
+            piece.SpawnPoint.orderRoute && piece.SpawnPoint.progressionTier==OrderTier;
+        public void ApplyOrderProgression(int number)
+        {
+            orderNumber=Mathf.Max(orderNumber,number);
+            int wanted=Mathf.Clamp((orderNumber-1)/2,0,4);
+            float endurance=link && link.state?link.state.capacity/Mathf.Max(.01f,link.state.drainPerSecond)*RobotUpgrades.SpeedScale*.93f:93;
+            int available=0;
+            foreach(var point in spawnPoints)
+                if(point && point.orderRoute && point.progressionTier<=wanted && point.estimatedLoopSeconds<=endurance)
+                    available=Mathf.Max(available,point.progressionTier);
+            OrderTier=Mathf.Max(OrderTier,available);
+            foreach(var point in spawnPoints)
+                if(point && !Allowed(point) && point.Piece && !point.Piece.Collected)RemovePiece(point);
+            EnsureOrderSupply();
+        }
+        void RemovePiece(SalvageSpawnPoint point)
+        {
+            var piece=point.Piece;point.Piece=null;
+            if(piece){piece.gameObject.SetActive(false);Destroy(piece.gameObject);}
+        }
+        void EnsureOrderSupply()
+        {
+            if(!messages || !messages.HasActiveOrder)return;
+            messages.GetUnstockedSalvageNeeds(orderNeeds);
+            var candidates=new List<SalvageSpawnPoint>();
+            foreach(var point in spawnPoints)
+            {
+                if(!Allowed(point) || !point.orderRoute || point.progressionTier!=OrderTier)continue;
+                if(!point.Free && point.Piece && orderNeeds.TryGetValue(point.Piece.prefab,out int count) && count>0)
+                {orderNeeds[point.Piece.prefab]=count-1;continue;}
+                candidates.Add(point);
+            }
+            foreach(var point in candidates)
+            {
+                if(link.robot && Flat(link.robot.position-point.transform.position).magnitude<4)continue;
+                GameObject needed=null;
+                foreach(var pair in orderNeeds)if(pair.Value>0){needed=pair.Key;break;}
+                if(!needed)break;
+                if(point.Piece && !point.Piece.Collected)RemovePiece(point);
+                SpawnAt(point,needed);orderNeeds[needed]--;
+            }
+        }
+        void SpawnAt(SalvageSpawnPoint point,GameObject requiredPart)
+        {
+            if(!Allowed(point) || !point.Free)return;
             var position = point.transform.position;
             var normal = point.transform.up;
             if (Ground(position + Vector3.up, 100, out var ground, out var groundNormal))
@@ -82,16 +144,18 @@ namespace MoonThemedGame.Scavenger
                 position = ground;
                 normal = groundNormal;
             }
-            var prefab = point.part ? point.part : kinds[Random.Range(0, kinds.Length)];
+            var prefab = requiredPart?requiredPart:point.part ? point.part : kinds[Random.Range(0, kinds.Length)];
             point.Piece = SalvagePiece.Create(prefab, position, normal, link.robotScale * 0.5f);
+            point.Piece.SpawnPoint=point;
         }
 
         // Refills one empty point the robot isn't standing on.
         void RespawnAtPoint()
         {
+            EnsureOrderSupply();
             var free = new List<SalvageSpawnPoint>();
-            foreach (var point in SalvageSpawnPoint.All)
-                if (point.Free && (!link.robot || Flat(link.robot.position - point.transform.position).magnitude >= 4)) free.Add(point);
+            foreach (var point in spawnPoints)
+                if (Allowed(point) && point.Free && !(messages && messages.HasActiveOrder && point.orderRoute && point.progressionTier==OrderTier) && (!link.robot || Flat(link.robot.position - point.transform.position).magnitude >= 4)) free.Add(point);
             if (free.Count > 0) SpawnAt(free[Random.Range(0, free.Count)]);
         }
 
@@ -149,10 +213,11 @@ namespace MoonThemedGame.Scavenger
         void Update()
         {
             if (!link || !link.robot) return;
+            if(Time.time>=nextSupplyCheck){nextSupplyCheck=Time.time+1;EnsureOrderSupply();}
             if (Time.time >= nextSpawn)
             {
                 nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
-                if (SalvageSpawnPoint.All.Count > 0) RespawnAtPoint();
+                if (spawnPoints.Count > 0) RespawnAtPoint();
                 else TrySpawn();
             }
             float reach = link.Drive ? link.Drive.Length * 1.1f + 1.5f : 3;

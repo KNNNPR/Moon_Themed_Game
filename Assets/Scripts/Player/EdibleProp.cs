@@ -8,6 +8,9 @@ namespace MoonThemedGame.Interactions
     {
         [Min(0.1f)] public float eatDuration=0.45f;
         [Min(0)] public float intoxicationDose;
+        [Header("Shot reaction")]
+        [Range(8,128)] public int shotParticleCount=52;
+        [Range(.5f,4)] public float shotParticleLifetime=1.8f;
         HeldProp prop;
         Vector3 originalScale;
         float elapsed;
@@ -23,6 +26,19 @@ namespace MoonThemedGame.Interactions
         {
             if(!CanEat)return false;
             elapsed=0;IsEating=true;SetHighlightOff();return true;
+        }
+        public bool ShatterFromShot(Vector3 direction,Material particleMaterial)
+        {
+            if(!isActiveAndEnabled || IsConsumed)return false;
+            IsConsumed=true;IsEating=false;
+            var renderer=GetComponent<Renderer>();
+            var bounds=renderer?renderer.bounds:new Bounds(transform.position,Vector3.one*.3f);
+            var body=GetComponent<Rigidbody>();
+            AppleShotBurst.Emit(bounds,direction,body && !body.isKinematic?body.linearVelocity:Vector3.zero,
+                particleMaterial,shotParticleCount,shotParticleLifetime);
+            // Breaking an apple is not eating it: do not apply intoxication or retain the hand.
+            if(prop)prop.Drop(false);
+            gameObject.SetActive(false);Destroy(gameObject);return true;
         }
         void SetHighlightOff(){if(prop)prop.SetHighlighted(false);}
         void Update()

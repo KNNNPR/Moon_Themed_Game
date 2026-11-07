@@ -11,6 +11,7 @@ namespace MoonThemedGame.Scavenger
         public static IReadOnlyList<SalvagePiece> All => all;
 
         public GameObject prefab;
+        public SalvageSpawnPoint SpawnPoint {get;internal set;}
         public float radius = 0.3f;
         Light beacon;
         Transform target;

@@ -43,6 +43,7 @@ Shader "Moon Game/Color ASCII"
             // No font texture, time seed, scrolling text, or external dependency.
             #include "ColorAsciiGlyphs.hlsl"
             #include "VisibleWeatherFog.hlsl"
+            #include "MoonWeatherOverlay.hlsl"
 
             float3 DisplayColor(float3 color)
             {
@@ -125,7 +126,7 @@ Shader "Moon Game/Color ASCII"
                     result = SRGBToLinear(result);
                 #endif
                 // Full bypass includes color, sampling, and the character grid.
-                return half4(lerp(original.rgb, result, _Intensity), original.a);
+                return half4(MoonWeatherFinish(lerp(original.rgb, result, _Intensity),screenUV), original.a);
             }
             ENDHLSL
         }

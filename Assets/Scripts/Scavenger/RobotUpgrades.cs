@@ -67,7 +67,7 @@ namespace MoonThemedGame.Scavenger
             Upgrade.Capacity => "Bigger battery, longer runs.",
             Upgrade.Drain => "Battery drains slower.",
             Upgrade.Speed => "Higher top speed and acceleration.",
-            Upgrade.Headlights => "High beams that cut through moon dust.",
+            Upgrade.Headlights => "Longer, brighter beams. Cut through moon dust.",
             Upgrade.Arm => "Lets the robot pull levers.",
             _ => "More room for salvage."
         });

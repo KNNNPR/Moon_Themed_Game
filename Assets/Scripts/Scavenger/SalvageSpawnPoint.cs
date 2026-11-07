@@ -9,8 +9,14 @@ namespace MoonThemedGame.Scavenger
         static readonly List<SalvageSpawnPoint> all = new List<SalvageSpawnPoint>();
         public static IReadOnlyList<SalvageSpawnPoint> All => all;
 
-        [Tooltip("Always this part; empty picks a random one.")]
+        [Tooltip("Default part; active repair orders can assign the required type to safe route points.")]
         public GameObject part;
+        [TextArea(2,6)] public string routeNotes;
+        [Header("Order progression")]
+        [Min(0)] public int progressionTier;
+        [Min(0)] public float estimatedLoopSeconds=42;
+        [Tooltip("Safe without an unopened gate or bridge; can carry required order supplies.")]
+        public bool orderRoute=true;
 
         public SalvagePiece Piece { get; set; }
         public bool Free => !Piece || Piece.Collected;

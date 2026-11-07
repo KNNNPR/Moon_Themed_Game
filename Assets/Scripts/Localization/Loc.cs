@@ -83,6 +83,19 @@ namespace MoonThemedGame
 
         static readonly Dictionary<string, string> Ru = new Dictionary<string, string>
         {
+            { "PISTOL", "ПИСТОЛЕТ" },
+            { "[E] Take pistol", "[E] Взять пистолет" },
+            { "RELOADING", "ПЕРЕЗАРЯДКА" },
+            { "MUZZLE BLOCKED", "СТВОЛ ПЕРЕКРЫТ" },
+            { "Reload pistol", "Перезарядить пистолет" },
+            { "[{0} / {1}] {2}\n[{3}] Play   [{4}] Off", "[{0} / {1}] {2}\n[{3}] Включить   [{4}] Выключить" },
+            { "Lean left (while aiming)", "Наклон влево (прицеливание)" },
+            { "Lean right (while aiming)", "Наклон вправо (прицеливание)" },
+            { "Lean left (pistol)", "Наклон влево (пистолет)" },
+            { "Lean right (pistol)", "Наклон вправо (пистолет)" },
+            { "[{0}/{1}] Lean   [{2}] Interact", "[{0}/{1}] Наклон   [{2}] Взаимодействие" },
+            { "[RMB + {0}/{1}] Lean", "[ПКМ + {0}/{1}] Наклон" },
+            { "[LMB] Fire   [RMB HOLD] Aim   [{0}] Reload", "[ЛКМ] Огонь   [УДЕРЖ. ПКМ] Прицел   [{0}] Перезарядить" },
             // Settings menu and controls
             { "PALE HORSE /// STATION TERMINAL", "PALE HORSE /// ТЕРМИНАЛ СТАНЦИИ" },
             { "LUNAR TECHNICAL STATION 7   BUILD_RUV", "ЛУННАЯ ТЕХНИЧЕСКАЯ СТАНЦИЯ 7   BUILD_RUV" },
@@ -185,6 +198,13 @@ namespace MoonThemedGame
             { "RADIATION", "РАДИАЦИЯ" },
             { "METEORITE RAIN", "МЕТЕОРИТНЫЙ ДОЖДЬ" },
             { "SUNNY", "ЯСНО" },
+            { "DEEP NIGHT", "ГЛУБОКАЯ НОЧЬ" },
+            { "CRYOGENIC FRONT", "КРИОГЕННЫЙ ФРОНТ" },
+            { "ASHEN CALM", "ПЕПЕЛЬНЫЙ ШТИЛЬ" },
+            { "Almost total darkness. Use your headlights.", "Почти полная темнота. Используйте фары." },
+            { "Faster battery drain. Reduced grip. Frost on the camera.", "Батарея садится быстрее. Сцепление хуже. Иней на камере." },
+            { "Slowly falling ash. No penalties.", "Медленно оседающий пепел. Без штрафов." },
+            { "Longer, brighter beams. Cut through moon dust.", "Более дальний и яркий свет. Пробивает лунную пыль." },
             { "Low Visibility", "Плохая видимость" },
             { "Drains your energy faster", "Энергия тратится быстрее" },
             { "Meteorites drop from the sky,\nwhen hit - drains your energy", "С неба падают метеориты,\nпопадание отнимает энергию" },

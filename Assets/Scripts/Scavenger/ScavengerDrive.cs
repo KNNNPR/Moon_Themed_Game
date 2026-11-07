@@ -106,7 +106,8 @@ namespace MoonThemedGame.Scavenger
         }
         public float ForwardSpeed => body ? Vector3.Dot(body.linearVelocity, Forward) : 0;
         public Rigidbody Body => body;
-        public float MaximumForwardSpeed => maxSpeed * length;
+        public float DebugSpeedMultiplier {get;set;}=1;
+        public float MaximumForwardSpeed => maxSpeed * length * DebugSpeedMultiplier;
         public bool IsOverturned => body && Vector3.Dot(transform.up,Vector3.up)<0.25f;
         public float DriftAmount => drift;
         public bool IsForwardDrift => drift>0.1f && driftSign>0;
@@ -309,7 +310,7 @@ namespace MoonThemedGame.Scavenger
             airHeading=(Quaternion.AngleAxis(Vector3.Dot(body.angularVelocity,Vector3.up)*Mathf.Rad2Deg*dt,Vector3.up)*airHeading).normalized;
             var direction=Heading*input.y;
             if(Vector3.Dot(body.linearVelocity,direction)<MaximumForwardSpeed)
-                body.AddForce(direction*airAcceleration*length,ForceMode.Acceleration);
+                body.AddForce(direction*airAcceleration*length*DebugSpeedMultiplier,ForceMode.Acceleration);
         }
 
         // `length` is how far the wheel centre hangs below its mount point.
@@ -352,7 +353,7 @@ namespace MoonThemedGame.Scavenger
             var forward = Forward;
             float speed = Vector3.Dot(body.linearVelocity, forward);
             float limit = MaximumForwardSpeed * (throttle < 0 ? reverseFactor : 1);
-            float rate = (speed * input.y < -length*0.02f || !controllable) ? braking : acceleration;
+            float rate = ((speed * input.y < -length*0.02f || !controllable) ? braking : acceleration)*DebugSpeedMultiplier;
             float accel = Mathf.Clamp((throttle*limit-speed)/dt, -rate*length, rate*length);
             if (controllable && Mathf.Abs(input.y)<0.01f)
                 accel = Mathf.Clamp((-speed*coastDrag-Mathf.Sign(speed)*rollingResistance*length)*(handbrake?0.15f:1), -Mathf.Abs(speed)/dt, Mathf.Abs(speed)/dt);
@@ -377,10 +378,13 @@ namespace MoonThemedGame.Scavenger
                 float slip = Vector3.Dot(body.linearVelocity, side);
                 float axleGrip=wheel.frontAxle?1:Mathf.Lerp(1,wheel.rearAxle?driftRearGrip:Mathf.Sqrt(driftRearGrip),drift);
                 float grip=(1-Mathf.Pow(Mathf.Max(0.001f,1-lateralGrip*axleGrip),dt/0.02f))/dt;
+                var weather=MoonThemedGame.Weather.MoonWeatherSystem.Active;
+                float surfaceGrip=weather?weather.GripMultiplier(wheel.contact):1;
+                grip*=surfaceGrip;
                 float share = body.mass * support / grounded;
                 // Hard braking at tyre height tips the bot over its nose; raise the push toward the centre of mass.
                 float height = Vector3.Dot(centre - wheel.contact, up);
-                body.AddForceAtPosition(drive * accel * share, wheel.contact + up * (height * pitchFreeDrive));
+                body.AddForceAtPosition(drive * accel * share * surfaceGrip, wheel.contact + up * (height * pitchFreeDrive));
                 body.AddForceAtPosition(-side * slip * grip * share, wheel.contact + up * (height * rollFreeGrip));
             }
 

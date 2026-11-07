@@ -116,6 +116,7 @@ namespace MoonThemedGame.Repair
         public void Holster(Transform holder, Vector3 localCenter, Quaternion localRotation)
         {
             Init();
+            OnPutAway();
             if (IsCarried) Current = null;
             hand = null;
             CancelInvoke();
@@ -139,6 +140,7 @@ namespace MoonThemedGame.Repair
         }
 
         protected virtual void OnPickedUp() { }
+        protected virtual void OnPutAway() { }
         protected virtual void Carry() { }
         protected virtual string CarryHint => "";
 
@@ -177,9 +179,9 @@ namespace MoonThemedGame.Repair
                 return;
             }
             if (!hand) { Drop(false); return; }
+            if (GameSettingsMenu.BlockGameplayInput) return;
             var player = hand.GetComponentInParent<FirstPersonController>();
             if (!hand.enabled || (player && !player.enabled)) { Drop(false); return; }
-            if (GameSettingsMenu.BlockGameplayInput) return;
             if (GameControls.Pressed(GameCommand.Throw)) { Drop(true); return; }
             var offset = HoldOffset * PlayerBody.Scale;
             var desired = hand.transform.position + hand.transform.rotation * new Vector3(offset.x, offset.y, offset.z + radius * 0.6f);
@@ -191,6 +193,7 @@ namespace MoonThemedGame.Repair
         public void Drop(bool toss)
         {
             if (!IsCarried) return;
+            OnPutAway();
             Current = null;
             var direction = hand ? hand.transform.forward : Vector3.zero;
             hand = null;
@@ -204,6 +207,7 @@ namespace MoonThemedGame.Repair
         // Leaves the hand without falling, e.g. a part that was bolted onto the robot.
         protected void Release()
         {
+            OnPutAway();
             if (IsCarried) Current = null;
             hand = null;
         }
@@ -223,6 +227,7 @@ namespace MoonThemedGame.Repair
 
         protected override void OnDisable()
         {
+            OnPutAway();
             if (IsCarried) Current = null;
             base.OnDisable();
         }

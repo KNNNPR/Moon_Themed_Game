@@ -17,6 +17,11 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
     [Header("Strafe Tilt")]
     [SerializeField] private bool enableTilt = true;
     [SerializeField, Range(0f, 3f)] private float maxTilt = 0.7f;
+    [Header("Weapon lean")]
+    [SerializeField,Range(0,25)] private float leanAngle=14;
+    [SerializeField,Min(0)] private float leanDistance=.19f;
+    [SerializeField,Min(.05f)] private float leanResponse=.18f;
+    public float WeaponLean=>lean;
 
     [Header("Response")]
     [SerializeField, Min(0.1f)] private float referenceSpeed = 3.5f;
@@ -33,6 +38,7 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
     private Vector3 bobOffset;
     private float phase;
     private float tilt;
+    private float lean,leanVelocity,weaponRoll,rollVelocity,weaponPush,pushVelocity;
 
     private void Reset()
     {
@@ -119,6 +125,32 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
 
         transform.localPosition = restPosition + bobOffset;
         transform.localRotation = restRotation * Quaternion.Euler(0f, 0f, tilt);
+        bool active=player.isActiveAndEnabled && MoonThemedGame.Repair.PlayerPistol.LeanControlsActive &&
+            !MoonThemedGame.Repair.PlayerPistol.InteractionModifierHeld;
+        float desired=active?(MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.LeanRight)?1:0)-
+            (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.LeanLeft)?1:0):0;
+        lean=Mathf.SmoothDamp(lean,desired,ref leanVelocity,leanResponse,Mathf.Infinity,dt);
+        weaponRoll=Mathf.SmoothDamp(weaponRoll,0,ref rollVelocity,.13f,Mathf.Infinity,dt);
+        weaponPush=Mathf.SmoothDamp(weaponPush,0,ref pushVelocity,.12f,Mathf.Infinity,dt);
+        float unit=MoonThemedGame.Repair.PlayerBody.Scale;
+        var shift=player.transform.right*(lean*leanDistance*unit)-transform.forward*weaponPush;
+        float distance=shift.magnitude,allowed=distance;
+        if(distance>.0001f)
+            foreach(var hit in Physics.SphereCastAll(transform.position,.10f*unit,shift/distance,distance,
+                Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))
+                if(!hit.transform.IsChildOf(player.transform))allowed=Mathf.Min(allowed,Mathf.Max(0,hit.distance-.02f*unit));
+        float clearance=distance>.0001f?allowed/distance:1;
+        transform.position+=shift*clearance;
+        transform.localRotation=restRotation*Quaternion.Euler(0,0,tilt-lean*leanAngle*clearance+weaponRoll);
+    }
+
+    public void AddWeaponImpulse(float roll,float push)
+    {weaponRoll=Mathf.Clamp(weaponRoll+roll,-3,3);weaponPush=Mathf.Min(weaponPush+push,.04f*MoonThemedGame.Repair.PlayerBody.Scale);rollVelocity=pushVelocity=0;}
+    public void ResetWeaponMotion()
+    {
+        lean=leanVelocity=weaponRoll=rollVelocity=weaponPush=pushVelocity=0;
+        transform.localPosition=restPosition+bobOffset;
+        transform.localRotation=restRotation*Quaternion.Euler(0,0,tilt);
     }
 
     private void OnDisable()
@@ -128,5 +160,6 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
         bobOffset = Vector3.zero;
         tilt = 0f;
         phase = 0f;
+        lean=leanVelocity=weaponRoll=rollVelocity=weaponPush=pushVelocity=0;
     }
 }

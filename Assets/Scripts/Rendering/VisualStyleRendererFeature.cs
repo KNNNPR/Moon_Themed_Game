@@ -14,7 +14,9 @@ namespace MoonThemedGame.Rendering
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             if (settings) passMaterial = settings.CurrentMaterial;
-            requirements = settings && settings.CurrentStyle == VisualStyle.ColorAscii ? ScriptableRenderPassInput.Depth : ScriptableRenderPassInput.None;
+            requirements = ScriptableRenderPassInput.Depth;
+            var weather=MoonThemedGame.Weather.MoonWeatherSystem.Active;
+            Shader.SetGlobalVector("_MoonWeatherCamera",weather?weather.CameraEffects(renderingData.cameraData.camera):Vector4.zero);
             base.AddRenderPasses(renderer, ref renderingData);
         }
     }

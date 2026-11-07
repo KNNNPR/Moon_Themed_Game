@@ -32,7 +32,7 @@ namespace MoonThemedGame.World
 
         public static bool UsesBox(MeshFilter filter)
         {
-            if(!filter || !filter.sharedMesh)return false;
+            if(!filter || !filter.sharedMesh || IsCargoShip(filter))return false;
             if(filter.sharedMesh.name.StartsWith("fence",StringComparison.OrdinalIgnoreCase))return true;
             for(var node=filter.transform;node;node=node.parent)
                 if(node.name.StartsWith("fence",StringComparison.OrdinalIgnoreCase))return true;
@@ -42,6 +42,16 @@ namespace MoonThemedGame.World
                     // Unity may append this suffix to a runtime material instance; case is significant.
                     if(material && (material.name=="cargo" || material.name=="cargo (Instance)"))return true;
             return false;
+        }
+        public static bool IsCargoShip(MeshFilter filter)
+        {
+            if(!filter)return false;
+            bool Match(string name)
+            {
+                string key=name.Split('(')[0].Trim().Replace("_","").Replace(" ","");
+                return key.Equals("Cube.064",StringComparison.OrdinalIgnoreCase) || key.Equals("CARGOSHIP",StringComparison.OrdinalIgnoreCase);
+            }
+            return Match(filter.name) || (filter.sharedMesh && Match(filter.sharedMesh.name));
         }
 
         public static int Ensure(Scene scene,LandscapeCollisionSet set,Func<GameObject,Type,Collider> add=null,Action<Collider> remove=null)
@@ -53,6 +63,17 @@ namespace MoonThemedGame.World
                 foreach(var filter in root.GetComponentsInChildren<MeshFilter>(true))
                 {
                     if(!filter.sharedMesh || IsSurface(filter.name) || IsSurface(filter.sharedMesh.name))continue;
+                    if(IsCargoShip(filter))
+                    {
+                        foreach(var box in filter.GetComponents<BoxCollider>())
+                        {
+                            if(remove!=null)remove(box);
+                            else if(Application.isPlaying){box.enabled=false;UnityEngine.Object.Destroy(box);}
+                            else UnityEngine.Object.DestroyImmediate(box);
+                            count++;
+                        }
+                        continue;
+                    }
                     if(UsesBox(filter))
                     {
                         if(EnsureBox(filter,add,remove))count++;

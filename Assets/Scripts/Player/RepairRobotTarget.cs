@@ -129,9 +129,14 @@ namespace MoonThemedGame.Repair
 
         [ContextMenu("Debug/Repair All Parts")]
         public void RepairAllForTesting()
+            => DebugRepairAll();
+
+        public bool DebugRepairAll()
         {
-            if (!Application.isPlaying || !initialized || IsBeingCollected || !IsSettled) return;
+            if (!Application.isPlaying || !initialized || IsBeingCollected || !IsSettled) return false;
+            ClearBolts();
             foreach (var slot in slots) if (slot.visual) slot.visual.SetActive(true);
+            return IsRepaired;
         }
 
         public bool TryReserveCollection()
@@ -230,7 +235,7 @@ namespace MoonThemedGame.Repair
         internal void BoltTightened(GameObject visual)
         {
             if (!loose.TryGetValue(visual, out var bolts)) return;
-            foreach (var bolt in bolts) if (bolt && !bolt.Tight) return;
+            foreach (var bolt in bolts) if (bolt && (!bolt.Tight || bolt.IsTurning)) return;
             loose.Remove(visual);
         }
 

@@ -20,8 +20,8 @@ namespace MoonThemedGame.Interactions
         static int consumedFrame=-1;
         public static bool IsOpen {get;private set;}
         public static bool BlockGameplayInput=>IsOpen || consumedFrame==Time.frameCount;
-        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","clear","close"};
-        static readonly string[] weatherNames={"sunny","fog","radiation","meteors"};
+        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","speed","pistol","clear","close"};
+        static readonly string[] weatherNames={"sunny","fog","radiation","meteors","night","cryogenic","ash"};
         readonly List<string> lines=new List<string>(),history=new List<string>();
         public IReadOnlyList<string> Lines=>lines;
         public VisualElement Root=>root;
@@ -180,12 +180,46 @@ namespace MoonThemedGame.Interactions
                 Write("spawn <part> [count]      Spawn near the human operator (1-20)");
                 Write("deliver <part> [count]    Send through Tube_For_Scrap (1-20)");
                 Write("weather                   Show current weather and available presets");
-                Write("weather <preset>          Set sunny, fog, radiation or meteors immediately");
+                Write("weather <preset>          Set sunny, fog, radiation, meteors, night, cryogenic or ash");
+                Write("repair                    Fully repair the robot in the repair bay");
+                Write("pistol                    Add a pistol to the operator's toolbox (8 rounds, R reload)");
+                Write("speed [x|reset] [bot|player] Set speed multiplier (0.1-10); default: bot");
                 Write("clear                     Clear console output");Write("close                     Close console");return;
             }
             if(command=="clear" && args.Length==1){lines.Clear();output?.Clear();return;}
             if(command=="close" && args.Length==1){Close();return;}
             if(command=="parts" && args.Length==1){Write("Parts: "+string.Join(", ",GetParts().Keys));return;}
+            if(command=="pistol")
+            {
+                if(args.Length!=1){Write("Usage: pistol");return;}
+                var player=FindFirstObjectByType<PlayerBody>();
+                if(!player){Write("No human operator in this scene.");return;}
+                Write(player.GrantPistol()?"Pistol available in toolbox. Hold MMB to select; LMB fire, RMB aim, R reload.":"Pistol assets are not ready.");return;
+            }
+            if(command=="repair")
+            {
+                if(args.Length!=1){Write("Usage: repair");return;}
+                var robot=RepairRobotDropper.Active?RepairRobotDropper.Active.CurrentRobot:null;
+                if(!robot){Write("No repair robot in the bay. Accept an order or drop a robot first.");return;}
+                if(robot.IsBeingCollected){Write("The crane is already collecting this robot.");return;}
+                if(!robot.IsSettled){Write("Wait for the repair robot to land.");return;}
+                Write(robot.DebugRepairAll()?"Robot fully repaired: all parts seated, bolts and screws complete.":"Robot could not be repaired.");return;
+            }
+            if(command=="speed")
+            {
+                string actor=args.Length==3?args[2].ToLowerInvariant():"bot";
+                if(args.Length>3 || (actor!="bot" && actor!="player")){Write("Usage: speed <0.1-10|reset> [bot|player]");return;}
+                var link=actor=="bot"?FindFirstObjectByType<ScavengerLink>():null;
+                var drive=link?link.Drive:null;var player=actor=="player"?FindFirstObjectByType<FirstPersonController>():null;
+                if((actor=="bot" && !drive) || (actor=="player" && !player)){Write("Speed target not available: "+actor);return;}
+                if(args.Length==1){Write("Bot speed multiplier: x"+drive.DebugSpeedMultiplier.ToString("0.##",CultureInfo.InvariantCulture));return;}
+                float multiplier=1;
+                if(!args[1].Equals("reset",StringComparison.OrdinalIgnoreCase) &&
+                    (!float.TryParse(args[1],NumberStyles.Float,CultureInfo.InvariantCulture,out multiplier) || float.IsNaN(multiplier) || float.IsInfinity(multiplier) || multiplier<.1f || multiplier>10))
+                {Write("Usage: speed <0.1-10|reset> [bot|player]");return;}
+                if(drive)drive.DebugSpeedMultiplier=multiplier;else player.DebugSpeedMultiplier=multiplier;
+                Write((actor=="bot"?"SCAV_BOT":"Player")+" speed multiplier: x"+multiplier.ToString("0.##",CultureInfo.InvariantCulture));return;
+            }
             if(command=="weather")
             {
                 var weather=MoonWeatherSystem.Active;
@@ -205,7 +239,10 @@ namespace MoonThemedGame.Interactions
                     case "fog": case "dust": case "moondust": kind=WeatherKind.MoonDust;break;
                     case "radiation": kind=WeatherKind.Radiation;break;
                     case "meteors": case "meteorite": case "meteoriterain": kind=WeatherKind.MeteoriteRain;break;
-                    default: Write("Usage: weather <sunny|fog|radiation|meteors>");return;
+                    case "night": case "deepnight": kind=WeatherKind.DeepNight;break;
+                    case "cryogenic": case "cold": case "snow": case "cryo": kind=WeatherKind.CryogenicFront;break;
+                    case "ash": case "ashencalm": case "wind": kind=WeatherKind.AshenCalm;break;
+                    default: Write("Usage: weather <sunny|fog|radiation|meteors|night|cryogenic|ash>");return;
                 }
                 weather.SetWeather(kind);
                 Write("Weather set: "+MoonWeatherSystem.Name(kind)+". Close console to resume simulation.");
