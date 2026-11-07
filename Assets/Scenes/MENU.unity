@@ -3992,6 +3992,7 @@ GameObject:
   - component: {fileID: 376847260}
   - component: {fileID: 376847262}
   - component: {fileID: 376847261}
+  - component: {fileID: 8220263400000000003}
   m_Layer: 0
   m_Name: Charge_monitor
   m_TagString: Untagged
@@ -19103,6 +19104,8 @@ GameObject:
   - component: {fileID: 1780053361}
   - component: {fileID: 1780053360}
   - component: {fileID: 1780053359}
+  - component: {fileID: 8220263400000000001}
+  - component: {fileID: 8220263400000000002}
   m_Layer: 0
   m_Name: Smaller_monitor
   m_TagString: Untagged
@@ -21958,6 +21961,55 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.011513784, y: 0.011882263, z: 0.044612158}
   m_Center: {x: -0.0013366713, y: -0.00000023840818, z: 0.0011060771}
+--- !u!64 &8220263400000000001
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780053357}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4300000, guid: 0708030631b7f804d9b9d0850364947b, type: 2}
+--- !u!114 &8220263400000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1780053357}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4821878c7a6ce1e46a4b2e55fa1a3935, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  widthPixels: 2
+  outlineColor: {r: 0.78, g: 0.95, b: 0.8, a: 1}
+  fadeSpeed: 14
+--- !u!114 &8220263400000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 376847259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 279dd71b565150840a150d0c560f4fa5, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

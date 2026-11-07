@@ -14,7 +14,13 @@ namespace MoonThemedGame.Scavenger
         public Vector3 hinge;
         public Vector3 loweredPosition;
         public Vector3 loweredEuler;
+        [SerializeField] Transform controlButton;
         Rigidbody body;
+
+        void Start()
+        {
+            if (!body && controlButton) Setup(controlButton);
+        }
         Vector3 raisedPosition;
         Quaternion raisedRotation,loweredRotation;
         float progress;
@@ -23,6 +29,7 @@ namespace MoonThemedGame.Scavenger
         public bool IsInitialized=>body;
         public void Setup(Transform button)
         {
+            controlButton=button;
             raisedPosition=transform.position;raisedRotation=transform.rotation;
             var filter=GetComponent<MeshFilter>();
             hinge=transform.TransformPoint(localHinge);

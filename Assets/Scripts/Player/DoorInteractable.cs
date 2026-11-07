@@ -24,6 +24,7 @@ namespace MoonThemedGame.Interactions
         Quaternion closedRotation;
         float progress;
         bool targetOpen;
+        [SerializeField] DoorInteractionZone fixedZone;
         GameObject interactionZone;
 
         public bool IsOpen => targetOpen;
@@ -33,6 +34,7 @@ namespace MoonThemedGame.Interactions
         void Awake()
         {
             if (!movingPart) movingPart = transform;
+            if (fixedZone) interactionZone = fixedZone.gameObject;
             closedPosition = movingPart.localPosition;
             closedRotation = movingPart.localRotation;
             var renderers = movingPart.GetComponentsInChildren<MeshRenderer>();
@@ -62,6 +64,7 @@ namespace MoonThemedGame.Interactions
                     openOffset = movingPart.parent
                         ? movingPart.parent.InverseTransformVector(worldOffset) : worldOffset;
                 }
+                if (fixedZone) return;
                 interactionZone = new GameObject("Door interaction / fixed closed position");
                 interactionZone.layer = gameObject.layer;
                 interactionZone.transform.position = bounds.center;
