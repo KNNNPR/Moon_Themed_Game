@@ -20,7 +20,7 @@ namespace MoonThemedGame.Scavenger
             public Vector3 anchor;
             public Vector3 centerInParent, pivotInParent, axleInParent;
             public Quaternion restRotation;
-            public float radius, length, spin, visualLift;
+            public float radius, length, spin, visualLift, visualVelocity;
             public bool grounded;
             public bool frontAxle;
             public bool rearAxle;
@@ -77,6 +77,13 @@ namespace MoonThemedGame.Scavenger
         [Tooltip("Suspension travel as a share of the wheel radius.")]
         public float travel = 0.6f;
         [Range(0, 2)] public float dampingRatio = 1.1f;
+
+        [Header("Landing presentation")]
+        [Tooltip("Responsive visual springs for the driven rover. Does not change suspension forces or repair deliveries.")]
+        public bool responsiveWheelVisuals;
+        public event System.Action<float> Landed;
+        public int PoseVersion {get;private set;}
+        float unsupportedTime,fallSpeed;
 
         public Vector3 localForward = Vector3.forward;
         public bool controllable;
@@ -233,6 +240,8 @@ namespace MoonThemedGame.Scavenger
             throttle = steer = drift = overturnedFor = 0;
             wasHandbrake=false;driftSign=1;
             Airborne=false;airTime=airPitch=0;lastHullContact=float.NegativeInfinity;
+            unsupportedTime=fallSpeed=0;PoseVersion++;
+            foreach(var wheel in wheels)wheel.visualVelocity=0;
             body.linearVelocity = Vector3.zero;
             body.angularVelocity = Vector3.zero;
             body.position = position;
@@ -269,6 +278,7 @@ namespace MoonThemedGame.Scavenger
                 Suspension(wheel, up, dt);
                 if (wheel.grounded) grounded++;
             }
+            UpdateLanding(grounded,dt);
             UpdateAirControl(grounded,input,airPitchInput,dt);
             if (grounded > 0 && !IsOverturned)
             {
@@ -283,6 +293,18 @@ namespace MoonThemedGame.Scavenger
 
         void OnCollisionEnter(Collision collision)=>lastHullContact=Time.time;
         void OnCollisionStay(Collision collision)=>lastHullContact=Time.time;
+        void UpdateLanding(int grounded,float dt)
+        {
+            if(body.isKinematic){unsupportedTime=fallSpeed=0;return;}
+            if(grounded==0)
+            {
+                unsupportedTime+=dt;fallSpeed=Mathf.Max(fallSpeed,-body.linearVelocity.y);return;
+            }
+            float impact=Mathf.Max(fallSpeed,-body.linearVelocity.y);
+            if(unsupportedTime>=.12f&&!IsOverturned&&impact>length*.45f)
+                Landed?.Invoke(Mathf.InverseLerp(length*.45f,length*2.8f,impact));
+            unsupportedTime=fallSpeed=0;
+        }
         void UpdateAirControl(int grounded,Vector2 input,float airPitchInput,float dt)
         {
             bool flying=grounded==0 && Time.time-lastHullContact>0.12f && !body.isKinematic;
@@ -438,22 +460,42 @@ namespace MoonThemedGame.Scavenger
             return true;
         }
 
-        void LateUpdate()
+        void LateUpdate()=>AnimateWheels(Time.deltaTime);
+        void AnimateWheels(float dt)
         {
             var up = transform.up;
             float speed = ForwardSpeed;
             foreach (var wheel in wheels)
             {
                 float lift = wheel.radius * travel - wheel.length;
-                wheel.visualLift = Mathf.Lerp(wheel.visualLift, lift, 1 - Mathf.Exp(-25 * Time.deltaTime));
+                if(responsiveWheelVisuals)SpringWheel(wheel,lift,dt);
+                else wheel.visualLift = Mathf.Lerp(wheel.visualLift, lift, 1 - Mathf.Exp(-25 * dt));
                 var parent = wheel.transform.parent;
-                wheel.spin += speed / Mathf.Max(0.01f, wheel.radius) * Mathf.Rad2Deg * Time.deltaTime;
+                wheel.spin += speed / Mathf.Max(0.01f, wheel.radius) * Mathf.Rad2Deg * dt;
                 var spin = Quaternion.AngleAxis(wheel.spin, wheel.axleInParent);
                 var turn = Quaternion.AngleAxis(wheel.frontAxle ? CurrentSteeringAngle : 0, parent.InverseTransformDirection(up));
                 var offset = parent.InverseTransformVector(up * wheel.visualLift);
                 wheel.transform.localPosition = wheel.centerInParent + offset + turn * spin * wheel.pivotInParent;
                 wheel.transform.localRotation = turn * spin * wheel.restRotation;
             }
+        }
+
+        // Exact damped spring: a fast compression and one small rebound, stable at low FPS.
+        // Only the displayed wheel moves; tyre contacts and all physical forces stay unchanged.
+        void SpringWheel(Wheel wheel,float target,float dt)
+        {
+            const float frequency=30,damping=.68f;
+            float oscillation=frequency*Mathf.Sqrt(1-damping*damping);
+            float displacement=wheel.visualLift-target;
+            float envelope=Mathf.Exp(-damping*frequency*dt);
+            float sine=Mathf.Sin(oscillation*dt),cosine=Mathf.Cos(oscillation*dt);
+            float coefficient=(wheel.visualVelocity+damping*frequency*displacement)/oscillation;
+            float next=target+envelope*(displacement*cosine+coefficient*sine);
+            wheel.visualVelocity=envelope*(wheel.visualVelocity*cosine-
+                (damping*frequency*wheel.visualVelocity+frequency*frequency*displacement)/oscillation*sine);
+            float limit=wheel.radius*travel;
+            wheel.visualLift=Mathf.Clamp(next,-limit,limit);
+            if(wheel.visualLift!=next)wheel.visualVelocity=0;
         }
 
         static Vector2 ReadInput()

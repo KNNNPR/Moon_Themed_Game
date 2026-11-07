@@ -28,11 +28,26 @@ mouse button or a right-stick click resets the view. Keyboard camera reset, hand
 and recovery can be rebound in Settings / Controls; older custom bindings are preserved.
 
 The camera ignores rover roll/pitch and adds a small cornering bank of at most 1.25 degrees.
-At maximum speed the field of view grows by 12 degrees, chase distance by 12%, and the
-chase angle lowers by 3 degrees. These effects blend with speed and settle back at rest.
+At maximum speed the field of view grows by 10 degrees, chase distance by 12%, and the
+chase angle lowers by 3 degrees. Acceleration adds up to 1.5 degrees of temporary FOV
+and a small extra pullback. These effects blend with speed and settle back at rest.
+Fast turns add up to 0.075 seconds of follow smoothing; manual orbit keeps its direct
+look smoothing. Corner bank fades out during flight so flips retain a stable horizon.
 The camera clamps vertical look, pulls in at obstacles and smoothly extends again.
 Tuner, pause and disconnected states suppress look input;
 the first mouse delta after UI handoff is discarded to prevent a camera jump.
+
+A real landing after at least 0.12 seconds unsupported generates one impulse scaled
+by downward impact speed. Small ground bumps do not retrigger it. The feed dips and
+nods briefly, with a small rebound and an exponential decay that ends within 0.65 seconds.
+Its pivot catches up faster during this recovery, and obstruction casts include the
+landing offset. Disabled feeds ignore impacts; reconnect, evacuation and manual
+recovery reset motion history rather than replaying a landing or an acceleration spike.
+
+Only the driven rover enables `responsiveWheelVisuals`. Its displayed wheels use a
+damped spring for visible compression and rebound, limited to existing suspension
+travel and settled within about 0.6 seconds. Contact casts, spring forces, grip and
+repair-delivery animation retain their existing behavior.
 
 Tuning lives on `ScavengerDrive` and `ScavengerOrbitCamera`. The link installs both
 at runtime. Drive speed, acceleration and braking are measured in bot lengths so the
@@ -40,7 +55,9 @@ existing robot scale and drive upgrades keep their proportions. `driftRearGrip` 
 the looseness of the rear axle, `handbrakeYawBoost` the extra turning response,
 `handbrakeDeceleration` the loss of speed, `gripRecovery` the return of grip, and `speedDownforce`
 the high-speed load on the suspension. Camera speed effects are controlled by
-`speedFieldOfView`, `speedPullback`, `speedPitchDrop` and `maximumCornerBank`.
+`speedFieldOfView`, `speedPullback`, `speedPitchDrop`, `maximumCornerBank`,
+`cornerFollowLag`, `accelerationFieldOfView`, `accelerationPullback`, `landingDip`
+and `landingNod`.
 
 The start location contains only the `Robot Start` transform. Startup does not generate
 a test floor, base pad, ramps or rocks. Existing authored terrain supplies the geometry;
