@@ -47,6 +47,7 @@ public class FirstPersonController : MonoBehaviour
     public static bool LookFrozen;
     public Transform CameraRoot => cameraRoot;
     public float Pitch => pitch;
+    public bool Noclip {get;private set;}
     // Feed recoil into the same view angles as mouse input, so the player can compensate.
     public void AddViewKick(float up, float yaw)
     {
@@ -104,7 +105,7 @@ public class FirstPersonController : MonoBehaviour
         }
 
         UpdateLook();
-        UpdateCrouch(MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Crouch),Time.deltaTime);
+        if(!Noclip)UpdateCrouch(MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Crouch),Time.deltaTime);
         UpdateMovement();
     }
 
@@ -202,6 +203,12 @@ public class FirstPersonController : MonoBehaviour
 
     private void Move(Vector2 input,bool jumpRequested,float dt)
     {
+        if(Noclip)
+        {
+            float climb=(MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Jump)?1:0)-
+                (MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Crouch)?1:0);
+            Fly(input,climb,dt);return;
+        }
         if(!controller.enabled || dt<=0)return;
 
         bool sprinting=!IsCrouching && MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Sprint);
@@ -239,6 +246,41 @@ public class FirstPersonController : MonoBehaviour
         {
             verticalVelocity = 0f;
         }
+    }
+
+    public bool SetNoclip(bool active)
+    {
+        if(active==Noclip)return true;
+        if(!controller||(!active&&!HasCollisionRoom()))return false;
+        horizontalVelocity=Vector3.zero;verticalVelocity=0;
+        Noclip=active;controller.enabled=!active;
+        GetComponent<MoonThemedGame.Repair.PlayerBody>()?.SetNoclipHidden(active);
+        return true;
+    }
+    bool HasCollisionRoom()
+    {
+        var scale=transform.lossyScale;
+        float radius=controller.radius*Mathf.Max(Mathf.Abs(scale.x),Mathf.Abs(scale.z));
+        float height=Mathf.Max(controller.height*Mathf.Abs(scale.y),radius*2);
+        float inset=Mathf.Max(.01f,controller.skinWidth*Mathf.Abs(scale.y));
+        var center=transform.TransformPoint(controller.center);var half=transform.up*(height*.5f-radius);
+        int count=Physics.OverlapCapsuleNonAlloc(center-half,center+half,Mathf.Max(.001f,radius-inset),stanceOverlaps,~0,QueryTriggerInteraction.Ignore);
+        if(count==stanceOverlaps.Length)return false;
+        for(int i=0;i<count;i++)
+        {
+            var other=stanceOverlaps[i];
+            if(other==controller||other.transform.IsChildOf(transform)||Physics.GetIgnoreLayerCollision(gameObject.layer,other.gameObject.layer)||Physics.GetIgnoreCollision(controller,other))continue;
+            return false;
+        }
+        return true;
+    }
+    void Fly(Vector2 input,float climb,float dt)
+    {
+        if(!Noclip||dt<=0)return;
+        var view=cameraRoot?cameraRoot:transform;
+        var direction=Vector3.ClampMagnitude(view.right*input.x+view.forward*input.y+Vector3.up*climb,1);
+        bool sprint=MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Sprint);
+        transform.position+=direction*(sprint?sprintSpeed:moveSpeed)*DebugSpeedMultiplier*dt;
     }
 
     private void OnApplicationFocus(bool hasFocus)

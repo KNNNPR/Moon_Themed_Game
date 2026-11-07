@@ -26,6 +26,8 @@ namespace MoonThemedGame.Interactions
         bool targetOpen;
         [SerializeField] DoorInteractionZone fixedZone;
         GameObject interactionZone;
+        Collider[] movingColliders;
+        readonly Collider[] safetyOverlaps=new Collider[64];
 
         public bool IsOpen => targetOpen;
         public override string Prompt => targetOpen ? "E — Close" : "E — Open";
@@ -37,6 +39,7 @@ namespace MoonThemedGame.Interactions
             if (fixedZone) interactionZone = fixedZone.gameObject;
             closedPosition = movingPart.localPosition;
             closedRotation = movingPart.localRotation;
+            movingColliders=movingPart.GetComponentsInChildren<Collider>();
             var renderers = movingPart.GetComponentsInChildren<MeshRenderer>();
             if (renderers.Length > 0)
             {
@@ -97,16 +100,64 @@ namespace MoonThemedGame.Interactions
             if (interactionZone) Destroy(interactionZone);
         }
 
-        void Update()
+        void Update()=>Advance(Time.deltaTime);
+        void Advance(float dt)
         {
-            progress = Mathf.MoveTowards(progress, targetOpen ? 1f : 0f,
-                Time.deltaTime / Mathf.Max(0.05f, duration));
+            if(dt<=0)return;
+            float next=Mathf.MoveTowards(progress,targetOpen?1:0,dt/Mathf.Max(.05f,duration));
+            if(Mathf.Approximately(progress,next))return;
+            if(!targetOpen&&ClosingBlocked(next))
+            {
+                targetOpen=true;return;
+            }
+            progress=next;
             float t = Mathf.SmoothStep(0f, 1f, progress);
             if (motion == Motion.Slide)
                 movingPart.localPosition = closedPosition + openOffset * t;
             else
                 movingPart.localRotation = closedRotation *
                     Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(openEuler), t);
+        }
+
+        bool ClosingBlocked(float next)
+        {
+            if(movingColliders==null)return false;
+            float from=Mathf.SmoothStep(0,1,progress),to=Mathf.SmoothStep(0,1,next);
+            float travel=motion==Motion.Slide?movingPart.parent?movingPart.parent.TransformVector(openOffset*(to-from)).magnitude:
+                (openOffset*(to-from)).magnitude:Mathf.Abs(to-from)*openEuler.magnitude*Mathf.Deg2Rad*4;
+            int samples=Mathf.Clamp(Mathf.CeilToInt(travel/.08f),1,96);
+            for(int sample=0;sample<=samples;sample++)
+            {
+                float t=Mathf.Lerp(from,to,(float)sample/samples);
+                var position=motion==Motion.Slide?closedPosition+openOffset*t:movingPart.localPosition;
+                var rotation=motion==Motion.Rotate?closedRotation*Quaternion.Slerp(Quaternion.identity,Quaternion.Euler(openEuler),t):movingPart.localRotation;
+                var worldPosition=movingPart.parent?movingPart.parent.TransformPoint(position):position;
+                var worldRotation=movingPart.parent?movingPart.parent.rotation*rotation:rotation;
+                var turn=worldRotation*Quaternion.Inverse(movingPart.rotation);
+                foreach(var shape in movingColliders)
+                {
+                    if(!shape||!shape.enabled||shape.isTrigger)continue;
+                    Vector3 localCenter,localSize;
+                    if(shape is BoxCollider box){localCenter=box.center;localSize=box.size;}
+                    else if(shape is MeshCollider mesh&&mesh.sharedMesh){localCenter=mesh.sharedMesh.bounds.center;localSize=mesh.sharedMesh.bounds.size;}
+                    else {localCenter=shape.transform.InverseTransformPoint(shape.bounds.center);localSize=Vector3.zero;}
+                    var scale=shape.transform.lossyScale;
+                    var half=localSize==Vector3.zero?shape.bounds.extents:
+                        Vector3.Scale(localSize*.5f,new Vector3(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z)));
+                    var center=worldPosition+turn*(shape.transform.TransformPoint(localCenter)-movingPart.position);
+                    var orientation=localSize==Vector3.zero?turn:turn*shape.transform.rotation;
+                    int count=Physics.OverlapBoxNonAlloc(center,half+Vector3.one*.06f,safetyOverlaps,orientation,~0,QueryTriggerInteraction.Ignore);
+                    if(count==safetyOverlaps.Length)return true;
+                    for(int i=0;i<count;i++)
+                    {
+                        var other=safetyOverlaps[i];
+                        if(!other||other.transform.IsChildOf(movingPart)||
+                            Physics.GetIgnoreLayerCollision(shape.gameObject.layer,other.gameObject.layer)||Physics.GetIgnoreCollision(shape,other))continue;
+                        if(other is CharacterController character&&character.enabled)return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

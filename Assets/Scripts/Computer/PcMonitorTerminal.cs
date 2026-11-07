@@ -64,6 +64,7 @@ namespace MoonThemedGame.Computer
         public bool PointerActive { get; private set; }
         public Vector2 PointerPosition { get; private set; }
         public int Credits => credits;
+        public bool RouteMapOpen=>GetComponent<RoutePlannerApp>()?.IsOpen??false;
 
         void OnEnable()
         {
@@ -117,6 +118,7 @@ namespace MoonThemedGame.Computer
             if(!TryGetComponent<MoonFinderApp>(out _))gameObject.AddComponent<MoonFinderApp>();
             if(!TryGetComponent<MoneyGetApp>(out _))gameObject.AddComponent<MoneyGetApp>();
             if(!TryGetComponent<CrazyCosmonautsApp>(out _))gameObject.AddComponent<CrazyCosmonautsApp>();
+            if(gameObject.scene.name=="Operator"&&!TryGetComponent<RoutePlannerApp>(out _))gameObject.AddComponent<RoutePlannerApp>();
         }
 
         public void SetCredits(int amount)
@@ -257,7 +259,7 @@ namespace MoonThemedGame.Computer
             cursor.style.left = Mathf.Clamp(point.x, 0, assets.resolution.x - 20);
             cursor.style.top = Mathf.Clamp(point.y, 0, assets.resolution.y - 30);
             HoveredIcon = null;
-            bool coveredByGame = GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false;
+            bool coveredByGame = RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false);
             foreach (var icon in icons)
             {
                 bool over = !coveredByGame && icon.worldBound.Contains(point);
@@ -305,6 +307,8 @@ namespace MoonThemedGame.Computer
         public void Back()
         {
             if (!focused || IsTransitioning) return;
+            var route=GetComponent<RoutePlannerApp>();
+            if(route&&route.IsOpen){route.Close();return;}
             var crazy = GetComponent<CrazyCosmonautsApp>();
             if (crazy && crazy.IsOpen) { crazy.HandleBack(); return; }
             var money = GetComponent<MoneyGetApp>();
@@ -323,6 +327,7 @@ namespace MoonThemedGame.Computer
         public void ExitFocus(bool instant = false)
         {
             if (!focused) return;
+            GetComponent<RoutePlannerApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
             HidePointer();
             transitionDirection = -1;

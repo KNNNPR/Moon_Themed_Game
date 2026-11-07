@@ -124,6 +124,15 @@ namespace MoonThemedGame.Repair
             lastPosition = transform.position;
             Application.onBeforeRender -= PoseArms;
             if(cosmonaut==null)Application.onBeforeRender += PoseArms;
+            SetNoclipHidden(controller.Noclip);
+        }
+
+        public void SetNoclipHidden(bool hidden)
+        {
+            if(!root||root.gameObject.activeSelf==!hidden)return;
+            if(hidden&&open)Close(false);
+            root.gameObject.SetActive(!hidden);
+            lastPosition=transform.position;bodyVelocity=Vector3.zero;walk=0;
         }
 
         static Vector3 Flat(Vector3 v) { v.y = 0; return v.sqrMagnitude > 1e-6f ? v.normalized : Vector3.forward; }
@@ -372,7 +381,7 @@ namespace MoonThemedGame.Repair
         bool CanOpen()
         {
             if (!view || !view.isActiveAndEnabled || GameSettingsMenu.BlockGameplayInput || Cursor.lockState != CursorLockMode.Locked) return false;
-            return controller && controller.enabled;
+            return controller && controller.enabled && !controller.Noclip;
         }
 
         bool Available(Slot slot) => slot.tool && slot.Stowed;
@@ -385,6 +394,7 @@ namespace MoonThemedGame.Repair
 
         void Update()
         {
+            if(controller&&controller.Noclip)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if (!root) return;
             AnimateLegs();
@@ -468,6 +478,7 @@ namespace MoonThemedGame.Repair
         // Runs after every LateUpdate, so the hands land on the carried item where it is drawn.
         void PoseArms()
         {
+            if(controller&&controller.Noclip)return;
             if (!root || (cosmonaut==null && (left == null || !left.shoulder))) return;
             if (view) { PoseKit(); PoseTools(); }
             var carried = RepairCarryable.Current;
@@ -627,6 +638,7 @@ namespace MoonThemedGame.Repair
 
         void LateUpdate()
         {
+            if(controller&&controller.Noclip)return;
             if(cosmonaut==null || DeveloperConsole.BlockGameplayInput)return;
             if(view)view.nearClipPlane=Mathf.Min(view.nearClipPlane,.025f);
             var capsule=GetComponent<CharacterController>();
@@ -637,7 +649,7 @@ namespace MoonThemedGame.Repair
 
         void OnGUI()
         {
-            if (GameSettingsMenu.BlockGameplayInput || open) return;
+            if (InteractionHud.Suppressed || GameSettingsMenu.BlockGameplayInput || open) return;
             if (message != null && Time.time < messageUntil)
                 RepairHud.Hint(Screen.width / 2f, Screen.height / 2f + 60, message);
             if (CanOpen())

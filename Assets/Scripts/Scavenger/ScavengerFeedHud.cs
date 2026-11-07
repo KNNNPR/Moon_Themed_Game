@@ -85,10 +85,9 @@ namespace MoonThemedGame.Scavenger
                 markerDot.Apply();
             }
             float size=Mathf.Clamp(Screen.height/100f,8,12);
-            foreach(var piece in orderMarkers)
+            void Marker(Vector3 worldPoint,string prefix,Color ink)
             {
-                if(!piece || piece.Collected)continue;
-                var point=camera.WorldToViewportPoint(piece.transform.position+Vector3.up*Mathf.Max(0.4f,piece.radius*0.5f));
+                var point=camera.WorldToViewportPoint(worldPoint);
                 Vector2 direction=new Vector2(point.x-0.5f,point.y-0.5f);
                 if(point.z<0)direction=-direction;
                 if(point.z<0 && direction.sqrMagnitude<0.00001f)direction=Vector2.down;
@@ -96,8 +95,9 @@ namespace MoonThemedGame.Scavenger
                     direction*=Mathf.Min(0.46f/Mathf.Max(0.0001f,Mathf.Abs(direction.x)),0.35f/Mathf.Max(0.0001f,Mathf.Abs(direction.y)));
                 var screen=new Vector2(Mathf.Round((0.5f+direction.x)*Screen.width),Mathf.Round((0.5f-direction.y)*Screen.height));
                 screen.x=Mathf.Clamp(screen.x,24,Screen.width-110);screen.y=Mathf.Clamp(screen.y,100,Screen.height-125);
-                string label=Mathf.CeilToInt(Vector3.Distance(link.robot.position,piece.transform.position)).ToString(CultureInfo.InvariantCulture)+" m";
+                string label=prefix+Mathf.CeilToInt(Vector3.Distance(link.robot.position,worldPoint)).ToString(CultureInfo.InvariantCulture)+" m";
                 var labelSize=markerText.CalcSize(new GUIContent(label));
+                screen.x=Mathf.Clamp(screen.x,24,Mathf.Max(24,Screen.width-labelSize.x-size-14));
                 var rect=new Rect(screen.x+size,Mathf.Round(screen.y-labelSize.y/2),labelSize.x+4,labelSize.y);
                 Color saved=GUI.color;GUI.color=Color.black;
                 GUI.DrawTexture(new Rect(screen.x-size/2-2,screen.y-size/2-2,size+4,size+4),markerDot);
@@ -107,9 +107,13 @@ namespace MoonThemedGame.Scavenger
                 GUI.Label(new Rect(rect.x+1,rect.y,rect.width,rect.height),label,markerText);
                 GUI.Label(new Rect(rect.x,rect.y-1,rect.width,rect.height),label,markerText);
                 GUI.Label(new Rect(rect.x,rect.y+1,rect.width,rect.height),label,markerText);
-                GUI.color=Color.white;GUI.DrawTexture(new Rect(screen.x-size/2,screen.y-size/2,size,size),markerDot);
-                markerText.normal.textColor=Color.white;GUI.Label(rect,label,markerText);GUI.color=saved;
+                GUI.color=ink;GUI.DrawTexture(new Rect(screen.x-size/2,screen.y-size/2,size,size),markerDot);
+                markerText.normal.textColor=ink;GUI.Label(rect,label,markerText);GUI.color=saved;
             }
+            var route=GetComponent<MoonThemedGame.Computer.RoutePlannerApp>();
+            foreach(var piece in orderMarkers)if(piece&&!piece.Collected&&(!route||!route.HasWaypoint||Vector3.Distance(piece.transform.position,route.Waypoint)>2))
+                Marker(piece.transform.position+Vector3.up*Mathf.Max(.4f,piece.radius*.5f),"",Color.white);
+            if(route&&route.HasWaypoint)Marker(route.Waypoint,Loc.Russian?"МЕТКА ":"WAYPOINT ",new Color(1,.8f,.38f));
         }
 
         void OnDestroy(){if(markerDot)Destroy(markerDot);if(stuntDrive)stuntDrive.SuccessfulFlip-=OnFlip;}

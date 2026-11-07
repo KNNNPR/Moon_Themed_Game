@@ -217,13 +217,13 @@ namespace MoonThemedGame.Computer
             var mint=tube?new Color(.92f,.88f,.72f):new Color(.67f,.83f,.77f);
             var dim=tube?new Color(.53f,.5f,.35f):new Color(.32f,.47f,.45f);
             var amber=tube?new Color(.96f,.9f,.66f):new Color(.86f,.72f,.43f);
-            Text("PALE.HORSE  //  LUNAR TECHNICAL STATION 7",15,dim).style.marginBottom=26;
+            Text(T("PALE.HORSE [LUNAR TECHNICAL STATION 7]","PALE.HORSE [ЛУННАЯ ТЕХНИЧЕСКАЯ СТАНЦИЯ 7]"),15,dim).style.marginBottom=26;
             if(screen==Screen.Credits&&content.logo)
             {
                 var logo=new Image{vectorImage=content.logo,scaleMode=ScaleMode.ScaleToFit};logo.style.width=100;logo.style.height=100;logo.style.marginBottom=24;card.Add(logo);
             }
             title=Text(screen==Screen.Fired?T("YOU ARE FIRED","ВЫ УВОЛЕНЫ"):screen==Screen.Thanks?(Loc.Russian?content.thanksRussian:content.thanksEnglish):"",screen==Screen.Fired?56:36,screen==Screen.Fired?amber:mint);
-            subtitle=Text(screen==Screen.Credits?T("ENDLESS MODE OPENED","БЕСКОНЕЧНЫЙ РЕЖИМ ОТКРЫТ"):screen==Screen.Fired?T("CONTRACT TERMINATED // RECOVERY FUNDS UNAVAILABLE","КОНТРАКТ РАСТОРГНУТ // НЕТ СРЕДСТВ НА ЭВАКУАЦИЮ"):"SCAV_BOT_AURINKO  /  SIGNAL CLOSED",15,dim);
+            subtitle=Text(screen==Screen.Credits?T("ENDLESS MODE OPENED","БЕСКОНЕЧНЫЙ РЕЖИМ ОТКРЫТ"):screen==Screen.Fired?T("CONTRACT TERMINATED [RECOVERY FUNDS UNAVAILABLE]","КОНТРАКТ РАСТОРГНУТ [НЕТ СРЕДСТВ НА ЭВАКУАЦИЮ]"):"SCAV_BOT_AURINKO [SIGNAL CLOSED]",15,dim);
             subtitle.style.marginTop=12;subtitle.style.marginBottom=26;
             if(screen==Screen.Credits)
             {

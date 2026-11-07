@@ -97,6 +97,7 @@ namespace MoonThemedGame.Interactions
 
         void OnGUI()
         {
+            if(InteractionHud.Suppressed)return;
             if (!target || !CanUseInput()) return;
             if (!dot)
             {

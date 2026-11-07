@@ -65,6 +65,7 @@ namespace MoonThemedGame.Repair
         readonly Queue<Reaction> queue = new Queue<Reaction>();
         readonly List<WheelVisual> wheels = new List<WheelVisual>();
         RepairRobotTarget owner;
+        RepairRobotPersonality personality;
         GameObject effects;
         Material indicatorMaterial;
         Reaction current;
@@ -108,7 +109,12 @@ namespace MoonThemedGame.Repair
                 else if (part.kind == Kind.Lamp) CreateChannels(part);
             configured = true;
             WheelChecksCompleted = LampChecksCompleted = SynchronizedChecksCompleted = 0;
+            personality=GetComponent<RepairRobotPersonality>();
+            if(!personality)personality=gameObject.AddComponent<RepairRobotPersonality>();
+            personality.Configure(robot,this,slots);
         }
+
+        internal bool IsEffect(Transform source)=>effects&&source.IsChildOf(effects.transform);
 
         void CreateIndicator(Part part, Vector3 robotCenter)
         {
@@ -336,6 +342,7 @@ namespace MoonThemedGame.Repair
                         brightness = .2f + .6f * Mathf.Pow(Mathf.Sin(inspectionProgress * Mathf.PI * (part.secure ? 1 : 3)), 2);
                     part.indicator.gameObject.SetActive(brightness > .005f);
                     part.indicator.position = part.visual.transform.TransformPoint(part.indicatorAnchor);
+                    if(personality)personality.PoseEffect(part.indicator,false);
                     Color color = inspectionPhase == RepairDiagnosticPhase.Power && !part.secure ? new Color(1, .5f, .12f) : new Color(.35f, 1, .57f);
                     part.indicatorBlock.SetColor(BaseColor, color * brightness * 2);
                     part.indicatorRenderer.SetPropertyBlock(part.indicatorBlock);
@@ -351,6 +358,7 @@ namespace MoonThemedGame.Repair
                     float scanTime = inspectionPhase == RepairDiagnosticPhase.Lights ? inspectionProgress : t;
                     float scan = Style == RepairRevivalStyle.Finder && scanCheck ? Mathf.Sin(scanTime * Mathf.PI * 2) * 8 : 0;
                     channel.beam.transform.rotation = Quaternion.LookRotation(direction, transform.up) * Quaternion.Euler(12, scan, 0);
+                    if(personality)personality.PoseEffect(channel.beam.transform,true);
                 }
         }
 
@@ -387,9 +395,11 @@ namespace MoonThemedGame.Repair
         {
             if (passed && inspectionGearStarted) SynchronizedChecksCompleted++;
             SetInspection(RepairDiagnosticPhase.None, 0);
+            if(passed&&personality)personality.BeginReaction();
         }
         internal void StopTests()
         {
+            if(personality)personality.StopReaction();
             queue.Clear(); if (current != null || wheels.Count > 0) EndCurrent(false);
             inspectionPhase = RepairDiagnosticPhase.None;
         }

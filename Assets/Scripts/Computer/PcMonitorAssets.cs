@@ -15,6 +15,7 @@ namespace MoonThemedGame.Computer
         public VectorImage messagesIcon;
         public VectorImage coinIcon;
         public VectorImage cursorIcon;
+        public VectorImage mapIcon;
         public TextAsset translations;
         public Material screenMaterial;
         public Vector2Int resolution = new Vector2Int(960, 512);

@@ -30,6 +30,7 @@ namespace MoonThemedGame.Scavenger
         Quaternion lockRotation;
         float lockFall, lockDrop, lockTime = -1, swing, delay;
         bool unlocked, open;
+        public bool IsOpen=>open&&swing>=.999f;
 
         public void Setup(Transform lockTransform, Transform[] leafTransforms)
         {

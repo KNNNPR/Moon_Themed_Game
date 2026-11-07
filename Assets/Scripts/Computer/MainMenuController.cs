@@ -175,7 +175,7 @@ namespace MoonThemedGame.Computer
             AddButton("settings",OpenSettings);AddButton("exit",RequestExit);
             var language=new Button(Loc.Toggle){name="menu-language"};language.AddToClassList("menu-language");screenRoot.Add(language);buttons.Add("language",language);
             status=Text(screenRoot,"AWAITING OPERATOR _","menu-status");
-            var footer=Text(screenRoot,"ZERO-G  /  SYSTEM READY","menu-footer");footer.name="menu-footer";
+            var footer=Text(screenRoot,"ZERO-G [SYSTEM READY]","menu-footer");footer.name="menu-footer";
             ShowModes(false);
         }
         static Label Text(VisualElement parent,string text,string css)
@@ -395,7 +395,7 @@ namespace MoonThemedGame.Computer
             buttons["back"].text=Loc.Russian?"НАЗАД":"BACK";
             screenRoot.Q<Label>("menu-station").text=Loc.Russian?"СТАНЦИЯ 7":"STATION 7";
             screenRoot.Q<Label>("menu-subtitle").text=Loc.Russian?"ТЕРМИНАЛ ОПЕРАТОРА":"OPERATOR TERMINAL";
-            screenRoot.Q<Label>("menu-footer").text=Loc.Russian?"НЕВЕСОМОСТЬ  /  СИСТЕМА ГОТОВА":"ZERO-G  /  SYSTEM READY";
+            screenRoot.Q<Label>("menu-footer").text=Loc.Russian?"НЕВЕСОМОСТЬ [СИСТЕМА ГОТОВА]":"ZERO-G [SYSTEM READY]";
             title?.Relocalize();
         }
         void OnDestroy()

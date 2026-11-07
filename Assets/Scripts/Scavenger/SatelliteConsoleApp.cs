@@ -59,7 +59,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal) return;
             if (icon == null && terminal.Root != null) Build();
             if (icon == null) return;
-            if (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false) return;
+            if (terminal.RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false)) return;
 
             bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             if (TryGetComponent(out RepairMessagesApp messages) && messages.IsOpen) pointer = false;
@@ -111,6 +111,7 @@ namespace MoonThemedGame.Scavenger
             GetComponent<MoonFinderApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
