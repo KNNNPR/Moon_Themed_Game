@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0df3b146f06401f8c3b223629369c68, type: 3}
+  m_Name: StoryFinaleContent
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.StoryFinaleContent
+  logo: {fileID: 7388822144124034973, guid: b89ee00a6f56bb3459492cbb55c1fc1e, type: 3}
+  customer: SCAV_BOT_AURINKO
+  english: 'I lived a long life, long enough to get sick. You know how it goes in a machine? They begin to rust, but not physically, no, not like that... It starts from the head, in the brain, in the circulating tubes and optical fiber, diesel makes you shudder. My friend, please, take care of me.'
+  russian: 'Я прожил долгую жизнь, достаточно долгую, чтобы успеть приболеть. Знаешь как бывает у машин? Они начинают ржаветь, но не физически, нет, не физически... Это в голове, в мозгах, в циркулирующих трубках и оптоволокне, солярка пробирает до дрожи. Друг, пожалуйста, позаботься обо мне.'
+  thanksEnglish: Thank you
+  thanksRussian: Спасибо тебе
+  credits:
+  - name: APPLEJOLLYGARDEN
+    englishRole: "3D ART\nGAME DESIGN\nEFFECTS / SHADERS"
+    russianRole: "3D-ГРАФИКА\nГЕЙМДИЗАЙН\nЭФФЕКТЫ / ШЕЙДЕРЫ"
+  - name: ZHELE
+    englishRole: "SOUND DESIGN\nMUSIC"
+    russianRole: "ЗВУКОВОЙ ДИЗАЙН\nМУЗЫКА"
+  - name: KNNPR, NIKITA
+    englishRole: "CODE\nSCENE SETTINGS"
+    russianRole: "КОД\nНАСТРОЙКА СЦЕН"
+  closingEnglish: "Always have an apple from your jolly garden.\nDear Player."
+  closingRussian: "Пусть у тебя всегда будет яблоко из твоего весёлого сада.\nДорогой игрок."

@@ -150,6 +150,12 @@ namespace MoonThemedGame.Repair
             }
             return bounds;
         }
+        internal void BeginSecured(RepairRobotTarget owner,List<RepairBolt> fasteners,Bounds geometry)
+        {
+            Begin(owner,fasteners,transform.localPosition,transform.localRotation,Vector3.zero,
+                RepairBolt.Outward(owner,gameObject,out float size),size,geometry,null);
+            IsInstalling=false;RestoreColliders();Secure();
+        }
         static Vector3 Abs(Vector3 vector) => new Vector3(Mathf.Abs(vector.x), Mathf.Abs(vector.y), Mathf.Abs(vector.z));
 
         internal void SetSeatOffset(Vector3 offset) { seatOffset = offset; impactAge = 0; }

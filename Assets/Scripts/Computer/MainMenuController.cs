@@ -57,6 +57,7 @@ namespace MoonThemedGame.Computer
         Quaternion authoredRotation;
         float focus,started,powerOff;
         bool initialized;
+        bool modeSelection;
         int keyboardButton=-1;
         const float FocusFov=38;
 
@@ -169,16 +170,20 @@ namespace MoonThemedGame.Computer
             Text(screenRoot,"PALE.HORSE.BUILD_RUV","menu-kicker");Text(screenRoot,"STATION 7","menu-heading");
             screenRoot.Q<Label>(className:"menu-heading").name="menu-station";
             var subtitle=Text(screenRoot,"OPERATOR TERMINAL","menu-subtitle");subtitle.name="menu-subtitle";
-            AddButton("wake",()=>StartGame());AddButton("settings",OpenSettings);AddButton("exit",RequestExit);
+            AddButton("wake",()=>ShowModes(true));
+            AddButton("story",()=>StartGame(StationGameMode.Story));AddButton("endless",()=>StartGame(StationGameMode.Endless));AddButton("back",()=>ShowModes(false));
+            AddButton("settings",OpenSettings);AddButton("exit",RequestExit);
             var language=new Button(Loc.Toggle){name="menu-language"};language.AddToClassList("menu-language");screenRoot.Add(language);buttons.Add("language",language);
             status=Text(screenRoot,"AWAITING OPERATOR _","menu-status");
             var footer=Text(screenRoot,"ZERO-G  /  SYSTEM READY","menu-footer");footer.name="menu-footer";
+            ShowModes(false);
         }
         static Label Text(VisualElement parent,string text,string css)
         {var label=new Label(text);label.AddToClassList(css);parent.Add(label);return label;}
         void AddButton(string id,Action action)
         {
             var button=new Button(action){name="menu-"+id};button.AddToClassList("menu-action");screenRoot.Add(button);buttons.Add(id,button);
+            if(id=="story"||id=="endless"||id=="back")button.style.fontSize=32;
         }
         void BuildOverlay()
         {
@@ -274,7 +279,7 @@ namespace MoonThemedGame.Computer
             powerOff=Mathf.MoveTowards(powerOff,Powered?0:1,dt/.65f);
             if(screenMaterial.HasProperty("_PowerOff"))screenMaterial.SetFloat("_PowerOff",powerOff);
             focus=Mathf.MoveTowards(focus,IsFocused?1:0,dt/Mathf.Max(.1f,focusDuration));
-            if(!blocked && keys!=null && keys.escapeKey.wasPressedThisFrame && IsFocused)SetFocused(false);
+            if(!blocked && keys!=null && keys.escapeKey.wasPressedThisFrame && IsFocused){if(modeSelection)ShowModes(false);else SetFocused(false);}
             if(!blocked && viewCamera)
             {
                 if(mouse!=null && mouse.delta.ReadValue().sqrMagnitude>0)keyboardButton=-1;
@@ -290,16 +295,17 @@ namespace MoonThemedGame.Computer
                 else if(Powered && powerOff<.02f && IsFocused && focus>.97f)
                 {
                     int index=0;
-                    foreach(var pair in buttons)
+                    var visible=VisibleButtons();
+                    foreach(var pair in visible)
                     {
                         bool hover=hit && pair.Value.worldBound.Contains(panelPoint);
                         pair.Value.EnableInClassList("is-hovered",keyboardButton>=0?index==keyboardButton:hover);
                         if(click && hover)Activate(pair.Key);index++;
                     }
                     if(keys!=null && (keys.downArrowKey.wasPressedThisFrame || keys.upArrowKey.wasPressedThisFrame))
-                        keyboardButton=keyboardButton<0?(keys.downArrowKey.wasPressedThisFrame?0:buttons.Count-1):(keyboardButton+(keys.downArrowKey.wasPressedThisFrame?1:buttons.Count-1))%buttons.Count;
+                        keyboardButton=keyboardButton<0?(keys.downArrowKey.wasPressedThisFrame?0:visible.Count-1):(keyboardButton+(keys.downArrowKey.wasPressedThisFrame?1:visible.Count-1))%visible.Count;
                     if(keys!=null && keys.enterKey.wasPressedThisFrame && keyboardButton>=0)
-                    {int i=0;foreach(var pair in buttons)if(i++==keyboardButton){Activate(pair.Key);break;}}
+                    {int i=0;foreach(var pair in visible)if(i++==keyboardButton){Activate(pair.Key);break;}}
                 }
             }
             else if(highlight)highlight.SetHighlighted(false);
@@ -348,14 +354,30 @@ namespace MoonThemedGame.Computer
         public void Activate(string id)
         {
             if(!Powered || IsLoading)return;
-            switch(id){case "wake":StartGame();break;case "settings":OpenSettings();break;case "exit":RequestExit();break;case "language":Loc.Toggle();break;}
+            switch(id){case "wake":ShowModes(true);break;case "story":StartGame(StationGameMode.Story);break;case "endless":StartGame(StationGameMode.Endless);break;case "back":ShowModes(false);break;case "settings":OpenSettings();break;case "exit":RequestExit();break;case "language":Loc.Toggle();break;}
+        }
+        List<KeyValuePair<string,Button>> VisibleButtons()
+        {
+            var result=new List<KeyValuePair<string,Button>>();foreach(var pair in buttons)if(pair.Value.enabledSelf&&pair.Value.style.display.value!=DisplayStyle.None)result.Add(pair);return result;
+        }
+        public void ShowModes(bool visible)
+        {
+            modeSelection=visible;keyboardButton=-1;
+            foreach(var pair in buttons)
+            {
+                bool mode=pair.Key=="story"||pair.Key=="endless"||pair.Key=="back";
+                pair.Value.style.display=pair.Key=="language" || mode==visible?DisplayStyle.Flex:DisplayStyle.None;
+            }
+            if(buttons.ContainsKey("endless"))buttons["endless"].SetEnabled(StationRun.EndlessUnlocked);
         }
         public void OpenSettings(){var settings=FindFirstObjectByType<GameSettingsMenu>();if(settings)settings.Open();}
         public void RequestExit(){var settings=FindFirstObjectByType<GameSettingsMenu>();if(settings){settings.Open();settings.RequestQuit();}}
-        public void StartGame()
+        public void StartGame()=>StartGame(StationGameMode.Story);
+        public void StartGame(StationGameMode mode)
         {
             if(IsLoading || !Powered)return;
             if(!Application.CanStreamedLevelBeLoaded(assets.gameplayScene)){Debug.LogError("Add "+assets.gameplayScene+" to the build scene list.",this);return;}
+            if(!StationRun.Select(mode))return;
             IsLoading=true;foreach(var button in buttons.Values)button.SetEnabled(false);
             OperatorWakeUp.Request(assets.gameplayScene);
             Cursor.lockState=CursorLockMode.Locked;Cursor.visible=false;Time.timeScale=1;
@@ -368,6 +390,9 @@ namespace MoonThemedGame.Computer
             buttons["settings"].text=Loc.Russian?"НАСТРОЙКИ":"SETTINGS";
             buttons["exit"].text=Loc.Russian?"ВЫХОД":"EXIT";
             buttons["language"].text=Loc.Russian?"ЯЗЫК  [RU / EN]":"LANGUAGE  [EN / RU]";
+            buttons["story"].text=Loc.Russian?"СЮЖЕТНЫЙ РЕЖИМ":"STORY MODE";
+            buttons["endless"].text=(Loc.Russian?"БЕСКОНЕЧНЫЙ РЕЖИМ":"ENDLESS MODE")+(StationRun.EndlessUnlocked?"":(Loc.Russian?" [ЗАКРЫТО]":" [LOCKED]"));
+            buttons["back"].text=Loc.Russian?"НАЗАД":"BACK";
             screenRoot.Q<Label>("menu-station").text=Loc.Russian?"СТАНЦИЯ 7":"STATION 7";
             screenRoot.Q<Label>("menu-subtitle").text=Loc.Russian?"ТЕРМИНАЛ ОПЕРАТОРА":"OPERATOR TERMINAL";
             screenRoot.Q<Label>("menu-footer").text=Loc.Russian?"НЕВЕСОМОСТЬ  /  СИСТЕМА ГОТОВА":"ZERO-G  /  SYSTEM READY";

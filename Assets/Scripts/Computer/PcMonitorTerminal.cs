@@ -153,6 +153,7 @@ namespace MoonThemedGame.Computer
 
         void Update()
         {
+            if(StationStoryFlow.IsBlocking)return;
             if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             if (!Application.isPlaying || root == null) return;
             bool interact = false, escape = false;
@@ -278,6 +279,7 @@ namespace MoonThemedGame.Computer
 
         public void Focus(bool instant = false)
         {
+            if(StationStoryFlow.IsBlocking)return;
             if (focused || !Camera.main) return;
             focusedCamera = Camera.main;
             focusedCamera.GetComponentInParent<FirstPersonCameraEffects>()?.ResetWeaponMotion();

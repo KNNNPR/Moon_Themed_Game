@@ -23,7 +23,7 @@ namespace MoonThemedGame.Scavenger
         static readonly float[] CapacityScales = { 1, 1.4f, 1.85f, 2.4f };
         static readonly float[] DrainScales = { 1, 0.8f, 0.62f, 0.45f };
         static readonly float[] SpeedScales = { 1, 1.2f, 1.4f, 1.6f };
-        static readonly int[] CargoSlotsByLevel = { 4, 6, 8, 10 };
+        static readonly int[] CargoSlotsByLevel = { 2, 3, 4, 5 };
         const float LampFogScale = 0.35f;
 
         static readonly int[] levels = new int[All.Length];
@@ -42,6 +42,7 @@ namespace MoonThemedGame.Scavenger
         public static float FogScale => Lamps ? LampFogScale : 1;
         public static int CargoSlots => CargoSlotsByLevel[Level(Upgrade.Cargo)];
         public static bool HasArm => Level(Upgrade.Arm) > 0;
+        public static void ResetForRun(){Array.Clear(levels,0,levels.Length);Changed?.Invoke();}
 
         public static bool TryBuy(Upgrade upgrade, PcMonitorTerminal terminal)
         {

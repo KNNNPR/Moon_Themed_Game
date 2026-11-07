@@ -5,23 +5,20 @@ using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
 {
-    // Robot parts scattered around the base. SCAVENGER picks them up with E and unloads them
+    // Only the active order's missing parts lie outside. SCAVENGER picks them up with E and unloads them
     // at the charge station; they then lie in the repair bay for the player to fit.
     [DisallowMultipleComponent]
     public sealed class SalvageField : MonoBehaviour
     {
-        [Tooltip("Random fallback limit. An authored layout populates its own fixed points.")]
+        [Tooltip("Maximum required parts at once in the random fallback. Authored layouts use their selected order points.")]
         [Min(0)] public int maxPieces = 8;
-        [Tooltip("Random fallback count, used only when there are no authored spawn points.")]
-        [Min(0)] public int startPieces = 6;
-        public Vector2 respawnInterval = new Vector2(25, 40);
         public Vector2 spawnDistance = new Vector2(12, 55);
         public LayerMask groundLayers = ~0;
+        [Min(1)] public float targetSpacing=18;
+        [Range(0,1)] public float manipulatorCacheChance=.5f;
 
         ScavengerLink link;
-        GameObject[] kinds;
         Vector3 center;
-        float nextSpawn;
         float nextSupplyCheck;
         int orderNumber=1;
         RepairMessagesApp messages;
@@ -30,6 +27,13 @@ namespace MoonThemedGame.Scavenger
         readonly List<GameObject> cargo = new List<GameObject>();
         readonly List<SalvageSpawnPoint> spawnPoints=new List<SalvageSpawnPoint>();
         readonly RaycastHit[] hits = new RaycastHit[32];
+        readonly Dictionary<SalvageSpawnPoint,GameObject> orderAssignments=new Dictionary<SalvageSpawnPoint,GameObject>();
+        readonly List<SalvagePiece> fallbackPieces=new List<SalvagePiece>();
+        readonly HashSet<SalvageSpawnPoint> usedThisOrder=new HashSet<SalvageSpawnPoint>();
+        readonly HashSet<SalvageSpawnPoint> previousOrderPoints=new HashSet<SalvageSpawnPoint>();
+        float orderEndurance;
+        bool chooseManipulatorCache;
+        bool HasOrder=>messages&&messages.HasSalvageOrder;
 
         public IReadOnlyList<GameObject> Cargo => cargo;
         public bool Full => link && link.state && cargo.Count >= link.state.cargoCapacity;
@@ -57,88 +61,124 @@ namespace MoonThemedGame.Scavenger
             messages=owner.GetComponent<RepairMessagesApp>();
             var weather = MoonWeatherSystem.Active;
             center = weather ? weather.shelterCenter : home;
-            kinds = FindKinds();
-            if (kinds.Length == 0) { Debug.LogWarning("[Scavenger] No part prefabs for salvage.", this); return; }
             var layout=SalvageSpawnLayout.Ensure(gameObject.scene);
             spawnPoints.Clear();
             if(layout)spawnPoints.AddRange(layout.GetComponentsInChildren<SalvageSpawnPoint>());
             else spawnPoints.AddRange(SalvageSpawnPoint.All);
-            if (spawnPoints.Count > 0)
-                foreach (var point in spawnPoints) SpawnAt(point);
-            else
-                for (int i = 0; i < startPieces; i++) TrySpawn();
-            nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
+            ClearOrderSupply();
         }
 
-        static GameObject[] FindKinds()
+        public void ClearOrderSupply()
         {
-            var bay = RepairBay.Active ? RepairBay.Active : FindAnyObjectByType<RepairBay>();
-            if (bay && bay.Parts.Length > 0) return bay.Parts;
-            var dropper = FindAnyObjectByType<RepairRobotDropper>();
-            var list = new List<GameObject>();
-            if (dropper) list.AddRange(dropper.AllParts);
-            if (list.Count == 0)
-            {
-                var catalog = Resources.Load<ShopCatalog>("ShopCatalog");
-                if (catalog)
-                    foreach (var prefab in new[] { catalog.battery, catalog.wheel, catalog.headlights, catalog.cargoBay })
-                        if (prefab) list.Add(prefab);
-            }
-            return list.ToArray();
+            foreach(var piece in new List<SalvagePiece>(SalvagePiece.All))
+                if(piece&&piece.gameObject.scene==gameObject.scene)RemovePiece(piece);
+            foreach(var point in spawnPoints)if(point)point.Piece=null;
+            orderAssignments.Clear();fallbackPieces.Clear();orderNeeds.Clear();
+            Near=Closest=null;ClosestDistance=float.MaxValue;
         }
 
-        void SpawnAt(SalvageSpawnPoint point)
-        {
-            SpawnAt(point,null);
-        }
-        bool Allowed(SalvageSpawnPoint point)=>point && point.isActiveAndEnabled && point.progressionTier>=OrderTier;
-        public bool IsOrderTarget(SalvagePiece piece)=>messages && messages.HasActiveOrder && piece && piece.SpawnPoint &&
-            piece.SpawnPoint.orderRoute && piece.SpawnPoint.progressionTier==OrderTier;
+        bool Allowed(SalvageSpawnPoint point)=>point && point.isActiveAndEnabled && point.progressionTier>=OrderTier &&
+            (!point.requiresManipulator || RobotUpgrades.HasArm);
+        bool Owns(SalvagePiece piece)=>piece&&(piece.SpawnPoint?
+            orderAssignments.TryGetValue(piece.SpawnPoint,out var assigned)&&assigned==piece.prefab&&piece.SpawnPoint.Piece==piece:
+            fallbackPieces.Contains(piece));
+        public bool IsOrderTarget(SalvagePiece piece)=>HasOrder&&piece&&!piece.Collected&&Owns(piece);
+        float Endurance=>link && link.state?link.state.capacity/Mathf.Max(.01f,link.state.drainPerSecond)*RobotUpgrades.SpeedScale*.93f:93;
+        bool CanSupply(SalvageSpawnPoint point)=>Allowed(point) && point.estimatedLoopSeconds<=orderEndurance &&
+            (point.requiresManipulator ? point.minimumOrderTier<=OrderTier : point.orderRoute && point.progressionTier==OrderTier);
         public void ApplyOrderProgression(int number)
         {
             orderNumber=Mathf.Max(orderNumber,number);
             // Six story repairs use six progressively farther safe supply routes.
             int wanted=Mathf.Clamp(orderNumber-1,0,5);
-            float endurance=link && link.state?link.state.capacity/Mathf.Max(.01f,link.state.drainPerSecond)*RobotUpgrades.SpeedScale*.93f:93;
+            float endurance=Endurance;
             int available=0;
             foreach(var point in spawnPoints)
-                if(point && point.orderRoute && point.progressionTier<=wanted && point.estimatedLoopSeconds<=endurance)
+                if(point && point.isActiveAndEnabled && point.orderRoute && !point.requiresManipulator && point.progressionTier<=wanted && point.estimatedLoopSeconds<=endurance)
                     available=Mathf.Max(available,point.progressionTier);
             OrderTier=Mathf.Max(OrderTier,available);
-            foreach(var point in spawnPoints)
-                if(point && !Allowed(point) && point.Piece && !point.Piece.Collected)RemovePiece(point);
+            orderEndurance=endurance;
+            previousOrderPoints.Clear();previousOrderPoints.UnionWith(usedThisOrder);usedThisOrder.Clear();
+            // Freeze the new plan until collection or the next accepted order; purchasing an
+            // upgrade must not move markers while the rover is on its way to them.
+            ClearOrderSupply();
+            chooseManipulatorCache=RobotUpgrades.HasArm && Random.value<manipulatorCacheChance;
             EnsureOrderSupply();
         }
-        void RemovePiece(SalvageSpawnPoint point)
+        void RemovePiece(SalvagePiece piece)
         {
-            var piece=point.Piece;point.Piece=null;
-            if(piece){piece.gameObject.SetActive(false);Destroy(piece.gameObject);}
+            if(!piece)return;
+            var point=piece.SpawnPoint;
+            if(point&&point.Piece==piece){orderAssignments.Remove(point);point.Piece=null;}
+            fallbackPieces.Remove(piece);
+            if(Near==piece)Near=null;if(Closest==piece)Closest=null;
+            piece.gameObject.SetActive(false);Destroy(piece.gameObject);
         }
         void EnsureOrderSupply()
         {
-            if(!messages || !messages.HasActiveOrder)return;
+            if(!HasOrder){ClearOrderSupply();return;}
             messages.GetUnstockedSalvageNeeds(orderNeeds);
-            var candidates=new List<SalvageSpawnPoint>();
+            // Keep exactly the currently unstocked quantities, not a second set of
+            // generic loot. Cargo, tube deliveries and bay inventory already count.
+            foreach(var piece in new List<SalvagePiece>(SalvagePiece.All))
+            {
+                if(!piece||piece.gameObject.scene!=gameObject.scene)continue;
+                if(Owns(piece)&&(!piece.SpawnPoint||CanSupply(piece.SpawnPoint))&&
+                    orderNeeds.TryGetValue(piece.prefab,out int count)&&count>0)
+                    orderNeeds[piece.prefab]=count-1;
+                else RemovePiece(piece);
+            }
+            fallbackPieces.RemoveAll(p=>!p||p.Collected||!p.gameObject.activeInHierarchy);
+            // Randomize across equally eligible routes, keeping this order's power budget.
+            // A difficult cache replaces at most one safe target.
+            for(int attempt=0;attempt<(spawnPoints.Count>0?spawnPoints.Count:maxPieces);attempt++)
+            {
+                var needed=NextNeededPart();
+                if(!needed)break;
+                if(spawnPoints.Count==0)
+                {
+                    if(!TrySpawn(needed))break;
+                    orderNeeds[needed]--;continue;
+                }
+                var point=chooseManipulatorCache?ChooseSupplyPoint(true):null;
+                if(!point)point=ChooseSupplyPoint(false);
+                if(!point)break;
+                SpawnAt(point,needed);
+                if(!point.Piece)continue;
+                orderAssignments[point]=needed;usedThisOrder.Add(point);orderNeeds[needed]--;
+                if(point.requiresManipulator)chooseManipulatorCache=false;
+            }
+        }
+        GameObject NextNeededPart()
+        {
+            int total=0;foreach(var pair in orderNeeds)total+=Mathf.Max(0,pair.Value);
+            if(total==0)return null;
+            int pick=Random.Range(0,total);
+            foreach(var pair in orderNeeds){pick-=Mathf.Max(0,pair.Value);if(pick<0)return pair.Key;}
+            return null;
+        }
+        SalvageSpawnPoint ChooseSupplyPoint(bool manipulator)
+        {
+            SalvageSpawnPoint best=null;float bestScore=-1;
             foreach(var point in spawnPoints)
             {
-                if(!Allowed(point) || !point.orderRoute || point.progressionTier!=OrderTier)continue;
-                if(!point.Free && point.Piece && orderNeeds.TryGetValue(point.Piece.prefab,out int count) && count>0)
-                {orderNeeds[point.Piece.prefab]=count-1;continue;}
-                candidates.Add(point);
+                if(!CanSupply(point) || point.requiresManipulator!=manipulator ||
+                    (link.robot && Flat(link.robot.position-point.transform.position).magnitude<4))continue;
+                if(orderAssignments.ContainsKey(point) && !point.Free)continue;
+                float separation=targetSpacing*3;
+                foreach(var used in usedThisOrder)
+                    if(used && used!=point)separation=Mathf.Min(separation,Flat(used.transform.position-point.transform.position).magnitude);
+                float score=Random.Range(.85f,1.15f)*separation;
+                if(separation<targetSpacing)score*=.15f;
+                if(previousOrderPoints.Contains(point))score*=.25f;
+                if(usedThisOrder.Contains(point))score*=.02f;
+                if(score>bestScore){bestScore=score;best=point;}
             }
-            foreach(var point in candidates)
-            {
-                if(link.robot && Flat(link.robot.position-point.transform.position).magnitude<4)continue;
-                GameObject needed=null;
-                foreach(var pair in orderNeeds)if(pair.Value>0){needed=pair.Key;break;}
-                if(!needed)break;
-                if(point.Piece && !point.Piece.Collected)RemovePiece(point);
-                SpawnAt(point,needed);orderNeeds[needed]--;
-            }
+            return best;
         }
         void SpawnAt(SalvageSpawnPoint point,GameObject requiredPart)
         {
-            if(!Allowed(point) || !point.Free)return;
+            if(!HasOrder||!requiredPart||!Allowed(point)||!point.Free)return;
             var position = point.transform.position;
             var normal = point.transform.up;
             if (Ground(position + Vector3.up, 100, out var ground, out var groundNormal))
@@ -146,24 +186,13 @@ namespace MoonThemedGame.Scavenger
                 position = ground;
                 normal = groundNormal;
             }
-            var prefab = requiredPart?requiredPart:point.part ? point.part : kinds[Random.Range(0, kinds.Length)];
-            point.Piece = SalvagePiece.Create(prefab, position, normal, link.robotScale * 0.5f);
+            point.Piece = SalvagePiece.Create(requiredPart, position, normal, link.robotScale * 0.5f);
             point.Piece.SpawnPoint=point;
         }
 
-        // Refills one empty point the robot isn't standing on.
-        void RespawnAtPoint()
+        bool TrySpawn(GameObject requiredPart)
         {
-            EnsureOrderSupply();
-            var free = new List<SalvageSpawnPoint>();
-            foreach (var point in spawnPoints)
-                if (Allowed(point) && point.Free && !(messages && messages.HasActiveOrder && point.orderRoute && point.progressionTier==OrderTier) && (!link.robot || Flat(link.robot.position - point.transform.position).magnitude >= 4)) free.Add(point);
-            if (free.Count > 0) SpawnAt(free[Random.Range(0, free.Count)]);
-        }
-
-        bool TrySpawn()
-        {
-            if (kinds == null || kinds.Length == 0 || SalvagePiece.All.Count >= maxPieces) return false;
+            if(!HasOrder||!requiredPart||fallbackPieces.Count>=maxPieces)return false;
             var weather = MoonWeatherSystem.Active;
             for (int attempt = 0; attempt < 24; attempt++)
             {
@@ -178,7 +207,7 @@ namespace MoonThemedGame.Scavenger
                 }
                 if (TooClose(candidate)) continue;
                 if (!Ground(candidate + Vector3.up * 100, 200, out var point, out var normal)) continue;
-                SalvagePiece.Create(kinds[Random.Range(0, kinds.Length)], point, normal, link.robotScale * 0.5f);
+                fallbackPieces.Add(SalvagePiece.Create(requiredPart,point,normal,link.robotScale*.5f));
                 return true;
             }
             return false;
@@ -216,20 +245,13 @@ namespace MoonThemedGame.Scavenger
         {
             if (!link || !link.robot) return;
             if(Time.time>=nextSupplyCheck){nextSupplyCheck=Time.time+1;EnsureOrderSupply();}
-            if (Time.time >= nextSpawn)
-            {
-                nextSpawn = Time.time + Random.Range(respawnInterval.x, respawnInterval.y);
-                if (spawnPoints.Count > 0) RespawnAtPoint();
-                else TrySpawn();
-            }
-            float reach = link.Drive ? link.Drive.Length * 1.1f + 1.5f : 3;
             Near = Closest = null;
             ClosestDistance = float.MaxValue;
             foreach (var piece in SalvagePiece.All)
             {
                 float distance = Flat(piece.transform.position - link.robot.position).magnitude;
                 if (distance < ClosestDistance) { ClosestDistance = distance; Closest = piece; }
-                if (distance <= reach + piece.radius && (!Near || distance < Flat(Near.transform.position - link.robot.position).magnitude)) Near = piece;
+                if ((!Near || distance < Flat(Near.transform.position - link.robot.position).magnitude) && CanPickUp(piece)) Near = piece;
             }
             if (link.state) link.state.Cargo = cargo.Count;
             if (cargo.Count > 0 && link.InChargeBuilding) Unload();
@@ -237,13 +259,36 @@ namespace MoonThemedGame.Scavenger
 
         public void PickUp(ScavengerFeedHud hud)
         {
-            if (!Near) return;
+            if (!Near || !CanPickUp(Near)) return;
+            messages.GetUnstockedSalvageNeeds(orderNeeds);
+            if(!orderNeeds.TryGetValue(Near.prefab,out int needed)||needed<=0){EnsureOrderSupply();return;}
             if (Full) { hud.Notify(Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION")); return; }
             var piece = Near;
             cargo.Add(piece.prefab);
+            if(link.state)link.state.Cargo=cargo.Count;
             piece.Collect(link.robot);
             Near = null;
             hud.Notify(Loc.F("{0} LOADED  CARGO {1}/{2}", PartName(piece.prefab), cargo.Count, link.state.cargoCapacity));
+        }
+
+        internal bool CanPickUp(SalvagePiece piece)
+        {
+            if(!HasOrder||!Owns(piece)||!piece || piece.Collected || !link || !link.robot ||
+                (piece.SpawnPoint && piece.SpawnPoint.requiresManipulator && !RobotUpgrades.HasArm))return false;
+            float length=link.Drive?link.Drive.Length:1.5f;
+            var origin=link.robot.position+Vector3.up*(length*.25f);
+            var offset=piece.PickupPosition-origin;
+            if(offset.magnitude>length*1.1f+1.5f+piece.radius)return false;
+            int count=Physics.RaycastNonAlloc(origin,offset.normalized,hits,offset.magnitude,groundLayers,QueryTriggerInteraction.Ignore);
+            if(count==hits.Length)return false;
+            for(int i=0;i<count;i++)
+            {
+                var hit=hits[i];
+                if(hit.transform.IsChildOf(link.robot) || hit.transform.IsChildOf(piece.transform) ||
+                    hit.collider.GetComponentInParent<ScavengerRobotState>() || hit.collider.GetComponentInParent<FirstPersonController>())continue;
+                return false;
+            }
+            return true;
         }
 
         void Unload()

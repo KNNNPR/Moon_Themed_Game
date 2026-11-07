@@ -35,10 +35,13 @@ namespace MoonThemedGame.Repair
                 return count;
             }
         }
-        public bool IsRepaired => initialized && MissingCount == 0;
+        public bool IsDismantling=>GetComponent<AurinkoDismantling>();
+        public bool IsRepaired => initialized && !IsDismantling && MissingCount == 0;
+        public bool ReadyForCollection=>IsDismantling?GetComponent<AurinkoDismantling>().Complete:IsRepaired;
         internal void FillMissingParts(Dictionary<GameObject,int> counts)
         {
             counts.Clear();
+            if(IsDismantling)return;
             if(!initialized || IsBeingCollected)return;
             foreach(var slot in slots)
                 if(!slot.visual || !slot.visual.activeSelf)
@@ -62,6 +65,7 @@ namespace MoonThemedGame.Repair
             get
             {
                 if (!initialized) return Loc.T("Robot diagnostics…");
+                if(IsDismantling)return GetComponent<AurinkoDismantling>().Status;
                 var test = GetComponent<RepairRobotFinalTest>();
                 if (test && test.IsRunning) return test.Status;
                 string check = Loc.Russian ? $"[{GameControls.Label(GameCommand.Interact)}] Проверить бота" : $"[{GameControls.Label(GameCommand.Interact)}] Run final test";
@@ -152,7 +156,7 @@ namespace MoonThemedGame.Repair
 
         public bool TryInstallPart(GameObject partPrefab)
         {
-            if (!initialized || IsBeingCollected || !IsSettled || !partPrefab) return false;
+            if (!initialized || IsDismantling || IsBeingCollected || !IsSettled || !partPrefab) return false;
             foreach (var slot in slots)
                 if (slot.visual && !slot.visual.activeSelf && definitions[slot.part].prefab == partPrefab)
                 {
@@ -168,7 +172,7 @@ namespace MoonThemedGame.Repair
 
         public bool DebugRepairAll()
         {
-            if (!Application.isPlaying || !initialized || IsBeingCollected || !IsSettled) return false;
+            if (!Application.isPlaying || !initialized || IsDismantling || IsBeingCollected || !IsSettled) return false;
             if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.Cancel();
             if (TryGetComponent<RepairRobotRevival>(out var revival)) revival.StopTests();
             ClearBolts();
@@ -178,7 +182,7 @@ namespace MoonThemedGame.Repair
 
         public bool TryReserveCollection()
         {
-            if (!isActiveAndEnabled || !IsRepaired || !IsSettled || IsBeingCollected) return false;
+            if (!isActiveAndEnabled || !ReadyForCollection || !IsSettled || IsBeingCollected) return false;
             IsBeingCollected = true;
             if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.Cancel();
             if (TryGetComponent<RepairRobotRevival>(out var revival)) revival.StopTests();
@@ -192,7 +196,7 @@ namespace MoonThemedGame.Repair
 
         public bool Needs(GameObject partPrefab)
         {
-            if (!initialized || !partPrefab) return false;
+            if (!initialized || IsDismantling || !partPrefab) return false;
             foreach (var slot in slots)
                 if (slot.visual && !slot.visual.activeSelf && definitions[slot.part].prefab == partPrefab) return true;
             return false;
@@ -201,7 +205,7 @@ namespace MoonThemedGame.Repair
         // The empty slot for this part that the player is looking at.
         public GameObject FindSlot(GameObject partPrefab, Ray view, float maxDistance)
         {
-            if (!Accepts || !partPrefab) return null;
+            if (!Accepts || IsDismantling || !partPrefab) return null;
             GameObject best = null;
             float bestAngle = 14;
             foreach (var slot in slots)
@@ -233,7 +237,7 @@ namespace MoonThemedGame.Repair
 
         public bool TryAttachLoose(GameObject visual, Vector3 viewer, Transform carried)
         {
-            if (!Accepts || !visual || visual.activeSelf || !slots.Exists(slot => slot.visual == visual)) return false;
+            if (!Accepts || IsDismantling || !visual || visual.activeSelf || !slots.Exists(slot => slot.visual == visual)) return false;
             var home = visual.transform.localPosition;
             var rotation = visual.transform.localRotation;
             visual.SetActive(true);
@@ -321,6 +325,7 @@ namespace MoonThemedGame.Repair
         }
         public override void Interact()
         {
+            if(IsDismantling)return;
             if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.StartTest();
         }
     }

@@ -141,7 +141,7 @@ namespace MoonThemedGame.Repair
             if (state.fullPathHash != takeState) { Cancel(); return; }
             if (!attached && state.normalizedTime >= grabAt)
             {
-                if (!candidate.IsRepaired) { Cancel(); return; }
+                if (!candidate.ReadyForCollection) { Cancel(); return; }
                 // Grasp at the sampled contact pose even if a frame steps past it.
                 craneAnimator.Play(takeState, 0, grabAt);
                 craneAnimator.Update(0f);
@@ -159,6 +159,7 @@ namespace MoonThemedGame.Repair
             if (attached)
             {
                 dropper.ForgetCollectedRobot(candidate);
+                candidate.GetComponent<AurinkoDismantling>()?.Collected();
                 candidate.gameObject.SetActive(false);
                 Destroy(candidate.gameObject);
                 carried = null;

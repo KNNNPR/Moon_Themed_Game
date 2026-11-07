@@ -19,7 +19,7 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float shutdownDelay = 10;
         [Min(0)] public int evacuationCost = 15;
         [Min(0)] public float evacuationTime = 8;
-        [Min(0)] public int cargoCapacity = 4;
+        [Min(0)] public int cargoCapacity = 2;
         public int Cargo { get; set; }
 
         float timer;
@@ -33,6 +33,8 @@ namespace MoonThemedGame.Scavenger
         public bool Charging => AtCharger && (Status == RobotStatus.Online || Status == RobotStatus.Failing) && Charge < capacity;
         public bool LowCharge => Status == RobotStatus.Online && Normalized <= lowChargeThreshold;
         public float TimeLeft => Mathf.Max(0, timer);
+        public int EvacuationsUsed { get; private set; }
+        public int EvacuationPrice=>EvacuationsUsed==0?0:evacuationCost;
         public bool HasSignal => Status == RobotStatus.Online || Status == RobotStatus.Failing;
 
         public float Interference => Status switch
@@ -91,7 +93,7 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        public bool CanAffordEvacuation(PcMonitorTerminal terminal) => terminal && terminal.Credits >= evacuationCost;
+        public bool CanAffordEvacuation(PcMonitorTerminal terminal) => terminal && terminal.Credits >= EvacuationPrice;
 
         public void ApplyEnergyDamage(float amount)
         {
@@ -103,7 +105,8 @@ namespace MoonThemedGame.Scavenger
         public bool OrderEvacuation(PcMonitorTerminal terminal)
         {
             if (Status != RobotStatus.Offline || !CanAffordEvacuation(terminal)) return false;
-            terminal.SetCredits(terminal.Credits - evacuationCost);
+            terminal.SetCredits(terminal.Credits - EvacuationPrice);
+            EvacuationsUsed++;
             SetStatus(RobotStatus.Evacuating, evacuationTime);
             return true;
         }

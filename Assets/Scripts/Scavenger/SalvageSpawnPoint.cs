@@ -9,7 +9,7 @@ namespace MoonThemedGame.Scavenger
         static readonly List<SalvageSpawnPoint> all = new List<SalvageSpawnPoint>();
         public static IReadOnlyList<SalvageSpawnPoint> All => all;
 
-        [Tooltip("Default part; active repair orders can assign the required type to safe route points.")]
+        [Tooltip("Editor reference only. An active repair order assigns its required part type to selected points.")]
         public GameObject part;
         [TextArea(2,6)] public string routeNotes;
         [Header("Order progression")]
@@ -17,6 +17,10 @@ namespace MoonThemedGame.Scavenger
         [Min(0)] public float estimatedLoopSeconds=42;
         [Tooltip("Safe without an unopened gate or bridge; can carry required order supplies.")]
         public bool orderRoute=true;
+        [Tooltip("Only selected for an active order with a manipulator. May supply a required part behind a gate, bridge or ship access mechanism.")]
+        public bool requiresManipulator;
+        [Tooltip("Earliest order distance tier that may use this optional manipulator cache. Its loop must also fit the battery budget.")]
+        [Min(0)] public int minimumOrderTier=4;
 
         public SalvagePiece Piece { get; set; }
         public bool Free => !Piece || Piece.Collected;

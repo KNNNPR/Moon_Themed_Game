@@ -20,7 +20,7 @@ namespace MoonThemedGame.Interactions
         static int consumedFrame=-1;
         public static bool IsOpen {get;private set;}
         public static bool BlockGameplayInput=>IsOpen || consumedFrame==Time.frameCount;
-        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","speed","pistol","clear","close"};
+        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","end","dismantle","speed","pistol","clear","close"};
         static readonly string[] weatherNames={"sunny","fog","radiation","meteors","night","cryogenic","ash"};
         readonly List<string> lines=new List<string>(),history=new List<string>();
         public IReadOnlyList<string> Lines=>lines;
@@ -57,6 +57,7 @@ namespace MoonThemedGame.Interactions
         }
         public void Open()
         {
+            if(StationStoryFlow.IsBlocking)return;
             if(IsOpen)return;
             if(root==null)BuildUI();
             if(root==null)return;
@@ -184,6 +185,8 @@ namespace MoonThemedGame.Interactions
                 Write("weather                   Show current weather and available presets");
                 Write("weather <preset>          Set sunny, fog, radiation, meteors, night, cryogenic or ash");
                 Write("repair                    Fully repair the robot in the repair bay");
+                Write("end                       Skip to and accept seventh story order AURINKO");
+                Write("dismantle                 Instantly dismantle final AURINKO; then call the crane");
                 Write("pistol                    Add a pistol to the operator's toolbox (8 rounds, R reload)");
                 Write("speed [x|reset] [bot|player] Set speed multiplier (0.1-10); default: bot");
                 Write("clear                     Clear console output");Write("close                     Close console");return;
@@ -197,6 +200,25 @@ namespace MoonThemedGame.Interactions
                 var player=FindFirstObjectByType<PlayerBody>();
                 if(!player){Write("No human operator in this scene.");return;}
                 Write(player.GrantPistol()?"Pistol available in toolbox. Hold MMB to select; LMB fire, RMB aim, R reload.":"Pistol assets are not ready.");return;
+            }
+            if(command=="end")
+            {
+                if(args.Length!=1){Write("Usage: end");return;}
+                var messages=FindFirstObjectByType<RepairMessagesApp>();
+                if(!messages){Write("No repair inbox in this scene. Use end in Operator.");return;}
+                bool started=messages.DebugStartFinalOrder(out string result);Write(result);
+                if(started)Close();return;
+            }
+            if(command=="dismantle")
+            {
+                if(args.Length!=1){Write("Usage: dismantle");return;}
+                var robot=RepairRobotDropper.Active?RepairRobotDropper.Active.CurrentRobot:null;
+                var final=robot?robot.GetComponent<AurinkoDismantling>():null;
+                if(!final){Write("No final AURINKO in the bay. Accept the seventh story order first.");return;}
+                if(robot.IsBeingCollected){Write("The crane is already collecting this robot.");return;}
+                if(final.Complete){Write("AURINKO is already dismantled. Call the crane.");return;}
+                if(!final.DebugDismantleAll()){Write("Wait for AURINKO to land and finish preparing.");return;}
+                Write("AURINKO dismantled. Call the crane at the red button.");Close();return;
             }
             if(command=="repair")
             {
