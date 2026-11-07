@@ -16,7 +16,7 @@ namespace MoonThemedGame.Repair
         public bool Complete=>prepared&&modules.Count>0&&removed.Count==modules.Count;
         public int Remaining=>modules.Count-removed.Count;
         public string Status=>Complete?(Loc.Russian?"Разборка завершена. [E] Вызвать кран на красной кнопке":"Dismantling complete. [E] Call the crane at the red button"):
-            (Loc.Russian?$"AURINKO / Снять деталей: {Remaining}\nОткрутите крепления и [{GameControls.Label(GameCommand.Interact)}] снимите деталь.":$"AURINKO / Modules to remove: {Remaining}\nLoosen fasteners, then [{GameControls.Label(GameCommand.Interact)}] remove the module.");
+            (Loc.Russian?$"AURINKO [Снять деталей: {Remaining}]\nОткрутите крепления и [{GameControls.Label(GameCommand.Interact)}] снимите деталь.":$"AURINKO [Modules to remove: {Remaining}]\nLoosen fasteners, then [{GameControls.Label(GameCommand.Interact)}] remove the module.");
         public void Configure(RepairRobotTarget target)
         {
             owner=target;gameObject.name="SCAV_BOT_AURINKO";

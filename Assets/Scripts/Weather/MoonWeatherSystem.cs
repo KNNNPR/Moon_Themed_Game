@@ -103,7 +103,7 @@ namespace MoonThemedGame.Weather
 
         public static string Name(WeatherKind kind) => kind switch
         {
-            WeatherKind.MoonDust => "FOG / MOON DUST", WeatherKind.Radiation => "RADIATION",
+            WeatherKind.MoonDust => "FOG [MOON DUST]", WeatherKind.Radiation => "RADIATION",
             WeatherKind.MeteoriteRain => "METEORITE RAIN", WeatherKind.DeepNight=>"DEEP NIGHT",
             WeatherKind.CryogenicFront=>"CRYOGENIC FRONT",WeatherKind.AshenCalm=>"ASHEN CALM", _ => "SUNNY"
         };

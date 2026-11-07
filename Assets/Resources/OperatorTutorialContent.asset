@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59654d266e4c42178564cb525f790cb6, type: 3}
+  m_Name: OperatorTutorialContent
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Computer.OperatorTutorialContent
+  radioLines:
+  - english: 'Good morning, Operator A.'
+    russian: 'Доброе утро, Оператор Я.'
+    seconds: 3.2
+  - english: 'Unlike other lunar bases, your base is falling behind in mobile module repairs.'
+    russian: 'В отличие от других лунных баз, ваша база отстаёт по показателям починки передвигаемых модулей.'
+    seconds: 6.5
+  - english: 'Pale Horse management is not particularly pleased with these results.'
+    russian: 'Руководство Pale Horse не слишком довольно такими результатами.'
+    seconds: 5.3
+  - english: 'Take a seat at the computer. Accept orders in MESSAGES, then use the SCAVENGER to find spare parts.'
+    russian: 'Садитесь за компьютер, принимайте заказы в СООБЩЕНИЯХ, а далее ищите запчасти при помощи СБОРЩИКА.'
+    seconds: 8
+  guideEnglish: "REPAIR ORDERS\n\n1  PC > MESSAGES.\n   Accept an order.\n2  Open SCAVENGER.\n   Collect marked parts.\n   Cargo: 2 parts.\n3  Return to base and\n   unload your cargo.\n4  Fit the missing parts.\n   Hammer wheel modules in.\n5  Hold MMB: toolbox.\n   Wrench: LMB + drag right.\n   Screwdriver: LMB +\n   clockwise circles.\n6  Tighten all fasteners.\n   Run the final test.\n   Red button: call crane."
+  guideRussian: "ПАМЯТКА ОПЕРАТОРА\n\n1  ПК > СООБЩЕНИЯ.\n   Примите заказ.\n2  Откройте СБОРЩИК.\n   Соберите детали\n   по меткам. Груз: 2.\n3  Вернитесь на базу\n   и выгрузите груз.\n4  Установите детали.\n   Колёсные модули\n   подбейте молотком.\n5  Зажмите СКМ: тулбокс.\n   Ключ: ЛКМ + вправо.\n   Отвёртка: ЛКМ + круг\n   по часовой стрелке.\n6  Затяните крепления.\n   Проверьте бота.\n   Красная кнопка: кран."

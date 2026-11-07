@@ -12,12 +12,18 @@ namespace MoonThemedGame.Repair
         [Min(.2f)] public float pixelsPerDegree = 1.15f;
         [Range(50, 100)] public float strokeDegrees = 82;
         [Range(.1f, .8f)] public float circleAssistance = .4f;
+        [Range(.5f,3)] public float screwSensitivity=1.8f;
+        [Range(.2f,1)] public float screwFinalResistance=.6f;
         [Range(.1f, .6f)] public float finalResistance = .28f;
         RepairBolt target, working;
         float engage, strokeAngle, highWater, screwAngle, releaseLookUntil;
         int strokeDirection = 1;
         bool session, wasHeld, hasTangent, legacyReverseStroke;
         Vector2 tangent;
+        Vector2 circleSegment;
+        float circleTime,directionEvidence,oppositeArc,initialArc;
+        bool hasInitialArc;
+        int screwDirection;
         public bool Engaged => engage > .01f && working;
         public bool Working => session;
         public Vector3 WorkAxis => working ? working.transform.up : Vector3.up;
@@ -69,11 +75,13 @@ namespace MoonThemedGame.Repair
             working = target = bolt; session = true;
             wasHeld = hasTangent = false; strokeAngle = highWater = screwAngle = WristAngle = 0;
             releaseLookUntil = 0;
+            ResetCircle();
             return true;
         }
         internal void EndWork(bool automatic = false)
         {
             session = wasHeld = hasTangent = false;
+            ResetCircle();
             releaseLookUntil = automatic ? Time.unscaledTime + .12f : 0;
         }
 
@@ -84,6 +92,7 @@ namespace MoonThemedGame.Repair
             if (!held)
             {
                 wasHeld = hasTangent = false;
+                ResetCircle();
                 strokeAngle = Mathf.MoveTowards(strokeAngle, 0, dt * 600);
                 screwAngle = Mathf.MoveTowards(screwAngle, 0, dt * 600);
                 WristAngle = drives == Fastener.Bolt ? strokeAngle * strokeDirection : screwAngle;
@@ -100,6 +109,7 @@ namespace MoonThemedGame.Repair
                     return 0;
                 }
                 strokeAngle = highWater = screwAngle = 0; hasTangent = false;
+                ResetCircle();
                 legacyReverseStroke=reverse;
                 strokeDirection = reverse ? -1 : 0; wasHeld = true;
             }
@@ -124,34 +134,56 @@ namespace MoonThemedGame.Repair
                 else strokeAngle = desired;
                 WristAngle = strokeAngle * strokeDirection;
             }
-            else if (delta.sqrMagnitude >= .12f)
-            {
-                if (hasTangent)
-                {
-                    float arc = -Vector2.SignedAngle(tangent, delta);
-                    if (Mathf.Abs(arc) < 100)
-                    {
-                        arc = Mathf.Clamp(arc, -900 * dt, 900 * dt);
-                        float raw = arc * circleAssistance * (reverse ? -1 : 1);
-                        screwAngle += working.DriveAngle(TorqueMotion(Mathf.Abs(raw), raw >= 0 ? 1 : -1) * (raw >= 0 ? 1 : -1));
-                        WristAngle = Mathf.Clamp(screwAngle, -85, 85);
-                    }
-                }
-                tangent = delta.normalized; hasTangent = true;
-            }
+            else ProcessCircle(delta,reverse,dt);
             return working.Progress - before;
+        }
+
+        void ResetCircle(){circleSegment=Vector2.zero;circleTime=directionEvidence=oppositeArc=initialArc=0;screwDirection=0;hasTangent=hasInitialArc=false;}
+        void ProcessCircle(Vector2 delta,bool reverse,float dt)
+        {
+            // Measure a short chord instead of individual subpixel deltas. Small hand
+            // tremors must not turn into alternating clockwise/counter-clockwise work.
+            circleSegment+=delta;circleTime+=dt;
+            if(circleSegment.sqrMagnitude<36)return;
+            var direction=circleSegment.normalized;
+            float arc=hasTangent?-Vector2.SignedAngle(tangent,direction):0;
+            tangent=direction;hasTangent=true;circleSegment=Vector2.zero;
+            float sampleTime=circleTime;circleTime=0;
+            if(Mathf.Abs(arc)>=100||Mathf.Abs(arc)<1)return;
+            arc=Mathf.Clamp(arc,-900*sampleTime,900*sampleTime)*(reverse?-1:1);
+            if(!hasInitialArc){initialArc=arc;hasInitialArc=true;}
+            if(screwDirection==0)
+            {
+                directionEvidence+=arc;
+                if(Mathf.Abs(directionEvidence)<20)return;
+                screwDirection=directionEvidence>0?1:-1;
+                // The first chord has no predecessor. Restore that initial arc after
+                // confirming direction, so low frame rates do not lose more work.
+                arc=directionEvidence+(initialArc*screwDirection>0?initialArc:0);directionEvidence=0;
+            }
+            if(Mathf.Sign(arc)!=screwDirection)
+            {
+                oppositeArc+=Mathf.Abs(arc);
+                if(oppositeArc<50)return;
+                screwDirection=-screwDirection;arc=screwDirection*(oppositeArc-50);oppositeArc=0;
+            }
+            else oppositeArc=0;
+            float raw=Mathf.Abs(arc)*circleAssistance*screwSensitivity;
+            screwAngle+=working.DriveAngle(TorqueMotion(raw,screwDirection)*screwDirection);
+            WristAngle=Mathf.Clamp(screwAngle,-85,85);
         }
 
         float TorqueMotion(float rawDegrees, int direction)
         {
             float head = working.VisualHeadAngle;
+            float resistance=drives==Fastener.Screw?screwFinalResistance:finalResistance;
             if (direction > 0)
             {
                 float free = Mathf.Min(rawDegrees, Mathf.Max(0, 102 - head));
-                return free + (rawDegrees - free) * finalResistance;
+                return free + (rawDegrees - free) * resistance;
             }
-            float stiffInput = Mathf.Max(0, head - 102) / finalResistance;
-            return Mathf.Min(rawDegrees, stiffInput) * finalResistance + Mathf.Max(0, rawDegrees - stiffInput);
+            float stiffInput = Mathf.Max(0, head - 102) / resistance;
+            return Mathf.Min(rawDegrees, stiffInput) * resistance + Mathf.Max(0, rawDegrees - stiffInput);
         }
 
         protected override void Carry()
@@ -210,13 +242,13 @@ namespace MoonThemedGame.Repair
                 {
                     var module=target.GetComponentInParent<AurinkoModule>();
                     return module && module.CanRemove?$"[{GameControls.Label(GameCommand.Interact)}] "+T("Remove module / tool returns to toolbox","Снять деталь / инструмент вернётся в тулбокс"):
-                        T("LOOSE / [RMB] Move to the next fastener","ОТКРУЧЕНО / [ПКМ] Перейдите к следующему креплению");
+                        T("LOOSE [RMB] Move to the next fastener","ОТКРУЧЕНО [ПКМ] Перейдите к следующему креплению");
                 }
                 string stage = target.Tight ? T("TIGHT", "ЗАТЯНУТО") : target.Progress >= target.ProgressLimit - .0001f && target.ProgressLimit < .999f
                     ? T("TACK THE OPPOSITE FASTENER (amber point)", "ПРИХВАТИТЕ ПРОТИВОПОЛОЖНОЕ КРЕПЛЕНИЕ (жёлтая точка)") :
-                    target.Progress >= RepairBolt.FinalProgress ? T("FINAL TURN / RESISTANCE", "ПОСЛЕДНИЙ ДОРОВОТ / СОПРОТИВЛЕНИЕ") :
+                    target.Progress >= RepairBolt.FinalProgress ? T("FINAL TURN [RESISTANCE]", "ПОСЛЕДНИЙ ДОРОВОТ [СОПРОТИВЛЕНИЕ]") :
                     target.Progress >= RepairBolt.SnugProgress ? T("CLAMP THE MODULE", "ПРИЖМИТЕ ДЕТАЛЬ") : T("CATCH THE THREAD", "ПРИХВАТИТЕ РЕЗЬБУ");
-                if(target.Dismantling)stage=T("DISMANTLE / ","РАЗБОРКА / ")+(drives==Fastener.Bolt?T("DRAG LEFT TO LOOSEN","ВЕДИТЕ ВЛЕВО, ЧТОБЫ ОТКРУТИТЬ"):T("TURN COUNTER-CLOCKWISE TO LOOSEN","КРУТИТЕ ПРОТИВ ЧАСОВОЙ СТРЕЛКИ"));
+                if(target.Dismantling)stage=T("DISMANTLE [","РАЗБОРКА [")+(drives==Fastener.Bolt?T("DRAG LEFT TO LOOSEN","ВЕДИТЕ ВЛЕВО, ЧТОБЫ ОТКРУТИТЬ"):T("TURN COUNTER-CLOCKWISE TO LOOSEN","КРУТИТЕ ПРОТИВ ЧАСОВОЙ СТРЕЛКИ"))+"]";
                 string action = !session ? T("[LMB] Engage tool", "[ЛКМ] Установить инструмент") : drives == Fastener.Bolt
                     ? T("[LMB] Right: tighten / left: loosen / release to reset", "[ЛКМ] Вправо: затянуть / влево: открутить / отпустите для возврата")
                     : T("[LMB] Circle: clockwise tighten / counter-clockwise loosen", "[ЛКМ] Круг: по часовой затянуть / против открутить");
@@ -225,6 +257,7 @@ namespace MoonThemedGame.Repair
         }
         protected override void OnGUI()
         {
+            if(InteractionHud.Suppressed)return;
             var interactor=hand?hand.GetComponentInParent<PlayerInteractor>():null;
             if(IsCarried&&interactor&&interactor.CurrentTarget is AurinkoModule ready&&ready.CanRemove)
             {

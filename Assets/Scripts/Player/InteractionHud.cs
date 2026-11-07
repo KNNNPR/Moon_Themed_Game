@@ -13,6 +13,16 @@ namespace MoonThemedGame.Interactions
         static readonly Color background=new Color(0.015f,0.023f,0.022f,0.86f);
         static readonly Color accent=new Color(0.66f,0.82f,0.73f,0.9f);
         static Font font;
+        static FirstPersonController player;
+        public static bool Suppressed
+        {
+            get
+            {
+                if(DeveloperConsole.IsOpen||OperatorRadioBriefing.IsPlaying)return true;
+                if(!player)player=Object.FindFirstObjectByType<FirstPersonController>();
+                return player&&player.Noclip;
+            }
+        }
 
         static GUIStyle Style(int size)
         {
@@ -25,7 +35,7 @@ namespace MoonThemedGame.Interactions
 
         public static Rect Prompt(float centerX,float top,string text,int size=17,float opacity=1)
         {
-            if(DeveloperConsole.IsOpen)return default;
+            if(Suppressed)return default;
             if(string.IsNullOrWhiteSpace(text) || opacity<=0)return default;
             text=GameControls.FormatHint(text);
             float scale=Mathf.Clamp(Screen.height/900f,1,1.3f);

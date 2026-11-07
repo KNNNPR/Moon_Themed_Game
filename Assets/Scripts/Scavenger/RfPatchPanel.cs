@@ -142,7 +142,7 @@ namespace MoonThemedGame.Scavenger
             Frame(panel, dim, 1);
             Frame(new Rect(panel.x + 4, panel.y + 4, panel.width - 8, panel.height - 8), phosphor * 0.25f, 1);
 
-            Print(new Rect(panel.x + pad, Row(0.6f), w, line), Loc.T("RCVR-2 // CARRIER TUNER"), phosphor, 0, text);
+            Print(new Rect(panel.x + pad, Row(0.6f), w, line), Loc.T("RCVR-2 [CARRIER TUNER]"), phosphor, 0, text);
             Print(new Rect(panel.x, Row(0.6f), w - pad, line), Loc.T("[H] / [ESC] EXIT"), dim, 1, right);
 
             bool blink = Mathf.Repeat(Time.time * 1.6f, 1) < 0.7f;

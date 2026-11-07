@@ -97,13 +97,14 @@ namespace MoonThemedGame
             { "[RMB + {0}/{1}] Lean", "[ПКМ + {0}/{1}] Наклон" },
             { "[LMB] Fire   [RMB HOLD] Aim   [{0}] Reload", "[ЛКМ] Огонь   [УДЕРЖ. ПКМ] Прицел   [{0}] Перезарядить" },
             // Settings menu and controls
-            { "PALE HORSE /// STATION TERMINAL", "PALE HORSE /// ТЕРМИНАЛ СТАНЦИИ" },
+            { "PALE HORSE [STATION TERMINAL]", "PALE HORSE [ТЕРМИНАЛ СТАНЦИИ]" },
             { "LUNAR TECHNICAL STATION 7   BUILD_RUV", "ЛУННАЯ ТЕХНИЧЕСКАЯ СТАНЦИЯ 7   BUILD_RUV" },
             { "SETTINGS", "НАСТРОЙКИ" },
             { "MASTER VOLUME", "ОБЩАЯ ГРОМКОСТЬ" },
             { "LANGUAGE: ENGLISH", "ЯЗЫК: РУССКИЙ" },
             { "CONTROLS  >", "УПРАВЛЕНИЕ  >" },
             { "RESUME", "ПРОДОЛЖИТЬ" },
+            { "MAIN MENU", "В ГЛАВНОЕ МЕНЮ" },
             { "EXIT GAME", "ВЫЙТИ ИЗ ИГРЫ" },
             { "CONTROLS", "УПРАВЛЕНИЕ" },
             { "Select a key, then press its replacement.", "Выберите действие и нажмите новую клавишу." },
@@ -182,7 +183,6 @@ namespace MoonThemedGame
             { "Login: {0}\nPassword: {1}\n\nDon't forget to change\nyour password after\nlogging in.", "Логин: {0}\nПароль: {1}\n\nНе забудь сменить\nпароль после\nвхода." },
 
             // PC login
-            { "PALE HORSE // STATION TERMINAL", "PALE HORSE // ТЕРМИНАЛ СТАНЦИИ" },
             { "OPERATOR LOGIN", "ВХОД ОПЕРАТОРА" },
             { "USER", "ЛОГИН" },
             { "PASSWORD", "ПАРОЛЬ" },
@@ -194,7 +194,7 @@ namespace MoonThemedGame
             { "ACCESS DENIED - INVALID USER OR PASSWORD", "ДОСТУП ЗАПРЕЩЁН - НЕВЕРНЫЙ ЛОГИН ИЛИ ПАРОЛЬ" },
 
             // Weather
-            { "FOG / MOON DUST", "ТУМАН / ЛУННАЯ ПЫЛЬ" },
+            { "FOG [MOON DUST]", "ТУМАН [ЛУННАЯ ПЫЛЬ]" },
             { "RADIATION", "РАДИАЦИЯ" },
             { "METEORITE RAIN", "МЕТЕОРИТНЫЙ ДОЖДЬ" },
             { "SUNNY", "ЯСНО" },
@@ -219,8 +219,8 @@ namespace MoonThemedGame
             { "IN {0}", "ЧЕРЕЗ {0}" },
             { "ENERGY DRAIN x{0}", "РАСХОД ЭНЕРГИИ x{0}" },
             { "IMPACT ZONES MARKED {0}s BEFORE", "ЗОНЫ УДАРА ОТМЕЧАЮТСЯ ЗА {0}с" },
-            { "BASE INTERIOR / SHELTERED", "ВНУТРИ БАЗЫ / УКРЫТИЕ" },
-            { "SURFACE FORECAST / T+{0}", "ПРОГНОЗ ПОВЕРХНОСТИ / T+{0}" },
+            { "BASE INTERIOR [SHELTERED]", "ВНУТРИ БАЗЫ [УКРЫТИЕ]" },
+            { "SURFACE FORECAST [T+{0}]", "ПРОГНОЗ ПОВЕРХНОСТИ [T+{0}]" },
 
             // Robot feed
             { "PING base.station ... ok", "ПИНГ база.станция ... ок" },
@@ -277,7 +277,7 @@ namespace MoonThemedGame
             { "CONNECTION TERMINATED", "СОЕДИНЕНИЕ РАЗОРВАНО" },
             { "LINK CLOSED BY OPERATOR   SESSION {0:00}:{1:00}   PKT {2}", "СВЯЗЬ ЗАКРЫТА ОПЕРАТОРОМ   СЕАНС {0:00}:{1:00}   ПАК {2}" },
             { "UPLINK {0} RELEASED", "КАНАЛ {0} ОСВОБОЖДЁН" },
-            { "{0} // LIVE FEED", "{0} // ПРЯМОЙ ЭФИР" },
+            { "{0} [LIVE FEED]", "{0} [ПРЯМОЙ ЭФИР]" },
             { "LINK 0x3F2A  PKT {0}  LOSS {1}%", "СВЯЗЬ 0x3F2A  ПАК {0}  ПОТЕРИ {1}%" },
             { "LAT {0}ms  RSSI {1}dBm", "ЗАДЕРЖКА {0}мс  RSSI {1}дБм" },
             { "POS {0} {1} {2}  HDG {3:000}", "ПОЗ {0} {1} {2}  КУРС {3:000}" },
@@ -336,7 +336,7 @@ namespace MoonThemedGame
             { "  +{0}% TO RIVAL", "  +{0}% КОНКУРЕНТУ" },
             { "CARRIER LOCKED CH{0} - {1} LOST THE SIGNAL", "НЕСУЩАЯ ЗАХВАЧЕНА КАН{0} - {1} ПОТЕРЯЛ СИГНАЛ" },
             { "CARRIER STABLE CH{0}", "НЕСУЩАЯ СТАБИЛЬНА КАН{0}" },
-            { "RCVR-2 // CARRIER TUNER", "ПРМ-2 // ТЮНЕР НЕСУЩЕЙ" },
+            { "RCVR-2 [CARRIER TUNER]", "ПРМ-2 [ТЮНЕР НЕСУЩЕЙ]" },
             { "[H] / [ESC] EXIT", "[H] / [ESC] ВЫХОД" },
             { "ALERT  {0} IS JAMMING THE CARRIER", "ТРЕВОГА  {0} ГЛУШИТ НЕСУЩУЮ" },
             { "INTERCEPT {0} {1,3}%", "ПЕРЕХВАТ {0} {1,3}%" },
@@ -378,7 +378,7 @@ namespace MoonThemedGame
             { "THREATS: none. {0} (rival) on outer orbit.", "УГРОЗ НЕТ. {0} (конкурент) на внешней орбите." },
 
             // SHOP
-            { "PARTS DEPOT // ROBOT UPGRADES", "СКЛАД ДЕТАЛЕЙ // УЛУЧШЕНИЯ РОБОТА" },
+            { "PARTS DEPOT [ROBOT UPGRADES]", "СКЛАД ДЕТАЛЕЙ [УЛУЧШЕНИЯ РОБОТА]" },
             { "BALANCE {0} CR", "БАЛАНС {0} CR" },
             { "{0} ALREADY AT MAX", "{0}: УЖЕ МАКСИМУМ" },
             { "NOT ENOUGH CREDITS - NEED {0} CR", "НЕ ХВАТАЕТ КРЕДИТОВ - НУЖНО {0} CR" },

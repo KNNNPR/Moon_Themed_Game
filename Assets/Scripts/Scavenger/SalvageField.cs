@@ -52,7 +52,7 @@ namespace MoonThemedGame.Scavenger
                 : name.Contains("window") ? "WINDOW"
                 : prefab.name.ToUpperInvariant());
             var variant = prefab.GetComponent<RepairPartVariant>();
-            return variant ? label + " / " + variant.robotName : label;
+            return variant ? label + " [" + variant.robotName + "]" : label;
         }
 
         public void Setup(ScavengerLink owner, Vector3 home)

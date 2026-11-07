@@ -92,14 +92,92 @@ namespace MoonThemedGame.Repair
             Physics.SyncTransforms();
             var whole = RepairPartMount.GeometryBounds(part.transform);
 
-            if (part.name.ToLowerInvariant().Contains("wheel") && !LongModule(part) && WheelAxis(part, robot, whole, out var axle))
-                return SpawnHub(robot, part, whole, axle, kind, bolts);
-
-            // One pair for the whole module, including multi-mesh lights. Only large
-            // body panels retain four corners for the diagonal tack sequence.
-            int count = part.name.ToLowerInvariant().Contains("body") && whole.size.magnitude > .8f ? 4 : 2;
-            SpawnFace(robot, part, whole, viewer, kind, count, bolts);
+            using(var surface=new PartSurface(part))
+            {
+                if (part.name.ToLowerInvariant().Contains("wheel") && !LongModule(part) && WheelAxis(part, robot, whole, out var axle))
+                    return SpawnHub(robot, part, whole, axle, kind, bolts,surface);
+                // One pair for the whole module; large panels retain their diagonal sequence.
+                int count = part.name.ToLowerInvariant().Contains("body") && whole.size.magnitude > .8f ? 4 : 2;
+                SpawnFace(robot, part, whole, viewer, kind, count, bolts,surface);
+            }
             return bolts;
+        }
+
+        // Mounting temporarily disables the part's colliders. Query the actual imported
+        // mesh through short-lived static proxies, including non-readable FBX meshes.
+        // Never fall back to an empty corner of the module's bounding box.
+        sealed class PartSurface:System.IDisposable
+        {
+            readonly List<MeshCollider> meshes=new List<MeshCollider>();
+            public PartSurface(GameObject part)
+            {
+                foreach(var filter in part.GetComponentsInChildren<MeshFilter>(true))
+                {
+                    if(!filter.sharedMesh||filter.GetComponentInParent<RepairBolt>())continue;
+                    var proxy=new GameObject("Repair / surface query"){hideFlags=HideFlags.HideAndDontSave};
+                    proxy.layer=31;
+                    proxy.transform.SetPositionAndRotation(filter.transform.position,filter.transform.rotation);
+                    proxy.transform.localScale=filter.transform.lossyScale;
+                    var collider=proxy.AddComponent<MeshCollider>();collider.sharedMesh=filter.sharedMesh;meshes.Add(collider);
+                }
+                Physics.SyncTransforms();
+            }
+            public bool Find(Vector3 wanted,Vector3 normal,Bounds bounds,float size,List<RepairBolt> placed,out Vector3 point,out Vector3 outward)
+            {
+                point=outward=default;float best=float.PositiveInfinity;
+                var a=Vector3.Cross(normal,Mathf.Abs(normal.y)>.9f?Vector3.forward:Vector3.up).normalized;
+                var b=Vector3.Cross(normal,a).normalized;
+                float depth=Vector3.Dot(bounds.extents,Abs(normal));
+                float e1=Vector3.Dot(bounds.extents,Abs(a)),e2=Vector3.Dot(bounds.extents,Abs(b));
+                void Probe(Vector3 face)
+                {
+                    var ray=new Ray(face+normal*.3f,-normal);
+                    foreach(var mesh in meshes)
+                    {
+                        if(!mesh.Raycast(ray,out var hit,depth*2+.6f))continue;
+                        bool occupied=false;
+                        foreach(var bolt in placed)
+                            if(Vector3.Distance(hit.point,bolt.part.transform.TransformPoint(bolt.inLocal))<size*2.5f){occupied=true;break;}
+                        if(occupied)continue;
+                        float score=(hit.point-wanted).sqrMagnitude;
+                        if(score>=best)continue;
+                        best=score;foundPoint=hit.point;foundNormal=hit.normal;
+                    }
+                }
+                foundPoint=foundNormal=default;Probe(wanted);
+                // Concave and multi-mesh modules may have no surface under a nominal
+                // corner. Search nearby real geometry on the same visible face.
+                if(float.IsPositiveInfinity(best))
+                    for(int x=-3;x<=3;x++)for(int y=-3;y<=3;y++)
+                        Probe(bounds.center+normal*depth+a*(e1*x*.28f)+b*(e2*y*.28f));
+                if(float.IsPositiveInfinity(best))
+                    foreach(var mesh in meshes)
+                    {
+                        var center=mesh.bounds.center;
+                        Probe(center+normal*Vector3.Dot(mesh.bounds.extents,Abs(normal)));
+                    }
+                // Some modules are open plates: the viewer-facing bounds plane may
+                // have no triangles at all. Use another real face instead of air.
+                if(float.IsPositiveInfinity(best))
+                    foreach(var face in new[]{Vector3.up,Vector3.right,Vector3.left,Vector3.forward,Vector3.back,Vector3.down})
+                    {
+                        normal=face;depth=Vector3.Dot(bounds.extents,Abs(normal));
+                        a=Vector3.Cross(normal,Mathf.Abs(normal.y)>.9f?Vector3.forward:Vector3.up).normalized;b=Vector3.Cross(normal,a).normalized;
+                        e1=Vector3.Dot(bounds.extents,Abs(a));e2=Vector3.Dot(bounds.extents,Abs(b));
+                        foreach(var mesh in meshes)Probe(mesh.bounds.center+normal*Vector3.Dot(mesh.bounds.extents,Abs(normal)));
+                        if(float.IsPositiveInfinity(best))
+                            for(int x=-3;x<=3;x++)for(int y=-3;y<=3;y++)
+                                Probe(bounds.center+normal*depth+a*(e1*x*.28f)+b*(e2*y*.28f));
+                        if(!float.IsPositiveInfinity(best))break;
+                    }
+                point=foundPoint;outward=foundNormal;
+                return !float.IsPositiveInfinity(best);
+            }
+            Vector3 foundPoint,foundNormal;
+            public void Dispose()
+            {
+                foreach(var mesh in meshes)if(mesh){mesh.gameObject.SetActive(false);Object.Destroy(mesh.gameObject);}
+            }
         }
 
         static bool LongModule(GameObject part)
@@ -110,7 +188,7 @@ namespace MoonThemedGame.Repair
             return max > (size.x + size.y + size.z - min - max) * 2.25f;
         }
 
-        static void SpawnFace(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 viewer, Fastener kind, int count, List<RepairBolt> bolts)
+        static void SpawnFace(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 viewer, Fastener kind, int count, List<RepairBolt> bolts,PartSurface query)
         {
             var toViewer = (viewer - bounds.center).normalized;
             var normal = Vector3.up;
@@ -132,14 +210,8 @@ namespace MoonThemedGame.Repair
             foreach (var spot in layout)
             {
                 var point = bounds.center + normal * depth + t1 * (spot.x * e1 * 0.55f) + t2 * (spot.y * e2 * 0.55f);
-                var start = point + normal * 0.3f;
-                var surface = point;
-                var surfaceNormal = normal;
-                float nearest = float.MaxValue;
-                foreach (var hit in Physics.RaycastAll(start, -normal, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
-                    if (hit.collider.transform.IsChildOf(part.transform) && hit.distance < nearest)
-                    { nearest = hit.distance; surface = hit.point; surfaceNormal = Vector3.Dot(hit.normal, normal) > 0.3f ? hit.normal : normal; }
-                bolts.Add(Create(robot, part, surface, surfaceNormal, size, kind));
+                if(query.Find(point,normal,bounds,size,bolts,out var surface,out var surfaceNormal))
+                    bolts.Add(Create(robot,part,surface,surfaceNormal,size,kind));
             }
         }
 
@@ -160,7 +232,7 @@ namespace MoonThemedGame.Repair
             return true;
         }
 
-        static List<RepairBolt> SpawnHub(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 axle, Fastener kind, List<RepairBolt> bolts)
+        static List<RepairBolt> SpawnHub(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 axle, Fastener kind, List<RepairBolt> bolts,PartSurface query)
         {
             var t1 = Vector3.Cross(axle, Mathf.Abs(axle.y) > 0.9f ? Vector3.forward : Vector3.up).normalized;
             var t2 = Vector3.Cross(axle, t1).normalized;
@@ -171,14 +243,8 @@ namespace MoonThemedGame.Repair
             {
                 float angle = i * Mathf.PI + Mathf.PI * .25f;
                 var ring = (t1 * Mathf.Cos(angle) + t2 * Mathf.Sin(angle)) * wheelRadius * 0.22f;
-                var start = bounds.center + ring + axle * (depth + 0.3f);
-                var surface = bounds.center + ring + axle * depth;
-                var normal = axle;
-                float nearest = float.MaxValue;
-                foreach (var hit in Physics.RaycastAll(start, -axle, depth * 2 + 0.3f, ~0, QueryTriggerInteraction.Ignore))
-                    if (hit.collider.transform.IsChildOf(part.transform) && hit.distance < nearest)
-                    { nearest = hit.distance; surface = hit.point; normal = Vector3.Dot(hit.normal, axle) > 0.5f ? hit.normal : axle; }
-                bolts.Add(Create(robot, part, surface, normal, size, kind));
+                if(query.Find(bounds.center+ring+axle*depth,axle,bounds,size,bolts,out var surface,out var normal))
+                    bolts.Add(Create(robot,part,surface,normal,size,kind));
             }
             return bolts;
         }

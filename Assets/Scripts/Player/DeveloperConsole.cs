@@ -20,7 +20,7 @@ namespace MoonThemedGame.Interactions
         static int consumedFrame=-1;
         public static bool IsOpen {get;private set;}
         public static bool BlockGameplayInput=>IsOpen || consumedFrame==Time.frameCount;
-        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","end","dismantle","speed","pistol","clear","close"};
+        static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","end","dismantle","speed","pistol","noclip","clear","close"};
         static readonly string[] weatherNames={"sunny","fog","radiation","meteors","night","cryogenic","ash"};
         readonly List<string> lines=new List<string>(),history=new List<string>();
         public IReadOnlyList<string> Lines=>lines;
@@ -142,6 +142,8 @@ namespace MoonThemedGame.Interactions
             {candidates=tokens[0].Equals("spawn",StringComparison.OrdinalIgnoreCase)?GetParts().Keys.Concat(new[]{"zombie"}):GetParts().Keys;prefix=tokens[1];}
             if(tokens.Length==2 && tokens[0].Equals("weather",StringComparison.OrdinalIgnoreCase))
             {candidates=weatherNames;prefix=tokens[1];}
+            if(tokens.Length==2 && tokens[0].Equals("noclip",StringComparison.OrdinalIgnoreCase))
+            {candidates=new[]{"on","off"};prefix=tokens[1];}
             var matches=candidates.Where(c=>c.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)).ToArray();
             if(matches.Length==1)
             {
@@ -189,11 +191,22 @@ namespace MoonThemedGame.Interactions
                 Write("dismantle                 Instantly dismantle final AURINKO; then call the crane");
                 Write("pistol                    Add a pistol to the operator's toolbox (8 rounds, R reload)");
                 Write("speed [x|reset] [bot|player] Set speed multiplier (0.1-10); default: bot");
+                Write("noclip [on|off]           Human flight through walls; WASD, Space up, Ctrl down, Shift faster");
                 Write("clear                     Clear console output");Write("close                     Close console");return;
             }
             if(command=="clear" && args.Length==1){lines.Clear();output?.Clear();return;}
             if(command=="close" && args.Length==1){Close();return;}
             if(command=="parts" && args.Length==1){Write("Parts: "+string.Join(", ",GetParts().Keys));return;}
+            if(command=="noclip")
+            {
+                string mode=args.Length==2?args[1].ToLowerInvariant():"";
+                if(args.Length>2||(args.Length==2&&mode!="on"&&mode!="off")){Write("Usage: noclip [on|off]");return;}
+                var player=FindFirstObjectByType<FirstPersonController>();
+                if(!player||!player.enabled){Write("Leave the PC or robot feed before using human noclip.");return;}
+                bool active=args.Length==1?!player.Noclip:mode=="on";
+                Write(player.SetNoclip(active)?"Noclip "+(active?"ON. WASD fly, Space up, Ctrl down, Shift faster.":"OFF."):
+                    "Cannot disable noclip inside solid geometry. Fly into clear space first.");return;
+            }
             if(command=="pistol")
             {
                 if(args.Length!=1){Write("Usage: pistol");return;}

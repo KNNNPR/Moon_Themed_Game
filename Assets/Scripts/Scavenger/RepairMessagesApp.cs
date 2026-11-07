@@ -117,7 +117,7 @@ namespace MoonThemedGame.Scavenger
         {
             if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             TrackDelivery();
-            if (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false) return;
+            if (terminal && terminal.RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false)) return;
             if (!terminal || terminal.Root == null) return;
             if (desktopRoot != terminal.Root) Build();
 
@@ -173,6 +173,7 @@ namespace MoonThemedGame.Scavenger
             GetComponent<MoonFinderApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             if (orders.Count == 0)
@@ -505,7 +506,7 @@ namespace MoonThemedGame.Scavenger
             if (heading == null) return;
             ValidateSelection();
             bool ru = Loc.Russian;
-            heading.text = ru ? "СООБЩЕНИЯ // ЗАКАЗЫ НА РЕМОНТ" : "MESSAGES // REPAIR ORDERS";
+            heading.text = ru ? "СООБЩЕНИЯ [ЗАКАЗЫ НА РЕМОНТ]" : "MESSAGES [REPAIR ORDERS]";
             queueHeading.text = ru ? "ОСНОВНЫЕ ЗАКАЗЫ" : "MAIN ORDERS";
             if(StationRun.Mode==StationGameMode.Endless)queueHeading.text=ru?"ПОТОК ЗАКАЗОВ":"CONTRACT STREAM";
             for (int i = 0; i < rows.Length; i++)
@@ -543,7 +544,7 @@ namespace MoonThemedGame.Scavenger
             }
             var order = orders[selected];
             if(order.dismantle)customer.text=(ru?"ЗАКАЗЧИК   ":"CUSTOMER   ")+FinalContent.customer;
-            customer.text += "  /  " + order.robot.DisplayName;
+            customer.text += "  [" + order.robot.DisplayName + "]";
             preview.style.height=order.dismantle?95:218;
             reward.style.display=order.dismantle?DisplayStyle.None:DisplayStyle.Flex;
             var items = new List<string>();

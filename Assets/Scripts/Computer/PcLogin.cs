@@ -193,7 +193,7 @@ namespace MoonThemedGame.Computer
             s.backgroundColor = new Color(0.012f, 0.024f, 0.031f, 1);
             s.paddingLeft = 120;
             s.paddingTop = 92;
-            overlay.Add(MakeLabel("PALE HORSE // STATION TERMINAL", 22, Text));
+            overlay.Add(MakeLabel("PALE HORSE [STATION TERMINAL]", 22, Text));
             overlay.Add(MakeLabel("LUNAR TECHNICAL STATION 7   BUILD_RUV", 13, Muted));
             overlay.Add(Space(36));
             overlay.Add(MakeLabel("OPERATOR LOGIN", 18, Text));

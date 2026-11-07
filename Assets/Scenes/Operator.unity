@@ -277,7 +277,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e559f8a39e4447683f5489e7ec4bda1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.LocationGate
   gateLeaves:
   - {fileID: 1095362358}
@@ -1598,7 +1598,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e559f8a39e4447683f5489e7ec4bda1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.LocationGate
   gateLeaves:
   - {fileID: 1095362360}
@@ -2246,7 +2246,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d245933ad7fafab47af9132693d2aeb2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.DoorInteractionZone
   door: {fileID: 8009987136491629094}
 --- !u!65 &332285849
@@ -4239,7 +4239,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -5267,7 +5267,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 758459908}
   lights:
@@ -7662,7 +7662,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5314bf601a32dd4418350cec3ea1af67, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.ChargeStationZone
   localCenter: {x: 0.04115097, y: -0.034550775, z: -0.04832338}
   localSize: {x: 0.19680385, y: 0.1960879, z: 0.040000018}
@@ -7914,6 +7914,117 @@ Light:
   m_CorrespondingSourceObject: {fileID: 1226376623792145048, guid: c598b48cbd9719a4c9ad131d427665d0, type: 3}
   m_PrefabInstance: {fileID: 1001208416}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1004971878
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 792543971171209248, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: tutorial
+      value: 
+      objectReference: {fileID: 11400000, guid: bfad7991cc31428f8d8ba32f49163328, type: 2}
+    - target: {fileID: 1097127780725168628, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_Text
+      value: "\u041F\u0410\u041C\u042F\u0422\u041A\u0410 \u041E\u041F\u0415\u0420\u0410\u0422\u041E\u0420\u0410\n\n1 
+        \u041F\u041A > \u0421\u041E\u041E\u0411\u0429\u0415\u041D\u0418\u042F.\n  
+        \u041F\u0440\u0438\u043C\u0438\u0442\u0435 \u0437\u0430\u043A\u0430\u0437.\n2 
+        \u041E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0421\u0411\u041E\u0420\u0429\u0418\u041A.\n  
+        \u0421\u043E\u0431\u0435\u0440\u0438\u0442\u0435 \u0434\u0435\u0442\u0430\u043B\u0438\n  
+        \u043F\u043E \u043C\u0435\u0442\u043A\u0430\u043C. \u0413\u0440\u0443\u0437:
+        2.\n3  \u0412\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043D\u0430
+        \u0431\u0430\u0437\u0443\n   \u0438 \u0432\u044B\u0433\u0440\u0443\u0437\u0438\u0442\u0435
+        \u0433\u0440\u0443\u0437.\n4  \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u0435
+        \u0434\u0435\u0442\u0430\u043B\u0438.\n   \u041A\u043E\u043B\u0451\u0441\u043D\u044B\u0435
+        \u043C\u043E\u0434\u0443\u043B\u0438\n   \u043F\u043E\u0434\u0431\u0435\u0439\u0442\u0435
+        \u043C\u043E\u043B\u043E\u0442\u043A\u043E\u043C.\n5  \u0417\u0430\u0436\u043C\u0438\u0442\u0435
+        \u0421\u041A\u041C: \u0442\u0443\u043B\u0431\u043E\u043A\u0441.\n   \u041A\u043B\u044E\u0447:
+        \u041B\u041A\u041C + \u0432\u043F\u0440\u0430\u0432\u043E.\n   \u041E\u0442\u0432\u0451\u0440\u0442\u043A\u0430:
+        \u041B\u041A\u041C + \u043A\u0440\u0443\u0433\n   \u043F\u043E \u0447\u0430\u0441\u043E\u0432\u043E\u0439
+        \u0441\u0442\u0440\u0435\u043B\u043A\u0435.\n6  \u0417\u0430\u0442\u044F\u043D\u0438\u0442\u0435
+        \u043A\u0440\u0435\u043F\u043B\u0435\u043D\u0438\u044F.\n   \u041F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435
+        \u0431\u043E\u0442\u0430.\n   \u041A\u0440\u0430\u0441\u043D\u0430\u044F
+        \u043A\u043D\u043E\u043F\u043A\u0430: \u043A\u0440\u0430\u043D."
+      objectReference: {fileID: 0}
+    - target: {fileID: 1990690561197269508, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 3292686677870076944, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.00014624653
+      objectReference: {fileID: 0}
+    - target: {fileID: 3292686677870076944, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.00014624653
+      objectReference: {fileID: 0}
+    - target: {fileID: 3292686677870076944, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.00014624653
+      objectReference: {fileID: 0}
+    - target: {fileID: 5185347563297153875, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_Name
+      value: Notes (1)
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 135
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 135
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 135
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.70130366
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 6.2476897
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -1.7568538
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.69388354
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0.7152931
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0.06631225
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0.04984163
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: -92.189
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 32.858994
+      objectReference: {fileID: 0}
+    - target: {fileID: 8064391699253145443, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: -42.283997
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
 --- !u!1001 &1016179856
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -8989,7 +9100,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -9435,7 +9546,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 1196906033}
   lights:
@@ -9622,7 +9733,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 1214405075}
   lights:
@@ -10612,7 +10723,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -11273,7 +11384,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2c902657e1eb4dad84db6771b1f9ec4d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.LocationPlatform
   upperButton: {fileID: 1095362362}
   lowerButton: {fileID: 1095362363}
@@ -12000,7 +12111,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -12709,7 +12820,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -14537,7 +14648,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d245933ad7fafab47af9132693d2aeb2, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.DoorInteractionZone
   door: {fileID: 7041628271696297014}
 --- !u!4 &1784884439
@@ -14681,7 +14792,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 1793336599}
   lights:
@@ -14793,7 +14904,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a1b2c3d4e5f46a7b8c9d0e1f2a3b4c5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.RobotLever
   handle: {fileID: 0}
   grip: {fileID: 0}
@@ -16621,7 +16732,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 628291768}
   lights:
@@ -16763,7 +16874,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8e559f8a39e4447683f5489e7ec4bda1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.LocationGate
   gateLeaves:
   - {fileID: 1095362356}
@@ -16925,7 +17036,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 2106851334}
   lights:
@@ -17319,7 +17430,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 63838501660603868}
   lights:
@@ -23085,7 +23196,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 6422744299424473350}
   lights:
@@ -23195,7 +23306,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 2482290133170559177}
   lights:
@@ -23405,7 +23516,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4821878c7a6ce1e46a4b2e55fa1a3935, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.InteractionOutline
   outlineMaterial: {fileID: 0}
   targets: []
@@ -23508,7 +23619,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 1719588512617376135}
   lights:
@@ -24505,8 +24616,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 724b0ffb2f5940b999a0db5925b15f36, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   capacity: 100
   drainPerSecond: 1
   chargePerSecond: 8
@@ -24573,8 +24684,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cf4e4046d0ee4047a32c6efdc5ab7b30, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxSpeed: 4.2
   reverseFactor: 0.5
   acceleration: 4.1
@@ -24605,6 +24716,7 @@ MonoBehaviour:
   gravity: 4
   travel: 0.6
   dampingRatio: 1.1
+  responsiveWheelVisuals: 0
   localForward: {x: 0, y: 0, z: 1}
   controllable: 0
   recoveryDelay: 0.6
@@ -24714,8 +24826,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7f63d5cd180a4f99b51c504f8d3b17a7, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   mouseSensitivity: 0.14
   gamepadTurnSpeed: 140
   defaultPitch: 22
@@ -24730,6 +24842,11 @@ MonoBehaviour:
   speedPullback: 0.12
   speedPitchDrop: 3
   maximumCornerBank: 1.25
+  cornerFollowLag: 0.075
+  accelerationFieldOfView: 1.5
+  accelerationPullback: 0.04
+  landingDip: 0.18
+  landingNod: 2.5
 --- !u!114 &8220263400000000012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24740,7 +24857,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
   m_RenderShadows: 1
   m_RequiresDepthTextureOption: 2
@@ -24784,8 +24901,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6d477db858c94524820be941f9e8c970, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   phosphor: {r: 0.78, g: 0.96, b: 0.8, a: 1}
   warning: {r: 1, g: 0.3, b: 0.22, a: 1}
   font: {fileID: 12800000, guid: f2c3b0d3542244afb35e4d6914801d2a, type: 3}
@@ -24801,8 +24918,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c2affd4746a8474fb68005486bc8443b, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   terminal: {fileID: 1508841709}
   robot: {fileID: 8220263400000000001}
   robotCamera: {fileID: 8220263400000000009}
@@ -24829,8 +24946,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d2a8f3c7e1b4a96b0c4e9f7a3d1c8b2, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8220263400000000016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24841,8 +24958,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 51d59a8cc7464afba5a36bffd53aa4f1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8220263400000000017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24853,8 +24970,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c5f3e4d6a7b8490ab1c2d3e4f5061728, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   scrollPixelsPerStep: 120
 --- !u!114 &8220263400000000018
 MonoBehaviour:
@@ -24866,8 +24983,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 57d42282cb14e6b46977dfc069db7b15, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   completedOrders: 0
 --- !u!114 &8220263400000000019
 MonoBehaviour:
@@ -24879,8 +24996,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e3eaf59f6db44b6cb6d3728aa527e496, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxLength: 16
   verifyTime: 1.1
   grantedTime: 0.9
@@ -24894,8 +25011,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a613a3516f9845fab6c367374ab7d951, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   maxPieces: 8
   spawnDistance: {x: 12, y: 55}
   groundLayers:
@@ -24913,8 +25030,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8b9656a4a17b5ea4e9f5b70e3ea9a14f, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   content: {fileID: 11400000, guid: b4241542af65a8241a538fd5abb56196, type: 2}
 --- !u!114 &8220263400000000022
 MonoBehaviour:
@@ -24926,8 +25043,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 73d4504d97dc4e5cbad605ed6b41b274, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   content: {fileID: 11400000, guid: 2082bbf6a0754e9ea98803eec5abe501, type: 2}
 --- !u!114 &8220263400000000023
 MonoBehaviour:
@@ -24939,8 +25056,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2737984ebe9155c4dbc68852f7436263, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   content: {fileID: 11400000, guid: 0755c12a12887254d926005cb17ecf78, type: 2}
 --- !u!114 &8220263400000000024
 MonoBehaviour:
@@ -24952,8 +25069,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a656e3b0ad44fe08109b22428384927, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8220263400000000025
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24964,8 +25081,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 279dd71b565150840a150d0c560f4fa5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &8220263400000000026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24976,8 +25093,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b8b54194a7752940bcc3c4519177d18, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   loweringSeconds: 5
   loweredPose: {fileID: 0}
   localHinge: {x: 0.000333, y: 0.02068916, z: 0.005946622}
@@ -24997,8 +25114,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0d225607dd7df9943a09c0e1cc258891, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   interactionDistance: 2.5
   outline: {fileID: 0}
 --- !u!114 &8220263400000000028
@@ -25011,8 +25128,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2107db6ad3f84d9492d43b99a0ef4a54, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   interactionDistance: 2.5
   outline: {fileID: 0}
 --- !u!64 &8220263400000000029
@@ -25047,8 +25164,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3d40a0da0629487a91abc9a3ce3ad524, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   deliveryTube: {fileID: 7625992472417414010}
   wrenchOffset: {x: 2.4, y: 0.5, z: 1.3}
 --- !u!1 &8220263400000000031 stripped
@@ -25076,8 +25193,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 70b599c7afe2bbf40bcb481fa31a5b74, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   craneAnimator: {fileID: 8220263400000000032}
   grip: {fileID: 8220263400000000033}
   dropper: {fileID: 223072623}
@@ -25093,8 +25210,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a7b9ace850880bc448bedcfb958927f1, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   interactionDistance: 2.5
   outline: {fileID: 8220263400000000037}
   crane: {fileID: 8220263400000000034}
@@ -25130,7 +25247,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4821878c7a6ce1e46a4b2e55fa1a3935, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Interactions.InteractionOutline
   outlineMaterial: {fileID: 0}
   targets: []
@@ -25471,7 +25588,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3adb0774247a4ea8be0f7dc54d627947, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.BreakableLamp
   glass: {fileID: 5340692348310420111}
   lights:
@@ -26203,6 +26320,7 @@ SceneRoots:
   - {fileID: 6961314583886788240}
   - {fileID: 3659962053519739499}
   - {fileID: 2177869261563972162}
+  - {fileID: 1004971878}
   - {fileID: 665067229}
   - {fileID: 223072624}
   - {fileID: 1710602006}

@@ -16,9 +16,9 @@ namespace MoonThemedGame.Interactions
     {
         public static bool IsOpen { get; private set; }
         static int consumedFrame = -1;
-        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying || StationStoryFlow.IsBlocking;
+        public static bool BlockGameplayInput => IsOpen || consumedFrame == Time.frameCount || DeveloperConsole.BlockGameplayInput || OperatorWakeUp.IsPlaying || OperatorRadioBriefing.IsPlaying || StationStoryFlow.IsBlocking;
         FirstPersonController player;
-        bool restorePlayer, visible;
+        bool restorePlayer, visible, returningToMenu;
         CursorLockMode cursorLock;
         float timeScale;
         PanelSettings panel;
@@ -54,7 +54,7 @@ namespace MoonThemedGame.Interactions
         void Update()
         {
             if(StationStoryFlow.IsBlocking)return;
-            if(OperatorWakeUp.IsPlaying)return;
+            if(OperatorWakeUp.IsPlaying||OperatorRadioBriefing.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue)
             {
@@ -72,7 +72,7 @@ namespace MoonThemedGame.Interactions
         }
         public void HandleBack()
         {
-            if(OperatorWakeUp.IsPlaying)return;
+            if(OperatorWakeUp.IsPlaying||OperatorRadioBriefing.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if(IsOpen && capturing.HasValue) { CancelRebind(); return; }
             if (IsOpen)
@@ -92,7 +92,7 @@ namespace MoonThemedGame.Interactions
         public void Open()
         {
             if(StationStoryFlow.IsBlocking)return;
-            if(OperatorWakeUp.IsPlaying)return;
+            if(OperatorWakeUp.IsPlaying||OperatorRadioBriefing.IsPlaying)return;
             if(DeveloperConsole.BlockGameplayInput)return;
             if (IsOpen) return;
             player = FindFirstObjectByType<FirstPersonController>(); restorePlayer = player && player.enabled;
@@ -144,7 +144,7 @@ namespace MoonThemedGame.Interactions
             var scrim=Box("settings-scrim"); root.Add(scrim);
             var shell=Box("settings-shell"); scrim.Add(shell);
             var header=Box("settings-header"); shell.Add(header);
-            header.Add(Text("PALE HORSE /// STATION TERMINAL","settings-title"));
+            header.Add(Text("PALE HORSE [STATION TERMINAL]","settings-title"));
             header.Add(Text("LUNAR TECHNICAL STATION 7   BUILD_RUV","station-caption"));
             var body=Box("settings-body"); shell.Add(body);
             homePanel=Box("settings-home"); homePanel.name="settings-home"; body.Add(homePanel);
@@ -158,6 +158,9 @@ namespace MoonThemedGame.Interactions
             homePanel.Add(ActionButton("LANGUAGE: ENGLISH",Loc.Toggle,"language"));
             homePanel.Add(ActionButton("CONTROLS  >",ShowControls,"controls"));
             homePanel.Add(ActionButton("RESUME",Close,"resume"));
+            var mainMenu=ActionButton("MAIN MENU",ReturnToMainMenu,"main-menu");
+            mainMenu.style.display=MainMenuController.IsMenuScene?DisplayStyle.None:DisplayStyle.Flex;
+            homePanel.Add(mainMenu);
             homePanel.Add(ActionButton("EXIT GAME",RequestQuit,"quit"));
             controlsPanel=Box("settings-controls"); controlsPanel.name="settings-controls"; body.Add(controlsPanel);
             controlsPanel.Add(Text("CONTROLS","section-title"));
@@ -237,6 +240,14 @@ namespace MoonThemedGame.Interactions
 #else
             Application.Quit();
 #endif
+        }
+        public void ReturnToMainMenu()
+        {
+            if(returningToMenu||MainMenuController.IsMenuScene||!Application.CanStreamedLevelBeLoaded("MENU"))return;
+            returningToMenu=true;Close();PlayerPrefs.Save();
+            Time.timeScale=1;FirstPersonController.LookFrozen=false;
+            Cursor.lockState=CursorLockMode.None;Cursor.visible=true;
+            SceneManager.LoadSceneAsync("MENU");
         }
         void OnDisable() { if (IsOpen) Close(); }
         void OnDestroy()

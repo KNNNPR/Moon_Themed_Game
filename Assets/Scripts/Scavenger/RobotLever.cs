@@ -31,6 +31,8 @@ namespace MoonThemedGame.Scavenger
         [SerializeField] LocationBridge bridge;
 
         public event Action<RobotLever> Pulled;
+        public Component Mechanism=>gate?(Component)gate:bridge?(Component)bridge:platform;
+        public bool PassageOpen=>gate?gate.IsOpen:bridge?bridge.IsLowered:platform?platform.AtTop:on;
         public void Bind(LocationGate target) => gate = target;
         public void Bind(LocationPlatform target) => platform = target;
         public void Bind(LocationBridge target) => bridge = target;
