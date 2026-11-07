@@ -890,6 +890,7 @@ Transform:
   - {fileID: 4110479998474860158}
   - {fileID: 8352540908028129702}
   - {fileID: 3436239468198145238}
+  - {fileID: 8260359930481465757}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6973010851346015469
@@ -904,7 +905,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6606d38ab2e846b980c7715626e2513a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnLayout
-  balanceNotes: '48 fixed part spawns in 12 four-part routes, reaching the southern
+  balanceNotes: '50 part spawns in 12 four-part routes plus two optional ship interior points, reaching the southern
     basin and eastern perimeter. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative
     route speed 4.55 m/s. First 12 parts cover the first three repair orders, without
     any gate or bridge. Outer routes use capacity/efficiency upgrades and the second
@@ -1061,6 +1062,57 @@ MonoBehaviour:
   progressionTier: 0
   estimatedLoopSeconds: 68
   orderRoute: 1
+--- !u!1 &3886165665173117949
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5602400135777057318}
+  - component: {fileID: 6361114735734192544}
+  m_Layer: 0
+  m_Name: 49 Battery
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5602400135777057318
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3886165665173117949}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.20077465, y: -0, z: 0.08761162, w: 0.97571194}
+  m_LocalPosition: {x: -168.19098, y: -70.2458, z: -443.49603}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8260359930481465757}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6361114735734192544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3886165665173117949}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
+  routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
+    gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
+    no BoxCollider is added. Not a mandatory order route.
+  progressionTier: 6
+  estimatedLoopSeconds: 300
+  orderRoute: 0
 --- !u!1 &4012254611959536338
 GameObject:
   m_ObjectHideFlags: 0
@@ -1840,6 +1892,39 @@ MonoBehaviour:
   progressionTier: 5
   estimatedLoopSeconds: 230
   orderRoute: 0
+--- !u!1 &6075806784208696736
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8260359930481465757}
+  m_Layer: 0
+  m_Name: 13 SHIP - interior hold
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8260359930481465757
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6075806784208696736}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5602400135777057318}
+  - {fileID: 3617183235639513699}
+  m_Father: {fileID: 994297994535252734}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6266131850010284037
 GameObject:
   m_ObjectHideFlags: 0
@@ -2609,6 +2694,57 @@ MonoBehaviour:
   progressionTier: 1
   estimatedLoopSeconds: 79
   orderRoute: 1
+--- !u!1 &8518090384072852664
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3617183235639513699}
+  - component: {fileID: 3677413734516600339}
+  m_Layer: 0
+  m_Name: 50 Wheel
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3617183235639513699
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8518090384072852664}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.20077454, y: -0, z: 0.087611556, w: 0.975712}
+  m_LocalPosition: {x: -162.84299, y: -71.7164, z: -449.223}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8260359930481465757}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3677413734516600339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8518090384072852664}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4bb1416838d747c38baa25c4fc9c94d7, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnPoint
+  part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
+  routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
+    gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
+    no BoxCollider is added. Not a mandatory order route.
+  progressionTier: 6
+  estimatedLoopSeconds: 300
+  orderRoute: 0
 --- !u!1 &8572760383763249988
 GameObject:
   m_ObjectHideFlags: 0

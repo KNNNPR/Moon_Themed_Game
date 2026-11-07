@@ -40,7 +40,7 @@ public static class SalvageLayoutSetup
         var root=new GameObject("Salvage Spawn Points");
         try
         {
-            root.AddComponent<SalvageSpawnLayout>().balanceNotes="48 fixed part spawns in 12 four-part routes, reaching the southern basin and eastern perimeter. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative route speed 4.55 m/s. First 12 parts cover the first three repair orders, without any gate or bridge. Outer routes use capacity/efficiency upgrades and the second charger. Gates and bridge unlock the outpost and later caches. Edit child positions and Part fields in this prefab or its scene instance.";
+            root.AddComponent<SalvageSpawnLayout>().balanceNotes="50 part spawns: 12 four-part routes plus two optional points inside Cube.064. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative route speed 4.55 m/s. Order supplies move farther after the first two successful repairs, capped by available power upgrades. Gates and bridge caches remain optional. Edit child positions and progression fields in this prefab or its scene instance.";
             int sequence=0;var errors=new List<string>();
             void Group(string name,string notes,params Spot[] spots)
             {
@@ -83,7 +83,8 @@ public static class SalvageLayoutSetup
                 P("Back_Body_Robot",184.9f,-11.6f,-417.5f),P("Battery",174.4f,-9.4f,-409.8f),P("Wheel",142.6f,-7.6f,-507.6f),P("Headlights",147.6f,-5.2f,-488));
             if(errors.Count>0)throw new InvalidOperationException(string.Join("\n",errors));
             SalvageOrderProgressionSetup.Annotate(root);
-            PrefabUtility.SaveAsPrefabAsset(root,PrefabPath);AssetDatabase.SaveAssets();Debug.Log("Balanced salvage layout: "+sequence+" fixed points.");
+            SalvageShipSpawnSetup.AddTo(root);
+            PrefabUtility.SaveAsPrefabAsset(root,PrefabPath);AssetDatabase.SaveAssets();Debug.Log("Balanced salvage layout: "+root.GetComponentsInChildren<SalvageSpawnPoint>().Length+" fixed points.");
         }
         finally{Object.DestroyImmediate(root);}
     }

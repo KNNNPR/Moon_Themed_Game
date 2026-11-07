@@ -12,7 +12,7 @@ public static class SalvageOrderProgressionSetup
             var group=point.transform.parent;
             if(!group || group.name.Length<2 || !int.TryParse(group.name.Substring(0,2),out int number))continue;
             point.progressionTier=number switch{1 or 2=>0,3=>1,4=>2,5=>3,6 or 7 or 9=>4,8 or 10=>5,_=>6};
-            point.estimatedLoopSeconds=number switch{1=>42,2=>68,3=>79,4=>108,5=>159,6=>199,7=>211,8=>254,9=>208,10=>230,11=>290,_=>260};
+            point.estimatedLoopSeconds=number switch{1=>42,2=>68,3=>79,4=>108,5=>159,6=>199,7=>211,8=>254,9=>208,10=>230,11=>290,13=>300,_=>260};
             point.orderRoute=number==1 || number==2 || number==3 || number==4 || number==5 || number==9;
         }
     }

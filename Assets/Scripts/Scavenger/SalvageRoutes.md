@@ -1,6 +1,6 @@
 # Salvage routes
 
-The editable layout is **Assets/Resources/SalvageSpawnLayout.prefab**. The Operator hierarchy installs it as **Salvage Spawn Points**, with twelve numbered groups and four fixed part spawns per group. Each point exposes its Part and route notes in the Inspector. Scene-instance position overrides are respected. Runtime instantiates the prefab if the scene has not been saved with an instance yet.
+The editable layout is **Assets/Resources/SalvageSpawnLayout.prefab**. The Operator hierarchy installs it as **Salvage Spawn Points**, with twelve four-part routes plus **13 SHIP - interior hold**, containing a battery and a wheel on the internal Cube.064 cargo floor (50 points total). The ship points use its existing MeshCollider, require no BoxCollider, and remain optional loot behind the ship gates. Each point exposes its Part and route notes in the Inspector. Scene-instance position overrides are respected. Runtime instantiates the prefab if the scene has not been saved with an instance yet.
 
 The first two accepted jobs use the nearby caches. From the third accepted job (after two successful repairs), the required supply route moves to the northern junction. Earlier points are physically cleared and cannot refill; this changes actual loot, rather than only hiding HUD markers. The selected route supplies the missing part types and quantities, including extra wheels when required. Cargo, parts in the bay and parts travelling through the tube count toward supply and are preserved.
 
