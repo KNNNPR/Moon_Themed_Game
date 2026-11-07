@@ -74,6 +74,7 @@ namespace MoonThemedGame.Computer
             if(!Purchased || terminal.Root==null)return;if(boundRoot!=terminal.Root)Build();
             window.style.display=open?DisplayStyle.Flex:DisplayStyle.None;if(!open)return;
             GetComponent<ShopApp>()?.Close();GetComponent<SatelliteConsoleApp>()?.Close();GetComponent<RepairMessagesApp>()?.Close();GetComponent<MoonFinderApp>()?.Close();
+            GetComponent<CrazyCosmonautsApp>()?.Close();
             window.BringToFront();terminal.Root.Q("screen-cursor")?.BringToFront();Refresh();
         }
         public void Close(){if(window!=null)window.style.display=DisplayStyle.None;}
@@ -91,7 +92,7 @@ namespace MoonThemedGame.Computer
                 }
                 if(lastCredits!=terminal.Credits)Refresh();
             }
-            if(GameSettingsMenu.BlockGameplayInput)return;
+            if(GameSettingsMenu.BlockGameplayInput || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
             bool pointer=terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point=terminal.PointerPosition;
             bool free=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false) && !(GetComponent<MoonFinderApp>()?.IsOpen??false);

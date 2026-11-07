@@ -138,7 +138,7 @@ namespace MoonThemedGame.Interactions
             string text=input.value;string[] tokens=text.Split(' ');
             IEnumerable<string> candidates=commands;string prefix=text;
             if(tokens.Length==2 && (tokens[0].Equals("spawn",StringComparison.OrdinalIgnoreCase)||tokens[0].Equals("deliver",StringComparison.OrdinalIgnoreCase)))
-            {candidates=GetParts().Keys;prefix=tokens[1];}
+            {candidates=tokens[0].Equals("spawn",StringComparison.OrdinalIgnoreCase)?GetParts().Keys.Concat(new[]{"zombie"}):GetParts().Keys;prefix=tokens[1];}
             if(tokens.Length==2 && tokens[0].Equals("weather",StringComparison.OrdinalIgnoreCase))
             {candidates=weatherNames;prefix=tokens[1];}
             var matches=candidates.Where(c=>c.StartsWith(prefix,StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -154,13 +154,14 @@ namespace MoonThemedGame.Interactions
         {
             var result=new Dictionary<string,GameObject>(StringComparer.OrdinalIgnoreCase);
             var delivery=FindFirstObjectByType<RepairRobotDropper>();
-            if(delivery && delivery.parts!=null)
-                foreach(var part in delivery.parts)
+            if(delivery)
+                foreach(var prefab in delivery.AllParts)
                 {
-                    if(part==null || !part.prefab)continue;
-                    string name=part.prefab.name.ToLowerInvariant();
+                    string name=prefab.name.ToLowerInvariant();
                     string id=name.Contains("wheel")?"wheel":name.Contains("battery")?"battery":name.Contains("headlight")?"headlights":name.Contains("window")?"window":name.Contains("body")?"body":name;
-                    result[id]=part.prefab;
+                    var variant=prefab.GetComponent<RepairPartVariant>();
+                    if(variant)id=variant.robotName.ToLowerInvariant()+"_"+id;
+                    result[id]=prefab;
                 }
             return result;
         }
@@ -178,6 +179,7 @@ namespace MoonThemedGame.Interactions
                 Write("credits <amount>          Add a positive number of credits");
                 Write("parts                     List repair part IDs");
                 Write("spawn <part> [count]      Spawn near the human operator (1-20)");
+                Write("spawn zombie              Spawn a zombie near the human operator");
                 Write("deliver <part> [count]    Send through Tube_For_Scrap (1-20)");
                 Write("weather                   Show current weather and available presets");
                 Write("weather <preset>          Set sunny, fog, radiation, meteors, night, cryogenic or ash");
@@ -200,7 +202,7 @@ namespace MoonThemedGame.Interactions
             {
                 if(args.Length!=1){Write("Usage: repair");return;}
                 var robot=RepairRobotDropper.Active?RepairRobotDropper.Active.CurrentRobot:null;
-                if(!robot){Write("No repair robot in the bay. Accept an order or drop a robot first.");return;}
+                if(!robot){Write("No repair robot in the bay. Accept a repair order first.");return;}
                 if(robot.IsBeingCollected){Write("The crane is already collecting this robot.");return;}
                 if(!robot.IsSettled){Write("Wait for the repair robot to land.");return;}
                 Write(robot.DebugRepairAll()?"Robot fully repaired: all parts seated, bolts and screws complete.":"Robot could not be repaired.");return;
@@ -258,6 +260,11 @@ namespace MoonThemedGame.Interactions
                 long total=(long)terminal.Credits+amount;
                 if(total>int.MaxValue){Write("Credit limit exceeded.");return;}
                 terminal.SetCredits((int)total);Write("Added "+amount+" credits. Balance: "+terminal.Credits);return;
+            }
+            if(command=="spawn" && args.Length>=2 && args[1].Equals("zombie",StringComparison.OrdinalIgnoreCase))
+            {
+                if(args.Length!=2){Write("Usage: spawn zombie");return;}
+                Write(ZombieSpawner.SpawnNearOperator()?"Zombie spawned. Close the console to resume simulation.":"No clear floor near the operator, or Zombie prefab unavailable.");return;
             }
             if(command=="spawn" || command=="deliver")
             {

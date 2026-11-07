@@ -27,6 +27,7 @@ namespace MoonThemedGame.Repair
         public AudioClip shotSound,emptySound,magazineOutSound,magazineInSound,slideSound;
         [Min(.1f)] public float shotInterval=.17f;
         [Min(1)] public float range=250;
+        [Min(1)] public float bulletDamage=34;
         public int Ammo {get;private set;}=MagazineSize;
         public bool IsReloading {get;private set;}
         public float AimAmount {get;private set;}
@@ -169,9 +170,13 @@ namespace MoonThemedGame.Repair
             Ammo--;ShotsFired++;
             if(HitSomething)
             {
+                var zone=hit.collider.GetComponent<ZombieHitZone>();
+                bool zombieHit=zone && zone.Hit(bulletDamage,hit.point,hit.normal,path.normalized);
+                var lamp=hit.collider.GetComponentInParent<BreakableLamp>();
+                bool glassHit=lamp && lamp.TryBreak(hit,new Ray(origin,path.normalized),PlayerBody.Scale,effectMaterial);
                 var prop=hit.collider.GetComponentInParent<HeldProp>();
                 bool shattered=prop && prop.ReactToPistolHit(path.normalized,effectMaterial);
-                if(!shattered)
+                if(!shattered && !zombieHit && !glassHit)
                 {
                     if(hit.rigidbody && !hit.rigidbody.isKinematic)hit.rigidbody.AddForceAtPosition(path.normalized*(5*PlayerBody.Scale),hit.point,ForceMode.Impulse);
                     PistolEffects.Impact(hit,PlayerBody.Scale,effectMaterial,impactMaterial);
@@ -192,6 +197,7 @@ namespace MoonThemedGame.Repair
             bool found=false;
             foreach(var hit in Physics.RaycastAll(origin,direction,distance,Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore))
             {
+                if(hit.collider is CharacterController && hit.collider.GetComponent<ZombieActor>())continue;
                 if(hit.distance>best || hit.transform.IsChildOf(transform) || (player && hit.transform.IsChildOf(player.transform)))continue;
                 nearest=hit;best=hit.distance;found=true;
             }

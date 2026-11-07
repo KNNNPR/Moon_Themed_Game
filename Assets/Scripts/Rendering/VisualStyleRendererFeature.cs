@@ -13,6 +13,7 @@ namespace MoonThemedGame.Rendering
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (renderingData.cameraData.camera.GetComponent<MoonThemedGame.Computer.CrazyCosmonautsCamera>()) return;
             if (settings) passMaterial = settings.CurrentMaterial;
             requirements = ScriptableRenderPassInput.Depth;
             var weather=MoonThemedGame.Weather.MoonWeatherSystem.Active;

@@ -116,6 +116,7 @@ namespace MoonThemedGame.Computer
             SetCredits(credits);
             if(!TryGetComponent<MoonFinderApp>(out _))gameObject.AddComponent<MoonFinderApp>();
             if(!TryGetComponent<MoneyGetApp>(out _))gameObject.AddComponent<MoneyGetApp>();
+            if(!TryGetComponent<CrazyCosmonautsApp>(out _))gameObject.AddComponent<CrazyCosmonautsApp>();
         }
 
         public void SetCredits(int amount)
@@ -179,6 +180,8 @@ namespace MoonThemedGame.Computer
             {
                 UpdateHighlight();
                 if (escape) { Back(); return; }
+                if (GetComponent<CrazyCosmonautsApp>()?.CapturingInput ?? false)
+                { HidePointer(); Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; return; }
                 if (camera && TryGetPanelPosition(camera, position, out var panelPoint)) SetPointer(panelPoint);
                 else HidePointer();
                 return;
@@ -253,9 +256,10 @@ namespace MoonThemedGame.Computer
             cursor.style.left = Mathf.Clamp(point.x, 0, assets.resolution.x - 20);
             cursor.style.top = Mathf.Clamp(point.y, 0, assets.resolution.y - 30);
             HoveredIcon = null;
+            bool coveredByGame = GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false;
             foreach (var icon in icons)
             {
-                bool over = icon.worldBound.Contains(point);
+                bool over = !coveredByGame && icon.worldBound.Contains(point);
                 icon.EnableInClassList("pointer-over", over);
                 if (over) HoveredIcon = icon.name;
             }
@@ -299,6 +303,8 @@ namespace MoonThemedGame.Computer
         public void Back()
         {
             if (!focused || IsTransitioning) return;
+            var crazy = GetComponent<CrazyCosmonautsApp>();
+            if (crazy && crazy.IsOpen) { crazy.HandleBack(); return; }
             var money = GetComponent<MoneyGetApp>();
             if (money && money.IsOpen) { money.Close(); return; }
             var moon = GetComponent<MoonFinderApp>();
@@ -315,6 +321,7 @@ namespace MoonThemedGame.Computer
         public void ExitFocus(bool instant = false)
         {
             if (!focused) return;
+            GetComponent<CrazyCosmonautsApp>()?.Close();
             HidePointer();
             transitionDirection = -1;
             if (instant || focusDuration <= 0 || !focusedCamera) { transition = 0; FinishTransition(); }

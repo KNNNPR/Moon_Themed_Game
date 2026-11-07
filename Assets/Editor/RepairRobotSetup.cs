@@ -56,7 +56,7 @@ namespace MoonThemedGame.Editor
             Selection.activeGameObject = host;
             EditorUtility.SetDirty(dropper);
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log("Repair drop point created. Move it if needed, save the scene, then press F in Play Mode.", host);
+            Debug.Log("Repair drop point created. Move it if needed, save the scene, then accept a repair order on the PC.", host);
         }
     }
 }

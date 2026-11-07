@@ -29,12 +29,16 @@ namespace MoonThemedGame.Scavenger
             public Label title, description, level, value, next, buyLabel;
             public Wireframe wireframe;
             public float yaw;
-            public bool moonFinder, moneyGet, installed;
+            public bool moonFinder, moneyGet, crazy, installed;
         }
 
         internal sealed class Wireframe
         {
             public Vector3[] from, to;
+            public Vector3[] normalA, normalB;
+            public bool[] feature;
+            public int[] source;
+            public int sourceCount;
         }
 
         PcMonitorTerminal terminal;
@@ -46,6 +50,8 @@ namespace MoonThemedGame.Scavenger
         MoonFinderApp moonFinderApp;
         MoneyGetContent moneyGet;
         MoneyGetApp moneyGetApp;
+        CrazyCosmonautsContent crazyContent;
+        CrazyCosmonautsApp crazyApp;
         ScrollView listings;
         float statusUntil;
 
@@ -63,6 +69,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal) return;
             if (window == null && terminal.Root != null) Build();
             if (window == null) return;
+            if (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false) return;
 
             bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point = terminal.PointerPosition;
@@ -91,7 +98,7 @@ namespace MoonThemedGame.Scavenger
             {
                 bool hover = pointer && listings.contentViewport.worldBound.Contains(point) && card.root.worldBound.Contains(point);
                 card.root.style.borderLeftColor = card.root.style.borderRightColor = card.root.style.borderTopColor = card.root.style.borderBottomColor = hover ? Text : Edge;
-                bool canBuy = card.moneyGet ? moneyGet && moneyGetApp && !moneyGetApp.Purchased && terminal.Credits>=moneyGet.price : card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
+                bool canBuy = card.crazy ? crazyContent && crazyApp && !crazyApp.Purchased && terminal.Credits >= crazyContent.price : card.moneyGet ? moneyGet && moneyGetApp && !moneyGetApp.Purchased && terminal.Credits>=moneyGet.price : card.moonFinder ? moonFinder && moonFinderApp && !moonFinderApp.Purchased && terminal.Credits>=moonFinder.price : !RobotUpgrades.IsMax(card.upgrade) && terminal.Credits >= RobotUpgrades.Price(card.upgrade);
                 card.buy.style.backgroundColor = hover && canBuy ? new Color(1, 1, 1, 0.18f) : Color.clear;
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
@@ -125,6 +132,12 @@ namespace MoonThemedGame.Scavenger
 
         void Buy(Card card)
         {
+            if (card.crazy)
+            {
+                if (crazyApp && crazyApp.Purchased) { Say(Loc.T("[INSTALLED]"), Muted); return; }
+                if (!crazyContent || !crazyApp || !crazyApp.Purchase()) { Say(Loc.F("NOT ENOUGH CREDITS - NEED {0} CR", crazyContent ? crazyContent.price : 10), Alarm); return; }
+                Say(Loc.Russian ? "Безумные Космонавты установлены на рабочем столе." : "Crazy Cosmonauts installed on your desktop.", Good); Refresh(); return;
+            }
             if(card.moneyGet)
             {
                 if(moneyGetApp && moneyGetApp.Purchased){Say(Loc.T("[INSTALLED]"),Muted);return;}
@@ -164,6 +177,7 @@ namespace MoonThemedGame.Scavenger
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             GetComponent<MoonFinderApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
+            GetComponent<CrazyCosmonautsApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
@@ -177,6 +191,7 @@ namespace MoonThemedGame.Scavenger
             moonFinder=Resources.Load<MoonFinderContent>("MoonFinderContent");
             moonFinderApp=GetComponent<MoonFinderApp>();
             moneyGet=Resources.Load<MoneyGetContent>("MoneyGetContent");moneyGetApp=GetComponent<MoneyGetApp>();
+            crazyContent=Resources.Load<CrazyCosmonautsContent>("CrazyCosmonautsContent");crazyApp=GetComponent<CrazyCosmonautsApp>();
             var cursor = terminal.Root.Q("screen-cursor");
             var desktop = cursor != null ? cursor.parent : terminal.Root;
             int index = cursor != null ? desktop.IndexOf(cursor) : desktop.childCount;
@@ -216,6 +231,7 @@ namespace MoonThemedGame.Scavenger
             foreach (var upgrade in RobotUpgrades.All) grid.Add(BuildCard(upgrade));
             grid.Add(BuildCard(default,true));
             grid.Add(BuildCard(default,false,true));
+            grid.Add(BuildCard(default,false,false,true));
             listings=new ScrollView(ScrollViewMode.Vertical){name="shop-listings",pickingMode=PickingMode.Ignore,verticalScrollerVisibility=ScrollerVisibility.Hidden};
             listings.style.height=418;listings.Add(grid);window.Add(listings);
 
@@ -225,13 +241,13 @@ namespace MoonThemedGame.Scavenger
             desktop.Insert(index, window);
         }
 
-        VisualElement BuildCard(Upgrade upgrade,bool moonFinderCard=false,bool moneyGetCard=false)
+        VisualElement BuildCard(Upgrade upgrade,bool moonFinderCard=false,bool moneyGetCard=false,bool crazyCard=false)
         {
-            var card = new Card { upgrade = upgrade, moonFinder=moonFinderCard, moneyGet=moneyGetCard, root = Box(), yaw = 30 + cards.Count * 47 };
-            card.root.name=moneyGetCard?"shop-moneyget":moonFinderCard?"shop-moonfinder":"shop-"+upgrade;
+            var card = new Card { upgrade = upgrade, moonFinder=moonFinderCard, moneyGet=moneyGetCard, crazy=crazyCard, root = Box(), yaw = 30 + cards.Count * 47 };
+            card.root.name=crazyCard?"shop-crazycosmonauts":moneyGetCard?"shop-moneyget":moonFinderCard?"shop-moonfinder":"shop-"+upgrade;
             cards.Add(card);
-            var model = moneyGetCard ? (moneyGet?moneyGet.shopModel:null) : moonFinderCard ? (moonFinder?moonFinder.shopModel:null) : catalog ? catalog.Model(upgrade) : null;
-            card.wireframe = model ? BuildWireframe(model) : null;
+            var model = crazyCard ? (crazyContent ? crazyContent.zombiePrefab : null) : moneyGetCard ? (moneyGet?moneyGet.shopModel:null) : moonFinderCard ? (moonFinder?moonFinder.shopModel:null) : catalog ? catalog.Model(upgrade) : null;
+            card.wireframe = crazyCard ? BuildCosmonautWireframe() : model ? BuildWireframe(model) : null;
 
             var root = card.root;
             root.style.width = 362;
@@ -300,6 +316,16 @@ namespace MoonThemedGame.Scavenger
             heading.text = Loc.Russian?"СКЛАД // ДЕТАЛИ И ПРОГРАММЫ":"DEPOT // PARTS & SOFTWARE";
             foreach (var card in cards)
             {
+                if (card.crazy)
+                {
+                    card.installed = crazyApp && crazyApp.Purchased;
+                    card.title.text = crazyContent ? crazyContent.Title : "Crazy Cosmonauts";
+                    card.description.text = crazyContent ? crazyContent.Description : "";
+                    card.level.text = Loc.Russian ? "ИГРА ДЛЯ ПК" : "PC GAME";
+                    card.value.text = Loc.Russian ? "Волны / пистолет / +3 CR" : "Waves / pistol / +3 CR"; card.next.text = "";
+                    card.buyLabel.text = card.installed ? Loc.T("[INSTALLED]") : Loc.F("[BUY  {0} CR]", crazyContent ? crazyContent.price : 10);
+                    card.buyLabel.style.color = card.installed ? Good : terminal.Credits >= (crazyContent ? crazyContent.price : 10) ? Text : Alarm; continue;
+                }
                 if(card.moneyGet)
                 {
                     card.installed=moneyGetApp && moneyGetApp.Purchased;
@@ -340,11 +366,45 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        // Feature edges only (silhouette creases and open borders), normalised to a unit sphere.
+        static Wireframe BuildCosmonautWireframe()
+        {
+            var assets = Resources.Load<MoonThemedGame.Repair.CosmonautBodyAssets>("CosmonautBodyAssets");
+            if (!assets || !assets.model) return null;
+            // Bake the complete original skin to readable CPU geometry. The imported
+            // FBX is not readable in a build, and the first-person mesh has no head.
+            var instance = Object.Instantiate(assets.model);
+            instance.name = "Cosmonaut / temporary shop wireframe";
+            var baked = new List<Mesh>();
+            try
+            {
+                foreach (var animator in instance.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+                foreach (var collider in instance.GetComponentsInChildren<Collider>(true)) collider.enabled = false;
+                foreach (var skin in instance.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    var mesh = new Mesh { name = "Cosmonaut / complete shop skin" };
+                    skin.BakeMesh(mesh); baked.Add(mesh); skin.enabled = false;
+                    var child = new GameObject("Shop wireframe geometry"); child.transform.SetParent(skin.transform, false);
+                    child.AddComponent<MeshFilter>().sharedMesh = mesh;
+                }
+                return BuildWireframe(instance);
+            }
+            finally
+            {
+                foreach (var mesh in baked) Object.Destroy(mesh);
+                Object.Destroy(instance);
+            }
+        }
+
+        // Creases, borders and view-dependent silhouettes, normalised to a unit sphere.
         internal static Wireframe BuildWireframe(GameObject model, System.Predicate<Transform> include = null)
         {
             var from = new List<Vector3>();
             var to = new List<Vector3>();
+            var normalA = new List<Vector3>();
+            var normalB = new List<Vector3>();
+            var feature = new List<bool>();
+            var source = new List<int>();
+            int sourceCount = 0;
             var root = model.transform.worldToLocalMatrix;
             var sources = new List<(Mesh mesh, Transform transform)>();
             foreach (var filter in model.GetComponentsInChildren<MeshFilter>(true))
@@ -368,7 +428,7 @@ namespace MoonThemedGame.Scavenger
                     if (!welded.TryGetValue(key, out int id)) { id = points.Count; welded[key] = id; points.Add(matrix.MultiplyPoint3x4(vertices[i])); }
                     ids[i] = id;
                 }
-                var edges = new Dictionary<long, (Vector3 normal, int count, bool crease)>();
+                var edges = new Dictionary<long, (Vector3 normal, Vector3 other, int count, bool crease)>();
                 for (int t = 0; t + 2 < triangles.Length; t += 3)
                 {
                     int a = ids[triangles[t]], b = ids[triangles[t + 1]], c = ids[triangles[t + 2]];
@@ -379,31 +439,29 @@ namespace MoonThemedGame.Scavenger
                     AddEdge(edges, b, c, normal);
                     AddEdge(edges, c, a, normal);
                 }
-                foreach (var pair in edges)
+                var orderedEdges = new List<long>(edges.Keys);
+                orderedEdges.Sort((a, b) => EdgeLength(b).CompareTo(EdgeLength(a)));
+                float EdgeLength(long edge) => (points[(int)(edge >> 32)] - points[(int)(edge & 0xffffffff)]).sqrMagnitude;
+                foreach (long key in orderedEdges)
                 {
-                    if (pair.Value.count != 1 && !pair.Value.crease) continue;
-                    from.Add(points[(int)(pair.Key >> 32)]);
-                    to.Add(points[(int)(pair.Key & 0xffffffff)]);
+                    var edge = edges[key];
+                    from.Add(points[(int)(key >> 32)]);
+                    to.Add(points[(int)(key & 0xffffffff)]);
+                    normalA.Add(edge.normal);
+                    normalB.Add(edge.other);
+                    feature.Add(edge.count != 2 || edge.crease);
+                    source.Add(sourceCount);
                 }
+                sourceCount++;
             }
             if (from.Count == 0) return null;
 
-            const int maxEdges = 700;
-            if (from.Count > maxEdges)
-            {
-                var order = new List<int>(from.Count);
-                for (int i = 0; i < from.Count; i++) order.Add(i);
-                order.Sort((x, y) => (to[y] - from[y]).sqrMagnitude.CompareTo((to[x] - from[x]).sqrMagnitude));
-                var keptFrom = new List<Vector3>(maxEdges);
-                var keptTo = new List<Vector3>(maxEdges);
-                for (int i = 0; i < maxEdges; i++) { keptFrom.Add(from[order[i]]); keptTo.Add(to[order[i]]); }
-                from = keptFrom;
-                to = keptTo;
-            }
             var all = new Bounds(from[0], Vector3.zero);
             for (int i = 0; i < from.Count; i++) { all.Encapsulate(from[i]); all.Encapsulate(to[i]); }
             float scale = 1 / Mathf.Max(all.extents.magnitude, 1e-5f);
-            var frame = new Wireframe { from = new Vector3[from.Count], to = new Vector3[to.Count] };
+            var frame = new Wireframe { from = new Vector3[from.Count], to = new Vector3[to.Count],
+                normalA = normalA.ToArray(), normalB = normalB.ToArray(), feature = feature.ToArray(),
+                source = source.ToArray(), sourceCount = sourceCount };
             for (int i = 0; i < from.Count; i++)
             {
                 frame.from[i] = (from[i] - all.center) * scale;
@@ -412,17 +470,17 @@ namespace MoonThemedGame.Scavenger
             return frame;
         }
 
-        static void AddEdge(Dictionary<long, (Vector3 normal, int count, bool crease)> edges, int a, int b, Vector3 normal)
+        static void AddEdge(Dictionary<long, (Vector3 normal, Vector3 other, int count, bool crease)> edges, int a, int b, Vector3 normal)
         {
             long key = a < b ? ((long)a << 32) | (uint)b : ((long)b << 32) | (uint)a;
             if (edges.TryGetValue(key, out var edge))
-                edges[key] = (edge.normal, edge.count + 1, edge.crease || Vector3.Dot(edge.normal, normal) < 0.85f);
-            else edges[key] = (normal, 1, false);
+                edges[key] = (edge.normal, normal, edge.count + 1, edge.crease || Vector3.Dot(edge.normal, normal) < 0.85f);
+            else edges[key] = (normal, Vector3.zero, 1, false);
         }
 
         static void DrawWireframe(MeshGenerationContext context, Card card)
         {
-            bool installed = card.moonFinder ? card.installed : RobotUpgrades.Level(card.upgrade) > 0;
+            bool installed = card.moonFinder || card.moneyGet || card.crazy ? card.installed : RobotUpgrades.Level(card.upgrade) > 0;
             DrawWireframe(context, card.wireframe, card.yaw,
                 installed ? new Color(Good.r, Good.g, Good.b, 0.85f) : new Color(Text.r, Text.g, Text.b, 0.75f));
         }
@@ -449,8 +507,15 @@ namespace MoonThemedGame.Scavenger
             p.strokeColor = color;
             p.lineWidth = 1;
             p.BeginPath();
+            // Reserve a share for every mesh: dense wheel rims must not consume the
+            // whole budget and erase a smooth body, battery or window from the preview.
+            var drawn = new int[Mathf.Max(1, frame.sourceCount)];
+            int budget = Mathf.Max(1, 700 / drawn.Length);
             for (int i = 0; i < frame.from.Length; i++)
             {
+                if (drawn[frame.source[i]] >= budget) continue;
+                if (!frame.feature[i] && (rotation * frame.normalA[i]).z * (rotation * frame.normalB[i]).z > 0) continue;
+                drawn[frame.source[i]]++;
                 var a = rotation * frame.from[i];
                 var b = rotation * frame.to[i];
                 p.MoveTo(center + new Vector2(a.x, -a.y) * size);

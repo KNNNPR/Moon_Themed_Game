@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b10444dd6f3e2594eb5eaf4e98c79d65, type: 3}
+  m_Name: SkateBot
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.RepairRobotDefinition
+  displayName: SkateBot
+  prefab: {fileID: 3179864484565160036, guid: 0d3ee825152d0df4aa32f4f521c97b4d, type: 3}
+  deliveryScale: 0.5
+  parts:
+  - prefab: {fileID: 4089173725372417576, guid: a4cf7ee108669024bb76609c4b2ed8aa, type: 3}
+    displayName: Back_Body_Robot
+  - prefab: {fileID: 2595136421391460754, guid: 72d6c474d2d151b45b7240e2078f0680, type: 3}
+    displayName: Battery
+  - prefab: {fileID: 8606585732527006296, guid: 34ca1eae7a8cd2a419c8035b35453b38, type: 3}
+    displayName: Headlights
+  - prefab: {fileID: 401630165186579102, guid: 3a0a0818d0da93f4bb70333837bcfcc8, type: 3}
+    displayName: Wheel
+  - prefab: {fileID: 3711991164806388768, guid: 8535b6da181977d409a5bbf2a0d63387, type: 3}
+    displayName: Window_Robot

@@ -25,6 +25,7 @@ namespace MoonThemedGame.Scavenger
 
         sealed class Order
         {
+            public RepairRobotDefinition robot;
             public int[] missingSlots;
             public int[] missingCounts;
             public Wireframe frame;
@@ -37,7 +38,6 @@ namespace MoonThemedGame.Scavenger
         RepairRobotTarget delivery;
         Order accepted;
         readonly List<Order> orders = new List<Order>();
-        List<RepairRobotTarget.Slot> slots;
         VisualElement desktopRoot, window, preview, endlessSection;
         Label heading, queueHeading, close, customer, parts, description, reward, accept, endlessHeading, endlessRow, reroll;
         readonly Label[] rows = new Label[InitialOrders.Length];
@@ -91,6 +91,7 @@ namespace MoonThemedGame.Scavenger
         {
             if(MoonThemedGame.Interactions.DeveloperConsole.BlockGameplayInput)return;
             TrackDelivery();
+            if (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false) return;
             if (!terminal || terminal.Root == null) return;
             if (desktopRoot != terminal.Root) Build();
 
@@ -145,6 +146,7 @@ namespace MoonThemedGame.Scavenger
             if (desktopRoot != terminal.Root) Build();
             GetComponent<MoonFinderApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
+            GetComponent<CrazyCosmonautsApp>()?.Close();
             if (TryGetComponent(out ShopApp shop)) shop.Close();
             if (TryGetComponent(out SatelliteConsoleApp satellites)) satellites.Close();
             if (orders.Count == 0)
@@ -152,10 +154,13 @@ namespace MoonThemedGame.Scavenger
                 dropper = RepairRobotDropper.Active;
                 if (dropper && dropper.gameObject.scene == gameObject.scene && dropper.robotPrefab && dropper.parts != null)
                 {
-                    slots = RepairRobotTarget.FindSlots(dropper.robotPrefab.transform, dropper.parts);
-                    if (slots.Count > 0)
-                        for (int i = 0; i < InitialOrders.Length; i++)
-                            orders.Add(BuildOrder(SelectMainSlots(i)));
+                    var types = dropper.RobotTypes;
+                    for (int i = 0; i < InitialOrders.Length && types.Count > 0; i++)
+                    {
+                        var robot = types[i % types.Count];
+                        var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
+                        if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot));
+                    }
                 }
             }
             window.style.display = DisplayStyle.Flex;
@@ -164,33 +169,34 @@ namespace MoonThemedGame.Scavenger
             Refresh();
         }
 
-        Order BuildOrder(int[] missing)
+        Order BuildOrder(int[] missing, RepairRobotDefinition robot)
         {
             // Keep a stable damage plan for the preview, text and eventual delivery.
-            var counts = new int[dropper.parts.Length];
+            var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
+            var counts = new int[robot.parts.Length];
             var hidden = new List<Transform>(missing.Length);
             foreach (int index in missing)
             {
                 counts[slots[index].part]++;
                 hidden.Add(slots[index].visual.transform);
             }
-            var frame = BuildWireframe(dropper.robotPrefab, mesh =>
+            var frame = BuildWireframe(robot.prefab, mesh =>
             {
                 foreach (var part in hidden)
                     if (mesh.IsChildOf(part)) return false;
                 return true;
             });
-            return new Order { missingSlots = missing, missingCounts = counts, frame = frame };
+            return new Order { robot = robot, missingSlots = missing, missingCounts = counts, frame = frame };
         }
 
-        int[] SelectMainSlots(int orderIndex)
+        int[] SelectMainSlots(int orderIndex, RepairRobotDefinition robot, List<RepairRobotTarget.Slot> slots)
         {
             var chosen = new List<int>();
             foreach (var (part, count) in InitialOrders[orderIndex])
             {
                 int remaining = count;
                 for (int i = 0; i < slots.Count && remaining > 0; i++)
-                    if (dropper.parts[slots[i].part].prefab.name == part)
+                    if (robot.parts[slots[i].part].prefab.name == part)
                     {
                         chosen.Add(i);
                         remaining--;
@@ -204,22 +210,25 @@ namespace MoonThemedGame.Scavenger
 
         Order GenerateEndless(Order previous)
         {
+            var types = dropper.RobotTypes;
+            var robot = types[endlessRandom.Next(types.Count)];
+            var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
             int minimum = Mathf.Clamp(dropper.minimumMissingParts, 1, slots.Count);
             int maximum = Mathf.Clamp(dropper.maximumMissingParts, minimum, slots.Count);
             var missing = RepairDamagePlan.Select(slots.Count, minimum, maximum, endlessRandom.Next());
-            if (previous != null)
+            if (previous != null && previous.robot == robot)
             {
-                var counts = new int[dropper.parts.Length];
+                var counts = new int[robot.parts.Length];
                 foreach (int index in missing) counts[slots[index].part]++;
                 bool same = true;
                 for (int i = 0; i < counts.Length; i++)
                     same &= counts[i] == previous.missingCounts[i];
-                if (same) missing = MakeDifferent(missing, minimum, maximum);
+                if (same) missing = MakeDifferent(missing, minimum, maximum, slots);
             }
-            return BuildOrder(missing);
+            return BuildOrder(missing, robot);
         }
 
-        int[] MakeDifferent(int[] rolled, int minimum, int maximum)
+        int[] MakeDifferent(int[] rolled, int minimum, int maximum, List<RepairRobotTarget.Slot> slots)
         {
             // Swap one slot for another kind so the parts list changes as well as the model.
             var selectedSlots = new HashSet<int>(rolled);
@@ -247,7 +256,7 @@ namespace MoonThemedGame.Scavenger
         void Accept()
         {
             if (orders.Count == 0 || accepted != null || !dropper || orders[selected].completed) return;
-            delivery = dropper.TryDropOrder(orders[selected].missingSlots);
+            delivery = dropper.TryDropOrder(orders[selected].missingSlots, orders[selected].robot);
             if (!delivery) return;
             accepted = orders[selected];
             GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
@@ -456,10 +465,11 @@ namespace MoonThemedGame.Scavenger
                 return;
             }
             var order = orders[selected];
+            customer.text += "  /  " + order.robot.DisplayName;
             var items = new List<string>();
             for (int i = 0; i < order.missingCounts.Length; i++)
                 if (order.missingCounts[i] > 0)
-                    items.Add($"{SalvageField.PartName(dropper.parts[i].prefab)} ×{order.missingCounts[i]}");
+                    items.Add($"{SalvageField.PartName(order.robot.parts[i].prefab)} ×{order.missingCounts[i]}");
             parts.text = (ru ? "НЕДОСТАЮЩИЕ ДЕТАЛИ\n" : "MISSING PARTS\n") + string.Join("  /  ", items);
             reward.text = ru ? $"НАГРАДА  +{order.Reward} CR" : $"REWARD  +{order.Reward} CR";
             description.text = ru

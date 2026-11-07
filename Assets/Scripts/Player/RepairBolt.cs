@@ -10,6 +10,8 @@ namespace MoonThemedGame.Repair
     public sealed class RepairBolt : MonoBehaviour
     {
         static readonly List<RepairBolt> all = new List<RepairBolt>();
+        internal static IReadOnlyList<RepairBolt> All => all;
+        internal static int RegistryVersion { get; private set; }
         static readonly Color RustyBolt = new Color(0.86f, 0.47f, 0.16f);
         static readonly Color BrassScrew = new Color(0.86f, 0.74f, 0.38f);
         static readonly Color Steel = new Color(0.5f, 0.53f, 0.56f);
@@ -20,6 +22,8 @@ namespace MoonThemedGame.Repair
         Renderer[] renderers;
         int turns;
         float visualTurns;
+        MoonThemedGame.Interactions.InteractionOutline hover;
+        public bool Highlighted { get; private set; }
         Quaternion restRotation;
         public const float TurnDuration=.34f;
         public float VisualTurns=>visualTurns;
@@ -221,7 +225,9 @@ namespace MoonThemedGame.Repair
             bolt.restRotation = root.transform.localRotation;
             bolt.inLocal = part.transform.InverseTransformPoint(surface + normal * size * 0.2f);
             bolt.renderers = pieces.ToArray();
+            RegistryVersion++;
             bolt.Paint(kind == Fastener.Bolt ? RustyBolt : BrassScrew);
+            RepairFastenerHighlight.Ensure(root.scene);
             return bolt;
         }
 
@@ -243,8 +249,26 @@ namespace MoonThemedGame.Repair
                 if (renderers[i] && !(Kind == Fastener.Screw && i == 2)) renderers[i].material.color = color;
         }
 
-        void OnEnable() => all.Add(this);
-        void OnDisable() => all.Remove(this);
+        void OnEnable() { all.Add(this); RegistryVersion++; }
+        void OnDisable() { all.Remove(this); RegistryVersion++; SetAimed(false); }
+
+        internal void AddHighlightMeshes(List<MeshRenderer> meshes)
+        {
+            if (renderers != null) foreach (var renderer in renderers) if (renderer is MeshRenderer mesh) meshes.Add(mesh);
+        }
+
+        public void SetAimed(bool value)
+        {
+            Highlighted = value;
+            if (value && !hover)
+            {
+                hover = gameObject.AddComponent<MoonThemedGame.Interactions.InteractionOutline>();
+                var meshes = new List<MeshRenderer>();
+                if (renderers != null) foreach (var renderer in renderers) if (renderer is MeshRenderer mesh) meshes.Add(mesh);
+                hover.targets = meshes.ToArray(); hover.widthPixels = 3; hover.outlineColor = new Color(.8f, 1, .86f);
+            }
+            if (hover) hover.SetHighlighted(value);
+        }
 
         public void Turn(int direction)
         {
@@ -266,6 +290,6 @@ namespace MoonThemedGame.Repair
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetState() => all.Clear();
+        static void ResetState() { all.Clear(); RegistryVersion = 0; }
     }
 }
