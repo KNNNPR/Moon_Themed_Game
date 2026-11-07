@@ -17947,17 +17947,9 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1097127780725168628, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
       propertyPath: m_Text
-      value: 'Login: Apple
-
-        Password: 12345
-
-
-        Don''t forget to change
-
-        your
-        password after
-
-        logging in.'
+      value: "\u041B\u043E\u0433\u0438\u043D: Apple\n\u041F\u0430\u0440\u043E\u043B\u044C:
+        12345\n\n\u041D\u0435 \u0437\u0430\u0431\u0443\u0434\u044C \u0441\u043C\u0435\u043D\u0438\u0442\u044C\n\u043F\u0430\u0440\u043E\u043B\u044C
+        \u043F\u043E\u0441\u043B\u0435\n\u0432\u0445\u043E\u0434\u0430."
       objectReference: {fileID: 0}
     - target: {fileID: 1990690561197269508, guid: 778e13e8ba3a5e14ca4d3c3321b2aaf8, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -20680,6 +20672,7 @@ GameObject:
   - component: {fileID: 7773157511335603306}
   - component: {fileID: 745443040411790609}
   - component: {fileID: 6979220929298772651}
+  - component: {fileID: 7773157511335603307}
   m_Layer: 0
   m_Name: Cylinder.020
   m_TagString: Untagged
@@ -22793,6 +22786,27 @@ Transform:
   m_Children: []
   m_Father: {fileID: 543450652233334530}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7773157511335603307
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5745913740840678792}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.021718532, y: 0.021718528, z: 0.049594603}
+  m_Center: {x: 0, y: 0, z: 0.008281089}
 --- !u!23 &7783642030760772626
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -22883,6 +22897,7 @@ GameObject:
   - component: {fileID: 5362852862851838516}
   - component: {fileID: 2199664822051956011}
   - component: {fileID: 7365283715120512438}
+  - component: {fileID: 7833249856453626027}
   m_Layer: 0
   m_Name: Cylinder.019
   m_TagString: Untagged
@@ -22890,6 +22905,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!65 &7833249856453626027
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7833249856453626026}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.03467366, y: 0.034673657, z: 0.11728549}
+  m_Center: {x: 0.0000000027939677, y: 9.313226e-10, z: 0.008027801}
 --- !u!4 &7885244154836167004
 Transform:
   m_ObjectHideFlags: 0
@@ -24066,6 +24102,7 @@ GameObject:
   - component: {fileID: 5979769516702367758}
   - component: {fileID: 19156295767209179}
   - component: {fileID: 649251793273961538}
+  - component: {fileID: 9141816029162403840}
   m_Layer: 0
   m_Name: Cube.026
   m_TagString: Untagged
@@ -24073,6 +24110,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!64 &9141816029162403840
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9141816029162403839}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: -8936622394817868014, guid: 286a759e9efb7bf41b992e3f599fafae, type: 3}
 --- !u!33 &9203870078835008530
 MeshFilter:
   m_ObjectHideFlags: 0
