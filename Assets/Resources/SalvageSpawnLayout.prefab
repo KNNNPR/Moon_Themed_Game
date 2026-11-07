@@ -48,7 +48,7 @@ MonoBehaviour:
   routeNotes: Later route after the bridge is lowered. 164-184m from charge station
     2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
     on the moving bridge deck.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 254
   orderRoute: 0
 --- !u!1 &219811456248124307
@@ -99,7 +99,7 @@ MonoBehaviour:
   routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
     2 and 578-611m from the base. Upgrade battery and regulator, recharge before
     departing. Fixed reachable ground, never the moving bridge or cliff tops.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 290
   orderRoute: 0
 --- !u!1 &601966011566633819
@@ -150,7 +150,7 @@ MonoBehaviour:
   routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
     third initial order. Normal weather; leave time to return, or collect only part
     of the cache.
-  progressionTier: 1
+  progressionTier: 2
   estimatedLoopSeconds: 79
   orderRoute: 1
 --- !u!1 &928496275403264945
@@ -236,7 +236,7 @@ MonoBehaviour:
   routeNotes: Later route after the bridge is lowered. 164-184m from charge station
     2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
     on the moving bridge deck.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 254
   orderRoute: 0
 --- !u!1 &1094686030581850089
@@ -287,7 +287,7 @@ MonoBehaviour:
   routeNotes: Later route after the bridge is lowered. 164-184m from charge station
     2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
     on the moving bridge deck.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 254
   orderRoute: 0
 --- !u!1 &1360783608361931817
@@ -338,7 +338,7 @@ MonoBehaviour:
   routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
     not as an unupgraded return trip. Open the outpost gate with the arm before relying
     on that charger.
-  progressionTier: 3
+  progressionTier: 4
   estimatedLoopSeconds: 159
   orderRoute: 1
 --- !u!1 &1418492490853282068
@@ -389,7 +389,7 @@ MonoBehaviour:
   routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
     upgrades are required for a comfortable return. The first three groups contain
     the same required part types earlier.'
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 208
   orderRoute: 1
 --- !u!1 &1506260681130743790
@@ -440,7 +440,7 @@ MonoBehaviour:
   routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
     and improved capacity/efficiency; gather on the outward route, not on stock battery.
     Spread between the depot exit and the far eastern road.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 260
   orderRoute: 0
 --- !u!1 &1627787475405802185
@@ -491,7 +491,7 @@ MonoBehaviour:
   routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
     third initial order. Normal weather; leave time to return, or collect only part
     of the cache.
-  progressionTier: 1
+  progressionTier: 2
   estimatedLoopSeconds: 79
   orderRoute: 1
 --- !u!1 &1804351700398505436
@@ -541,7 +541,7 @@ MonoBehaviour:
   part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
   routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
     before any unlock. Can split collection into shorter sorties.
-  progressionTier: 0
+  progressionTier: 1
   estimatedLoopSeconds: 68
   orderRoute: 1
 --- !u!1 &2122111647836159607
@@ -642,7 +642,7 @@ MonoBehaviour:
   part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
   routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
     before any unlock. Can split collection into shorter sorties.
-  progressionTier: 0
+  progressionTier: 1
   estimatedLoopSeconds: 68
   orderRoute: 1
 --- !u!1 &2577861221566620281
@@ -693,7 +693,7 @@ MonoBehaviour:
   routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
     recommended for a full four-part detour. Avoid a full cache run during radiation
     on stock power.
-  progressionTier: 2
+  progressionTier: 3
   estimatedLoopSeconds: 108
   orderRoute: 1
 --- !u!1 &2793881225235108254
@@ -744,7 +744,7 @@ MonoBehaviour:
   routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
     recommended for a full four-part detour. Avoid a full cache run during radiation
     on stock power.
-  progressionTier: 2
+  progressionTier: 3
   estimatedLoopSeconds: 108
   orderRoute: 1
 --- !u!1 &2811384459692116064
@@ -794,7 +794,7 @@ MonoBehaviour:
   part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
   routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
     cargo still returns to the main base for unloading.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 199
   orderRoute: 0
 --- !u!1 &3022640451870541756
@@ -845,7 +845,7 @@ MonoBehaviour:
   routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
     pieces support short loops from that charger, rather than a single long trip
     from the base.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 211
   orderRoute: 0
 --- !u!1 &3060458836882160653
@@ -905,12 +905,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6606d38ab2e846b980c7715626e2513a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Scavenger.SalvageSpawnLayout
-  balanceNotes: '50 part spawns in 12 four-part routes plus two optional ship interior points, reaching the southern
-    basin and eastern perimeter. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative
-    route speed 4.55 m/s. First 12 parts cover the first three repair orders, without
-    any gate or bridge. Outer routes use capacity/efficiency upgrades and the second
-    charger. Gates and bridge unlock the outpost and later caches. Edit child positions
-    and Part fields in this prefab or its scene instance.'
+  balanceNotes: '50 fixed part spawns. Six story orders request six safe routes, advancing after each successful repair: access road, roadside wrecks, northern junction, western detour, outpost approach, eastern service road. Normal-weather endurance caps the selected route with a 7% reserve. Stock power covers the first three routes; upgrade battery and regulator for the final three. Gates, bridge and ship caches remain optional. Edit positions and progression fields in this prefab or its scene instance.'
 --- !u!1 &3275041195148092381
 GameObject:
   m_ObjectHideFlags: 0
@@ -958,7 +953,7 @@ MonoBehaviour:
   part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
   routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
     cargo still returns to the main base for unloading.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 199
   orderRoute: 0
 --- !u!1 &3436380902280940942
@@ -1009,7 +1004,7 @@ MonoBehaviour:
   routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
     2 and 578-611m from the base. Upgrade battery and regulator, recharge before
     departing. Fixed reachable ground, never the moving bridge or cliff tops.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 290
   orderRoute: 0
 --- !u!1 &3557695237120569466
@@ -1059,7 +1054,7 @@ MonoBehaviour:
   part: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
   routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
     before any unlock. Can split collection into shorter sorties.
-  progressionTier: 0
+  progressionTier: 1
   estimatedLoopSeconds: 68
   orderRoute: 1
 --- !u!1 &3886165665173117949
@@ -1110,7 +1105,7 @@ MonoBehaviour:
   routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
     gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
     no BoxCollider is added. Not a mandatory order route.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 300
   orderRoute: 0
 --- !u!1 &4012254611959536338
@@ -1161,7 +1156,7 @@ MonoBehaviour:
   routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
     pieces support short loops from that charger, rather than a single long trip
     from the base.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 211
   orderRoute: 0
 --- !u!1 &4298959463195185045
@@ -1211,7 +1206,7 @@ MonoBehaviour:
   part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
   routeNotes: No shortcuts. Base route 93-115m each way. Window and body remain available
     before any unlock. Can split collection into shorter sorties.
-  progressionTier: 0
+  progressionTier: 1
   estimatedLoopSeconds: 68
   orderRoute: 1
 --- !u!1 &4454494452797111133
@@ -1261,7 +1256,7 @@ MonoBehaviour:
   part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
   routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
     battery and power-regulator upgrades turn this dense cache into a viable haul.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 230
   orderRoute: 0
 --- !u!1 &4456246365405754853
@@ -1312,7 +1307,7 @@ MonoBehaviour:
   routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
     not as an unupgraded return trip. Open the outpost gate with the arm before relying
     on that charger.
-  progressionTier: 3
+  progressionTier: 4
   estimatedLoopSeconds: 159
   orderRoute: 1
 --- !u!1 &4542959464622744676
@@ -1363,7 +1358,7 @@ MonoBehaviour:
   routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
     pieces support short loops from that charger, rather than a single long trip
     from the base.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 211
   orderRoute: 0
 --- !u!1 &4588590441676105216
@@ -1414,7 +1409,7 @@ MonoBehaviour:
   routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
     upgrades are required for a comfortable return. The first three groups contain
     the same required part types earlier.'
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 208
   orderRoute: 1
 --- !u!1 &4619163481975064956
@@ -1535,7 +1530,7 @@ MonoBehaviour:
   routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
     2 and 578-611m from the base. Upgrade battery and regulator, recharge before
     departing. Fixed reachable ground, never the moving bridge or cliff tops.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 290
   orderRoute: 0
 --- !u!1 &5213911551893585124
@@ -1585,7 +1580,7 @@ MonoBehaviour:
   part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
   routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
     cargo still returns to the main base for unloading.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 199
   orderRoute: 0
 --- !u!1 &5304900932550292603
@@ -1636,7 +1631,7 @@ MonoBehaviour:
   routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
     not as an unupgraded return trip. Open the outpost gate with the arm before relying
     on that charger.
-  progressionTier: 3
+  progressionTier: 4
   estimatedLoopSeconds: 159
   orderRoute: 1
 --- !u!1 &5323547722147523935
@@ -1687,7 +1682,7 @@ MonoBehaviour:
   routeNotes: Behind the outpost gate. 46-54m from charge station 2. Four nearby
     pieces support short loops from that charger, rather than a single long trip
     from the base.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 211
   orderRoute: 0
 --- !u!1 &5570114715472325752
@@ -1738,7 +1733,7 @@ MonoBehaviour:
   routeNotes: Later route after the bridge is lowered. 164-184m from charge station
     2. Take capacity/efficiency upgrades and recharge before crossing. No parts placed
     on the moving bridge deck.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 254
   orderRoute: 0
 --- !u!1 &5775566520683160168
@@ -1788,7 +1783,7 @@ MonoBehaviour:
   part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
   routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
     battery and power-regulator upgrades turn this dense cache into a viable haul.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 230
   orderRoute: 0
 --- !u!1 &5878118158307796490
@@ -1839,7 +1834,7 @@ MonoBehaviour:
   routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
     recommended for a full four-part detour. Avoid a full cache run during radiation
     on stock power.
-  progressionTier: 2
+  progressionTier: 3
   estimatedLoopSeconds: 108
   orderRoute: 1
 --- !u!1 &6040118723213052428
@@ -1889,7 +1884,7 @@ MonoBehaviour:
   part: {fileID: 7926535806669919927, guid: 070d4ceb978af854a859eb45ea9f207e, type: 3}
   routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
     battery and power-regulator upgrades turn this dense cache into a viable haul.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 230
   orderRoute: 0
 --- !u!1 &6075806784208696736
@@ -2164,7 +2159,7 @@ MonoBehaviour:
   routeNotes: Base route 269-324m. Collect while travelling toward the second charger,
     not as an unupgraded return trip. Open the outpost gate with the arm before relying
     on that charger.
-  progressionTier: 3
+  progressionTier: 4
   estimatedLoopSeconds: 159
   orderRoute: 1
 --- !u!1 &6738915652119973339
@@ -2300,7 +2295,7 @@ MonoBehaviour:
   part: {fileID: 8182834803536935133, guid: 5bdf91dedd156ea4e9205115edc4e9fe, type: 3}
   routeNotes: Later route behind the east depot gate. 459-490m from base. Larger
     battery and power-regulator upgrades turn this dense cache into a viable haul.
-  progressionTier: 5
+  progressionTier: 6
   estimatedLoopSeconds: 230
   orderRoute: 0
 --- !u!1 &7141708134144228602
@@ -2351,7 +2346,7 @@ MonoBehaviour:
   routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
     third initial order. Normal weather; leave time to return, or collect only part
     of the cache.
-  progressionTier: 1
+  progressionTier: 2
   estimatedLoopSeconds: 79
   orderRoute: 1
 --- !u!1 &7183714329886677295
@@ -2488,7 +2483,7 @@ MonoBehaviour:
   routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
     and improved capacity/efficiency; gather on the outward route, not on stock battery.
     Spread between the depot exit and the far eastern road.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 260
   orderRoute: 0
 --- !u!1 &7616674335312121166
@@ -2539,7 +2534,7 @@ MonoBehaviour:
   routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
     upgrades are required for a comfortable return. The first three groups contain
     the same required part types earlier.'
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 208
   orderRoute: 1
 --- !u!1 &7784101057453883400
@@ -2589,7 +2584,7 @@ MonoBehaviour:
   part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
   routeNotes: Behind the outpost gate. 17-38m from charge station 2. Recharge here;
     cargo still returns to the main base for unloading.
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 199
   orderRoute: 0
 --- !u!1 &7913781278995112533
@@ -2640,7 +2635,7 @@ MonoBehaviour:
   routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
     and improved capacity/efficiency; gather on the outward route, not on stock battery.
     Spread between the depot exit and the far eastern road.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 260
   orderRoute: 0
 --- !u!1 &8499510162985409298
@@ -2691,7 +2686,7 @@ MonoBehaviour:
   routeNotes: No shortcuts. Base route 126-143m each way. Extra wheels cover the
     third initial order. Normal weather; leave time to return, or collect only part
     of the cache.
-  progressionTier: 1
+  progressionTier: 2
   estimatedLoopSeconds: 79
   orderRoute: 1
 --- !u!1 &8518090384072852664
@@ -2742,7 +2737,7 @@ MonoBehaviour:
   routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
     gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
     no BoxCollider is added. Not a mandatory order route.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 300
   orderRoute: 0
 --- !u!1 &8572760383763249988
@@ -2793,7 +2788,7 @@ MonoBehaviour:
   routeNotes: Closed-gate base route 192-214m each way. Capacity or efficiency upgrade
     recommended for a full four-part detour. Avoid a full cache run during radiation
     on stock power.
-  progressionTier: 2
+  progressionTier: 3
   estimatedLoopSeconds: 108
   orderRoute: 1
 --- !u!1 &8787108322304671217
@@ -2914,7 +2909,7 @@ MonoBehaviour:
   routeNotes: Late-game perimeter route, 456-536m from the base. Arm/gate unlock
     and improved capacity/efficiency; gather on the outward route, not on stock battery.
     Spread between the depot exit and the far eastern road.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 260
   orderRoute: 0
 --- !u!1 &8842893322457597820
@@ -2965,7 +2960,7 @@ MonoBehaviour:
   routeNotes: Beyond the lowered bridge, 218-251m of driving from charge station
     2 and 578-611m from the base. Upgrade battery and regulator, recharge before
     departing. Fixed reachable ground, never the moving bridge or cliff tops.
-  progressionTier: 6
+  progressionTier: 7
   estimatedLoopSeconds: 290
   orderRoute: 0
 --- !u!1 &8894366870011335458
@@ -3016,7 +3011,7 @@ MonoBehaviour:
   routeNotes: 'Long progression route: 384-440m from base. Capacity and efficiency
     upgrades are required for a comfortable return. The first three groups contain
     the same required part types earlier.'
-  progressionTier: 4
+  progressionTier: 5
   estimatedLoopSeconds: 208
   orderRoute: 1
 --- !u!1 &9068186053417467463

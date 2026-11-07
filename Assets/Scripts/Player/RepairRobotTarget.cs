@@ -62,7 +62,10 @@ namespace MoonThemedGame.Repair
             get
             {
                 if (!initialized) return Loc.T("Robot diagnostics…");
-                if (IsRepaired) return Loc.T(IsSettled ? "Robot repaired. You can call the crane." : "Robot repaired. Waiting for landing.");
+                var test = GetComponent<RepairRobotFinalTest>();
+                if (test && test.IsRunning) return test.Status;
+                string check = Loc.Russian ? $"[{GameControls.Label(GameCommand.Interact)}] Проверить бота" : $"[{GameControls.Label(GameCommand.Interact)}] Run final test";
+                if (IsRepaired) return Loc.T(IsSettled ? "Robot repaired. You can call the crane." : "Robot repaired. Waiting for landing.") + (Accepts ? "\n" + check : "");
                 var counts = new int[definitions.Length];
                 foreach (var slot in slots)
                     if (!slot.visual || !slot.visual.activeSelf) counts[slot.part]++;
@@ -77,6 +80,7 @@ namespace MoonThemedGame.Repair
                         if (fastener && !fastener.Tight) { if (fastener.Kind == Fastener.Bolt) bolts++; else screws++; }
                 if (bolts > 0) text.Append('\n').Append(Loc.F("Bolts to tighten with the wrench: {0}", bolts));
                 if (screws > 0) text.Append('\n').Append(Loc.F("Screws to drive with the screwdriver: {0}", screws));
+                if (Accepts) text.Append('\n').Append(check);
                 return text.ToString();
             }
         }
@@ -103,6 +107,8 @@ namespace MoonThemedGame.Repair
 
         internal void Initialize(RepairPartDefinition[] parts, int minimum, int maximum, int seed, int[] missingSlots)
         {
+            if (TryGetComponent<RepairRobotRevival>(out var previous)) previous.StopTests();
+            if (TryGetComponent<RepairRobotFinalTest>(out var previousTest)) previousTest.Cancel();
             definitions = parts;
             ClearBolts();
             initialized = false;
@@ -114,7 +120,35 @@ namespace MoonThemedGame.Repair
                 slots[index].visual.SetActive(false);
             initialized = true;
             interactionDistance = 4f;
+            var revival = GetComponent<RepairRobotRevival>();
+            if (!revival) revival = gameObject.AddComponent<RepairRobotRevival>();
+            revival.Configure(this, slots);
+            var test = GetComponent<RepairRobotFinalTest>();
+            if (!test) test = gameObject.AddComponent<RepairRobotFinalTest>();
+            test.Configure(this, revival);
         }
+
+        internal void GetDiagnosticFaults(List<RepairRobotFinalTest.Fault> faults)
+        {
+            faults.Clear();
+            foreach (var slot in slots)
+            {
+                var fault = new RepairRobotFinalTest.Fault { visual = slot.visual, prefab = definitions[slot.part].prefab };
+                if (!slot.visual || !slot.visual.activeSelf) fault.reason = RepairRobotFinalTest.Reason.Missing;
+                else if (slot.visual.TryGetComponent<RepairPartMount>(out var mount) && mount.IsInstalling) fault.reason = RepairRobotFinalTest.Reason.Installing;
+                else if (proud.ContainsKey(slot.visual)) fault.reason = RepairRobotFinalTest.Reason.Unseated;
+                else if (loose.TryGetValue(slot.visual, out var bolts))
+                {
+                    fault.reason = RepairRobotFinalTest.Reason.Fasteners;
+                    foreach (var bolt in bolts) if (bolt && (!bolt.Tight || bolt.IsTurning)) fault.count++;
+                }
+                else continue;
+                faults.Add(fault);
+            }
+        }
+
+        internal bool IsPartSecured(GameObject visual) => initialized && visual && visual.activeSelf &&
+            !loose.ContainsKey(visual) && !proud.ContainsKey(visual) && Seated(visual);
 
         public bool TryInstallPart(GameObject partPrefab)
         {
@@ -135,6 +169,8 @@ namespace MoonThemedGame.Repair
         public bool DebugRepairAll()
         {
             if (!Application.isPlaying || !initialized || IsBeingCollected || !IsSettled) return false;
+            if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.Cancel();
+            if (TryGetComponent<RepairRobotRevival>(out var revival)) revival.StopTests();
             ClearBolts();
             foreach (var slot in slots) if (slot.visual) slot.visual.SetActive(true);
             return IsRepaired;
@@ -144,6 +180,8 @@ namespace MoonThemedGame.Repair
         {
             if (!isActiveAndEnabled || !IsRepaired || !IsSettled || IsBeingCollected) return false;
             IsBeingCollected = true;
+            if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.Cancel();
+            if (TryGetComponent<RepairRobotRevival>(out var revival)) revival.StopTests();
             SetHighlighted(false);
             return true;
         }
@@ -191,22 +229,36 @@ namespace MoonThemedGame.Repair
         // The part sits in its slot but only counts once it is seated and all of its fasteners are tight.
         // Tight-fitting parts first stick out and have to be knocked in with the hammer.
         public void AttachLoose(GameObject visual, Vector3 viewer)
+            => TryAttachLoose(visual, viewer, null);
+
+        public bool TryAttachLoose(GameObject visual, Vector3 viewer, Transform carried)
         {
-            if (!visual || visual.activeSelf) return;
+            if (!Accepts || !visual || visual.activeSelf || !slots.Exists(slot => slot.visual == visual)) return false;
+            var home = visual.transform.localPosition;
+            var rotation = visual.transform.localRotation;
             visual.SetActive(true);
+            var geometry = RepairPartMount.GeometryBounds(visual.transform);
+            var outward = RepairBolt.Outward(this, visual, out float size);
+            var parent = visual.transform.parent;
+            Vector3 offset = Vector3.zero;
             if (RepairBolt.NeedsHammer(visual))
             {
-                var outward = RepairBolt.Outward(this, visual, out float size);
-                var parent = visual.transform.parent;
-                var offset = parent ? parent.InverseTransformVector(outward * size * 0.07f) : outward * size * 0.07f;
+                offset = parent ? parent.InverseTransformVector(outward * size * 0.07f) : outward * size * 0.07f;
                 var seat = new Proud { home = visual.transform.localPosition, offset = offset, hits = HammerHits };
                 visual.transform.localPosition = seat.home + seat.offset;
                 proud[visual] = seat;
             }
             loose[visual] = RepairBolt.Spawn(this, visual, viewer, RepairBolt.KindFor(visual));
+            var mount = visual.GetComponent<RepairPartMount>();
+            if (!mount) mount = visual.AddComponent<RepairPartMount>();
+            // Geometry was measured at the rest pose; use its center at the proud pose for registration.
+            geometry.center += parent ? parent.TransformVector(offset) : offset;
+            mount.Begin(this, loose[visual], home, rotation, offset, outward, size, geometry, carried);
+            return true;
         }
 
-        public bool Seated(GameObject visual) => !proud.ContainsKey(visual);
+        public bool Seated(GameObject visual) => !proud.ContainsKey(visual) &&
+            (!visual || !visual.TryGetComponent<RepairPartMount>(out var mount) || !mount.IsInstalling);
         public int HitsLeft(GameObject visual) => proud.TryGetValue(visual, out var seat) ? seat.hits : 0;
 
         // The sticking-out part the player is looking at.
@@ -217,6 +269,7 @@ namespace MoonThemedGame.Repair
             foreach (var visual in proud.Keys)
             {
                 if (!visual) continue;
+                if (visual.TryGetComponent<RepairPartMount>(out var mount) && mount.IsInstalling) continue;
                 var offset = SlotCenter(visual) - view.origin;
                 if (offset.magnitude > maxDistance) continue;
                 float angle = Vector3.Angle(view.direction, offset);
@@ -228,26 +281,47 @@ namespace MoonThemedGame.Repair
         public void Strike(GameObject visual)
         {
             if (!visual || !proud.TryGetValue(visual, out var seat)) return;
+            if (visual.TryGetComponent<RepairPartMount>(out var mount) && mount.IsInstalling) return;
             seat.hits--;
-            visual.transform.localPosition = seat.home + seat.offset * (seat.hits / (float)HammerHits);
+            var offset = seat.offset * (seat.hits / (float)HammerHits);
+            if (mount) mount.SetSeatOffset(offset);
+            else visual.transform.localPosition = seat.home + offset;
             if (seat.hits <= 0) proud.Remove(visual);
+            BoltTightened(visual);
         }
 
         internal void BoltTightened(GameObject visual)
         {
+            if (!Seated(visual)) return;
             if (!loose.TryGetValue(visual, out var bolts)) return;
             foreach (var bolt in bolts) if (bolt && (!bolt.Tight || bolt.IsTurning)) return;
+            if (visual.TryGetComponent<RepairPartMount>(out var mount)) mount.Secure();
             loose.Remove(visual);
+        }
+
+        internal void FastenerTurned(GameObject visual)
+        {
+            // Backing out a previously tight bolt makes the mount loose again.
+            if (!loose.ContainsKey(visual) && visual && visual.TryGetComponent<RepairPartMount>(out var mount))
+                loose[visual] = mount.Fasteners;
         }
 
         void ClearBolts()
         {
-            foreach (var bolts in loose.Values)
-                foreach (var bolt in bolts) if (bolt) Destroy(bolt.gameObject);
+            foreach (var slot in slots)
+                if (slot.visual)
+                {
+                    if (slot.visual.TryGetComponent<RepairPartMount>(out var mount)) mount.ResetMount();
+                    foreach (var bolt in slot.visual.GetComponentsInChildren<RepairBolt>(true))
+                    { bolt.gameObject.SetActive(false); Destroy(bolt.gameObject); }
+                }
             loose.Clear();
             foreach (var pair in proud) if (pair.Key) pair.Key.transform.localPosition = pair.Value.home;
             proud.Clear();
         }
-        public override void Interact() { }
+        public override void Interact()
+        {
+            if (TryGetComponent<RepairRobotFinalTest>(out var test)) test.StartTest();
+        }
     }
 }

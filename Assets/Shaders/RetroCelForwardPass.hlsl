@@ -8,6 +8,14 @@
 float _LunarLookEnabled, _LunarBandPixelSize;
 float4 _LunarCel;
 half4 _LunarShadowTint;
+// Optional local lighting volume; zero enable leaves other scenes unchanged.
+float4 _StationRoomMin, _StationRoomMax, _StationRoomLighting;
+half4 _StationRoomBounce;
+half StationRoomWeight(float3 world)
+{
+    float3 edge = min(world - _StationRoomMin.xyz, _StationRoomMax.xyz - world);
+    return saturate(min(edge.x, min(edge.y, edge.z)) / max(.01, _StationRoomLighting.z)) * _StationRoomLighting.w;
+}
 #if defined(OLD_TECH_CRT_SCREEN)
     #include "CRTScreenEffect.hlsl"
 #endif
@@ -102,6 +110,8 @@ half4 CelFragment(CelVaryings input) : SV_Target
     }
     half3 normalWS = NormalizeNormalPerPixel(input.normalWS);
     half noise = BandNoise(input.positionCS.xy) - 0.5h;
+    half room = StationRoomWeight(input.positionWS);
+    noise *= lerp(1, .65h, room);
 
     InputData inputData = (InputData)0;
     inputData.positionWS = input.positionWS;
@@ -117,6 +127,7 @@ half4 CelFragment(CelVaryings input) : SV_Target
     Light mainLight = GetMainLight(inputData.shadowCoord, input.positionWS, shadowMask);
     half nightLight=lerp(1,0.015h,_MoonDeepNight*MoonExterior(input.positionWS));
     mainLight.color*=nightLight;
+    mainLight.color *= lerp(1, _StationRoomLighting.x, room);
     half3 direct = CelLight(mainLight, normalWS, noise);
 
     #if defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)
@@ -136,8 +147,11 @@ half4 CelFragment(CelVaryings input) : SV_Target
     AmbientOcclusionFactor ao = GetScreenSpaceAmbientOcclusion(inputData.normalizedScreenSpaceUV);
     half3 shadowTint = _LunarLookEnabled > 0.5 ? lerp(_ShadowTint.rgb, _LunarShadowTint.rgb, 0.7h) : _ShadowTint.rgb;
     half ambientScale = _LunarLookEnabled > 0.5 ? _LunarCel.y : 1;
+    ambientScale *= lerp(1, _StationRoomLighting.y, room);
     half3 ambient = SAMPLE_GI(input.lightmapUV, input.vertexSH, normalWS) * _AmbientStrength * ambientScale;
     ambient = max(ambient, _ShadowFloor * shadowTint * ambientScale);
+    // Reflected station light preserves silhouettes below the post-effect's black crush.
+    ambient = max(ambient, room * _StationRoomBounce.rgb * _StationRoomLighting.y);
     ambient*=nightLight;
     half lightAmount = saturate(Luminance(direct));
     half3 tint = lerp(shadowTint, half3(1, 1, 1), lightAmount);

@@ -13,6 +13,7 @@ namespace MoonThemedGame.Repair
         public GameObject prefab;
         GameObject ghost, ghostSlot, slot;
         RepairRobotTarget slotRobot;
+        float magnet;
 
         protected override Vector3 HoldOffset => new Vector3(0.05f, -0.28f, 0.7f);
         public override string Prompt => Loc.F("E — Take {0}", SalvageField.PartName(prefab));
@@ -38,13 +39,26 @@ namespace MoonThemedGame.Repair
                 if (found) { slot = found; slotRobot = robot; break; }
             }
             ShowGhost(slot);
+            AttractToSlot();
             if (slot && MouseClicked())
             {
-                slotRobot.AttachLoose(slot, hand.transform.position);
+                if (!slotRobot.TryAttachLoose(slot, hand.transform.position, transform)) return;
                 ShowGhost(null);
                 Release();
                 Destroy(gameObject);
             }
+        }
+
+        void AttractToSlot()
+        {
+            if (!slot) { magnet = 0; return; }
+            var target = RepairPartMount.GeometryBounds(slot.transform);
+            float distance = Vector3.Distance(RendererBounds().center, target.center);
+            float reach = 1.05f * PlayerBody.Scale;
+            float pull = (1 - Mathf.SmoothStep(0, 1, distance / reach)) * .48f;
+            magnet = Mathf.MoveTowards(magnet, pull, Time.deltaTime * 2.5f);
+            transform.rotation = Quaternion.Slerp(transform.rotation, slot.transform.rotation, magnet);
+            transform.position += (target.center - RendererBounds().center) * magnet;
         }
 
         protected override string CarryHint

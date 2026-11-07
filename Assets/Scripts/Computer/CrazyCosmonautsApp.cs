@@ -17,7 +17,6 @@ namespace MoonThemedGame.Computer
     [DisallowMultipleComponent]
     public sealed class CrazyCosmonautsApp : MonoBehaviour
     {
-        const string InstalledKey = "crazyCosmonauts.installed";
         public const string RetryKey = "crazyCosmonauts.retryAtUtc";
         public CrazyCosmonautsContent content;
         public bool Purchased { get; private set; }
@@ -57,7 +56,9 @@ namespace MoonThemedGame.Computer
         {
             terminal = GetComponent<PcMonitorTerminal>();
             if (!content) content = Resources.Load<CrazyCosmonautsContent>("CrazyCosmonautsContent");
-            Purchased = PlayerPrefs.GetInt(InstalledKey, 0) == 1;
+            // Credits and the other software purchases belong to this game run.
+            // A legacy PlayerPrefs installation must not grant a free copy in a new run.
+            Purchased = false;
             lockout = new CrazyCosmonautsLockout(RetryKey);
         }
         void OnEnable() => Loc.Changed += Refresh;
@@ -68,7 +69,7 @@ namespace MoonThemedGame.Computer
         {
             if (Purchased || !content || !terminal || terminal.Credits < content.price || !content.arenaPrefab) return false;
             terminal.SetCredits(terminal.Credits - content.price);
-            Purchased = true; PlayerPrefs.SetInt(InstalledKey, 1); PlayerPrefs.Save();
+            Purchased = true;
             if (terminal.Root != null && boundRoot != terminal.Root) Build();
             Refresh(); return true;
         }

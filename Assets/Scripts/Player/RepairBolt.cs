@@ -20,20 +20,29 @@ namespace MoonThemedGame.Repair
         GameObject part;
         Vector3 outLocal, inLocal;
         Renderer[] renderers;
-        int turns;
+        float turns;
         float visualTurns;
+        bool highlightNeeded = true;
         MoonThemedGame.Interactions.InteractionOutline hover;
         public bool Highlighted { get; private set; }
         Quaternion restRotation;
         public const float TurnDuration=.34f;
         public float VisualTurns=>visualTurns;
+        public float Progress => Mathf.Clamp01(turns / Turns);
+        public float VisualProgress => Mathf.Clamp01(visualTurns / Turns);
+        public float VisualHeadAngle => AngleAt(VisualProgress);
+        public const float SnugProgress = .6f;
+        public const float FinalProgress = .88f;
+        public float ProgressLimit => part && part.TryGetComponent<RepairPartMount>(out var mount) ? mount.AllowedProgress(this) : 1;
+        public RepairBolt NextFastener => part && part.TryGetComponent<RepairPartMount>(out var mount) ? mount.RecommendedFastener : null;
         public bool IsTurning=>Mathf.Abs(visualTurns-turns)>.001f;
 
         public Fastener Kind { get; private set; }
         public int Turns => Kind == Fastener.Bolt ? 6 : 5;
-        public int TurnsDone => turns;
-        public bool Tight => turns >= Turns;
-        public bool Seated => !robot || robot.Seated(part);
+        public int TurnsDone => Mathf.FloorToInt(turns + .0001f);
+        public bool Tight => Progress >= .9999f;
+        public bool NeedsHighlight => !Tight || IsTurning;
+        public bool Seated => !robot || (robot.Accepts && robot.Seated(part));
 
         public static Fastener KindFor(GameObject part)
         {
@@ -48,12 +57,13 @@ namespace MoonThemedGame.Repair
         }
 
         // The loose fastener closest to where the player is looking; robot panels never hide it.
-        public static RepairBolt Aimed(Ray view, float reach, float maxAngle = 7)
+        public static RepairBolt Aimed(Ray view, float reach, float maxAngle = 7, bool onlyUnfinished = false)
         {
             RepairBolt best = null;
             float bestAngle = maxAngle;
             foreach (var bolt in all)
             {
+                if (onlyUnfinished && !bolt.NeedsHighlight) continue;
                 var offset = bolt.transform.position - view.origin;
                 if (offset.magnitude > reach) continue;
                 float angle = Vector3.Angle(view.direction, offset);
@@ -63,21 +73,9 @@ namespace MoonThemedGame.Repair
             return best;
         }
 
-        static Bounds BoundsOf(IEnumerable<Renderer> renderers)
-        {
-            bool first = true;
-            var bounds = new Bounds();
-            foreach (var r in renderers)
-            {
-                if (first) { bounds = r.bounds; first = false; }
-                else bounds.Encapsulate(r.bounds);
-            }
-            return bounds;
-        }
-
         public static Vector3 Outward(RepairRobotTarget robot, GameObject part, out float size)
         {
-            var bounds = BoundsOf(part.GetComponentsInChildren<Renderer>());
+            var bounds = RepairPartMount.GeometryBounds(part.transform);
             size = bounds.size.magnitude;
             var outward = bounds.center - (robot ? robot.transform.position : bounds.center - Vector3.forward);
             outward.y = 0;
@@ -90,20 +88,24 @@ namespace MoonThemedGame.Repair
             var renderers = new List<Renderer>(part.GetComponentsInChildren<Renderer>());
             if (renderers.Count == 0) return bolts;
             Physics.SyncTransforms();
-            var whole = BoundsOf(renderers);
+            var whole = RepairPartMount.GeometryBounds(part.transform);
 
-            if (part.name.ToLowerInvariant().Contains("wheel") && WheelAxis(part, robot, whole, out var axle))
+            if (part.name.ToLowerInvariant().Contains("wheel") && !LongModule(part) && WheelAxis(part, robot, whole, out var axle))
                 return SpawnHub(robot, part, whole, axle, kind, bolts);
 
-            // A set of separate pieces (both headlights) gets its own pair of fasteners on each piece.
-            if (renderers.Count > 1)
-            {
-                foreach (var piece in renderers.GetRange(0, Mathf.Min(3, renderers.Count)))
-                    SpawnFace(robot, part, piece.bounds, viewer, kind, 2, bolts);
-                return bolts;
-            }
-            SpawnFace(robot, part, whole, viewer, kind, whole.size.magnitude > 0.8f ? 4 : 2, bolts);
+            // One pair for the whole module, including multi-mesh lights. Only large
+            // body panels retain four corners for the diagonal tack sequence.
+            int count = part.name.ToLowerInvariant().Contains("body") && whole.size.magnitude > .8f ? 4 : 2;
+            SpawnFace(robot, part, whole, viewer, kind, count, bolts);
             return bolts;
+        }
+
+        static bool LongModule(GameObject part)
+        {
+            var mesh = part.GetComponentInChildren<MeshFilter>(); if (!mesh || !mesh.sharedMesh) return false;
+            var size = mesh.sharedMesh.bounds.size;
+            float min = Mathf.Min(size.x, Mathf.Min(size.y, size.z)), max = Mathf.Max(size.x, Mathf.Max(size.y, size.z));
+            return max > (size.x + size.y + size.z - min - max) * 2.25f;
         }
 
         static void SpawnFace(RepairRobotTarget robot, GameObject part, Bounds bounds, Vector3 viewer, Fastener kind, int count, List<RepairBolt> bolts)
@@ -163,9 +165,9 @@ namespace MoonThemedGame.Repair
             float depth = Vector3.Dot(bounds.extents, Abs(axle));
             float wheelRadius = Mathf.Min(Vector3.Dot(bounds.extents, Abs(t1)), Vector3.Dot(bounds.extents, Abs(t2)));
             float size = Mathf.Clamp(wheelRadius * 0.09f, 0.015f, 0.05f);
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 2; i++)
             {
-                float angle = i * Mathf.PI * 0.5f + Mathf.PI * 0.25f;
+                float angle = i * Mathf.PI + Mathf.PI * .25f;
                 var ring = (t1 * Mathf.Cos(angle) + t2 * Mathf.Sin(angle)) * wheelRadius * 0.22f;
                 var start = bounds.center + ring + axle * (depth + 0.3f);
                 var surface = bounds.center + ring + axle * depth;
@@ -254,11 +256,13 @@ namespace MoonThemedGame.Repair
 
         internal void AddHighlightMeshes(List<MeshRenderer> meshes)
         {
+            if (!NeedsHighlight) return;
             if (renderers != null) foreach (var renderer in renderers) if (renderer is MeshRenderer mesh) meshes.Add(mesh);
         }
 
         public void SetAimed(bool value)
         {
+            value &= NeedsHighlight;
             Highlighted = value;
             if (value && !hover)
             {
@@ -272,21 +276,60 @@ namespace MoonThemedGame.Repair
 
         public void Turn(int direction)
         {
-            if (!Seated || (Tight && direction > 0)) return;
-            turns = Mathf.Clamp(turns + direction, 0, Turns);
+            Drive(direction / (float)Turns);
         }
+
+        // Normalized thread travel; tools use the same mechanical limits as debug turns.
+        public float Drive(float progress, bool immediate = false)
+        {
+            if (!Seated || (Tight && progress > 0)) return 0;
+            float before = Progress;
+            float limit = progress > 0 ? Mathf.Max(before, ProgressLimit) : 1;
+            float after = Mathf.Clamp(before + progress, 0, limit);
+            if (Mathf.Abs(after - before) < .000001f) return 0;
+            turns = after * Turns;
+            if (immediate) visualTurns = turns;
+            if (part && part.TryGetComponent<RepairPartMount>(out var mount)) mount.FastenerMoved(this, before);
+            RefreshHighlightState();
+            if (robot) robot.FastenerTurned(part);
+            return after - before;
+        }
+
+        public float DriveAngle(float degrees, bool immediate = true)
+        {
+            float before = AngleAt(Progress);
+            Drive(ProgressAt(before + degrees) - Progress, immediate);
+            return AngleAt(Progress) - before;
+        }
+
+        static float AngleAt(float progress) => progress <= SnugProgress ? progress / SnugProgress * 70 :
+            progress <= FinalProgress ? 70 + (progress - SnugProgress) / (FinalProgress - SnugProgress) * 32 :
+            102 + (progress - FinalProgress) / (1 - FinalProgress) * 18;
+        static float ProgressAt(float angle) => angle <= 70 ? Mathf.Clamp01(angle / 70) * SnugProgress :
+            angle <= 102 ? SnugProgress + (angle - 70) / 32 * (FinalProgress - SnugProgress) :
+            Mathf.Clamp01(FinalProgress + (angle - 102) / 18 * (1 - FinalProgress));
 
         void Update()
         {
             if (!part) return;
             visualTurns=Mathf.MoveTowards(visualTurns,turns,Time.deltaTime/TurnDuration);
-            float t = visualTurns / Turns;
-            transform.localPosition = Vector3.Lerp(outLocal, inLocal, t);
-            transform.localRotation=restRotation*Quaternion.AngleAxis(60*visualTurns,Vector3.up);
+            RefreshHighlightState();
+            float t = VisualProgress;
+            float depth = t <= FinalProgress ? t / FinalProgress * .94f : .94f + (t - FinalProgress) / (1 - FinalProgress) * .06f;
+            transform.localPosition = Vector3.Lerp(outLocal, inLocal, depth);
+            transform.localRotation=restRotation*Quaternion.AngleAxis(VisualHeadAngle,Vector3.up);
             var loose = Kind == Fastener.Bolt ? RustyBolt : BrassScrew;
             for (int i = 0; i < renderers.Length; i++)
                 if (renderers[i] && !(Kind == Fastener.Screw && i == 2)) renderers[i].material.color = Color.Lerp(loose, Steel, t * t);
             if (Tight && !IsTurning && robot) robot.BoltTightened(part);
+        }
+
+        void RefreshHighlightState()
+        {
+            bool needed = NeedsHighlight;
+            if (needed == highlightNeeded) return;
+            highlightNeeded = needed; RegistryVersion++;
+            if (!needed) SetAimed(false);
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

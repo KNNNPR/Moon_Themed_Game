@@ -39,7 +39,8 @@ namespace MoonThemedGame.Repair
             persistent.SetHighlighted(camera && (!player || player.isActiveAndEnabled) && meshes.Count > 0 && !GameSettingsMenu.IsOpen);
             RepairBolt target = null;
             if (camera && (!player || player.isActiveAndEnabled) && Cursor.lockState == CursorLockMode.Locked && !GameSettingsMenu.BlockGameplayInput && !PlayerBody.BeltOpen)
-                target = RepairBolt.Aimed(new Ray(camera.transform.position, camera.transform.forward), 3.5f * PlayerBody.Scale, 7);
+                target = RepairBolt.Aimed(new Ray(camera.transform.position, camera.transform.forward), 3.5f * PlayerBody.Scale, 7, true);
+            if (target && !target.NeedsHighlight) target = null;
             if (Target == target) return;
             if (Target) Target.SetAimed(false);
             Target = target;

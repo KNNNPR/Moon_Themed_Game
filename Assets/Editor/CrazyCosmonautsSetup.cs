@@ -20,7 +20,7 @@ public static class CrazyCosmonautsSetup
         AssetDatabase.Refresh();
         var content = AssetDatabase.LoadAssetAtPath<CrazyCosmonautsContent>("Assets/Resources/CrazyCosmonautsContent.asset");
         if (!content) { content = ScriptableObject.CreateInstance<CrazyCosmonautsContent>(); AssetDatabase.CreateAsset(content, "Assets/Resources/CrazyCosmonautsContent.asset"); }
-        content.desktopIcon = Icon("Assets/Icons/zombie-svgrepo-com.svg", Folder + "/zombie.svg");
+        content.desktopIcon = Icon("Assets/Icons/zombie-svgrepo-com (1).svg", Folder + "/zombie.svg");
         content.healthIcon = Icon("Assets/Icons/health-svgrepo-com.svg", Folder + "/health.svg");
         content.zombiePrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/Zombie.prefab");
         content.pistolPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Resources/PlayerPistol.prefab");

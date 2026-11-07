@@ -40,7 +40,7 @@ public static class SalvageLayoutSetup
         var root=new GameObject("Salvage Spawn Points");
         try
         {
-            root.AddComponent<SalvageSpawnLayout>().balanceNotes="50 part spawns: 12 four-part routes plus two optional points inside Cube.064. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative route speed 4.55 m/s. Order supplies move farther after the first two successful repairs, capped by available power upgrades. Gates and bridge caches remain optional. Edit child positions and progression fields in this prefab or its scene instance.";
+            root.AddComponent<SalvageSpawnLayout>().balanceNotes="50 part spawns: 12 four-part routes plus two optional points inside Cube.064. Default battery: 100 CRG, drain 1/s, cargo 4. Conservative route speed 4.55 m/s. Six story orders request six safe routes, advancing after each successful repair and capped by available power upgrades. Gates and bridge caches remain optional. Edit child positions and progression fields in this prefab or its scene instance.";
             int sequence=0;var errors=new List<string>();
             void Group(string name,string notes,params Spot[] spots)
             {

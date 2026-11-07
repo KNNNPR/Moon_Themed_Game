@@ -87,7 +87,7 @@ namespace MoonThemedGame.Interactions
                 if (fixedGeometry)
                 {
                     foreach (var entry in fixedMeshes)
-                        if (entry.mesh && entry.source && entry.source.enabled && entry.source.gameObject.activeInHierarchy)
+                        if (entry.mesh && CanOutline(entry.source))
                             for (int part = 0; part < entry.mesh.subMeshCount; part++)
                                 commands.DrawMesh(entry.mesh, entry.matrix, material, part, 0);
                 }
@@ -97,7 +97,7 @@ namespace MoonThemedGame.Interactions
                     var renderers = targets != null && targets.Length > 0 ? targets : GetComponentsInChildren<MeshRenderer>();
                     foreach (var renderer in renderers)
                     {
-                        if (!renderer || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                        if (!CanOutline(renderer)) continue;
                         var filter = renderer.GetComponent<MeshFilter>();
                         if (!filter || !filter.sharedMesh) continue;
                         for (int part = 0; part < filter.sharedMesh.subMeshCount; part++)
@@ -112,6 +112,14 @@ namespace MoonThemedGame.Interactions
                 Graphics.Blit(mask, contour, material, 1);
             }
             finally { RenderTexture.active = previous; }
+        }
+
+        static bool CanOutline(MeshRenderer renderer)
+        {
+            if (!renderer || !renderer.enabled || !renderer.gameObject.activeInHierarchy) return false;
+            // A robot-wide or fading hover mask must not bring finished fasteners back.
+            var fastener = renderer.GetComponentInParent<MoonThemedGame.Repair.RepairBolt>();
+            return !fastener || fastener.NeedsHighlight;
         }
 
         void OnGUI()

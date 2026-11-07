@@ -45,6 +45,12 @@ namespace MoonThemedGame.Repair
             foreach (var lamp in lamps) associations[lamp] = new List<Light>();
             foreach (var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
             {
+                if (light.TryGetComponent<MoonThemedGame.Rendering.StationLampSource>(out var source))
+                {
+                    foreach (var lamp in lamps)
+                        if (source.glass && lamp.glass == source.glass) associations[lamp].Add(light);
+                    continue;
+                }
                 if (light.type != LightType.Point) continue;
                 BreakableLamp nearest = null; float distance = float.PositiveInfinity;
                 foreach (var lamp in lamps)
