@@ -97,7 +97,8 @@ namespace MoonThemedGame.Scavenger
         public void ApplyOrderProgression(int number)
         {
             orderNumber=Mathf.Max(orderNumber,number);
-            int wanted=Mathf.Clamp((orderNumber-1)/2,0,4);
+            // Six story repairs use six progressively farther safe supply routes.
+            int wanted=Mathf.Clamp(orderNumber-1,0,5);
             float endurance=link && link.state?link.state.capacity/Mathf.Max(.01f,link.state.drainPerSecond)*RobotUpgrades.SpeedScale*.93f:93;
             int available=0;
             foreach(var point in spawnPoints)

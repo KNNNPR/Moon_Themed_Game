@@ -1,6 +1,6 @@
 # Crazy Cosmonauts / Безумные Космонавты
 
-Buy/download the game in SHOP for 10 credits. The zombie icon then appears on the PC desktop. Installation is saved. The game runs through a dedicated camera/render texture inside the PC application; the operator stays at the computer.
+Buy/download the game in SHOP for 10 credits. The zombie icon then appears on the PC desktop. Installation lasts for the current game run, like the other paid applications and the credit balance; closing and reopening the PC retains it. A new run starts without the application, even if an older version saved an installation in PlayerPrefs. The game runs through a dedicated camera/render texture inside the PC application; the operator stays at the computer.
 
 Controls: movement uses the saved movement bindings; Shift runs, Space jumps, LMB fires, RMB aims, R reloads the eight-round pistol. Ammo magazines are unlimited. Zombies have the existing body-part damage, hit reactions and death ragdolls. Their attacks remove 20 HP from the game's 100 HP, without damaging or moving the operator in the base.
 
@@ -14,4 +14,4 @@ The shop card shows the complete Cosmonaut model in the same rotating white wire
 
 # Repair fasteners
 
-All bolts and screws have a persistent crisp green contour while viewing the repair area. A single shared contour mask covers all fasteners, including ones outside the crosshair. A brighter hover contour additionally identifies the targeted fastener. Both use live meshes and follow tightening; the persistent contour remains when looking away and hides when opening settings or using the PC.
+Unfinished bolts and screws have a persistent crisp green contour while viewing the repair area. A single shared contour mask covers unfinished fasteners, including ones outside the crosshair. A brighter hover contour additionally identifies the targeted unfinished fastener. Both use live meshes and follow tightening; the persistent contour remains when looking away and hides when opening settings or using the PC. Once the last tightening turn finishes, both outlines disappear. Backing the fastener out restores its highlight; wrench targeting still supports unscrewing a tight fastener.

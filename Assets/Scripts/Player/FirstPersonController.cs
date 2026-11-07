@@ -168,7 +168,7 @@ public class FirstPersonController : MonoBehaviour
 
     private void UpdateLook()
     {
-        if (LookFrozen) return;
+        if (LookFrozen || MoonThemedGame.Repair.RepairWrench.ConsumesLook) return;
         Vector2 look = lookAction.action.ReadValue<Vector2>();
 
         transform.Rotate(Vector3.up, look.x * mouseSensitivity);

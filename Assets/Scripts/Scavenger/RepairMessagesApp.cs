@@ -13,6 +13,7 @@ namespace MoonThemedGame.Scavenger
     {
         const string Company = "PALE HORSE CO.";
         const int CreditsPerMissingPart = 2;
+        static readonly int[] StoryRewards = { 15, 20, 25, 30, 40, 50 };
         static readonly (string part, int count)[][] InitialOrders =
         {
             new[] { ("Wheel", 2), ("Battery", 1) },
@@ -30,7 +31,8 @@ namespace MoonThemedGame.Scavenger
             public int[] missingCounts;
             public Wireframe frame;
             public bool completed;
-            public int Reward => missingSlots.Length * CreditsPerMissingPart;
+            public int storyReward = -1;
+            public int Reward => storyReward >= 0 ? storyReward : missingSlots.Length * CreditsPerMissingPart;
         }
 
         PcMonitorTerminal terminal;
@@ -50,6 +52,26 @@ namespace MoonThemedGame.Scavenger
         public int CompletedOrders=>completedOrders;
         public bool HasActiveOrder=>accepted!=null && delivery;
         float yaw = 30f;
+
+        public bool IsOrderUnlocked(int index)
+        {
+            if (index < 0 || index >= orders.Count) return false;
+            for (int i = 0; i < Mathf.Min(index, InitialOrders.Length); i++)
+                if (!orders[i].completed) return false;
+            return true;
+        }
+        bool OrderVisible(int index) => index >= 0 && index < orders.Count &&
+            (orders[index].completed || IsOrderUnlocked(index));
+        int NextAvailableOrder()
+        {
+            for (int i = 0; i < orders.Count; i++)
+                if (!orders[i].completed && IsOrderUnlocked(i)) return i;
+            return Mathf.Clamp(selected, 0, Mathf.Max(0, orders.Count - 1));
+        }
+        void ValidateSelection()
+        {
+            if (!OrderVisible(selected)) selected = NextAvailableOrder();
+        }
 
         public bool IsOpen => window != null && window.style.display == DisplayStyle.Flex;
         internal void GetSalvageNeeds(Dictionary<GameObject,int> counts)
@@ -108,8 +130,8 @@ namespace MoonThemedGame.Scavenger
                 {
                     if (close.worldBound.Contains(point)) Close();
                     else if (accept.worldBound.Contains(point)) Accept();
-                    else if (HasEndless && reroll.worldBound.Contains(point)) RerollEndless();
-                    else if (HasEndless && endlessRow.worldBound.Contains(point))
+                    else if (HasEndless && IsOrderUnlocked(EndlessIndex) && reroll.worldBound.Contains(point)) RerollEndless();
+                    else if (HasEndless && IsOrderUnlocked(EndlessIndex) && endlessRow.worldBound.Contains(point))
                     {
                         selected = EndlessIndex;
                         Refresh();
@@ -119,7 +141,7 @@ namespace MoonThemedGame.Scavenger
                         for (int i = 0; i < rows.Length; i++)
                         {
                             int index = i;
-                            if (index >= orders.Count || !rows[i].worldBound.Contains(point)) continue;
+                            if (!OrderVisible(index) || !rows[i].worldBound.Contains(point)) continue;
                             selected = index;
                             Refresh();
                             break;
@@ -131,7 +153,7 @@ namespace MoonThemedGame.Scavenger
 
             close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
             for (int i = 0; i < rows.Length; i++)
-                Border(rows[i], selected == i || (pointer && rows[i].worldBound.Contains(point)) ? Text : Edge);
+                Border(rows[i], OrderVisible(i) && (selected == i || (pointer && rows[i].worldBound.Contains(point))) ? Text : Edge);
             RefreshAction();
             if (terminal.IsFocused)
             {
@@ -159,7 +181,7 @@ namespace MoonThemedGame.Scavenger
                     {
                         var robot = types[i % types.Count];
                         var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
-                        if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot));
+                        if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot, StoryRewards[i]));
                     }
                 }
             }
@@ -169,7 +191,7 @@ namespace MoonThemedGame.Scavenger
             Refresh();
         }
 
-        Order BuildOrder(int[] missing, RepairRobotDefinition robot)
+        Order BuildOrder(int[] missing, RepairRobotDefinition robot, int storyReward = -1)
         {
             // Keep a stable damage plan for the preview, text and eventual delivery.
             var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
@@ -186,7 +208,7 @@ namespace MoonThemedGame.Scavenger
                     if (mesh.IsChildOf(part)) return false;
                 return true;
             });
-            return new Order { robot = robot, missingSlots = missing, missingCounts = counts, frame = frame };
+            return new Order { robot = robot, missingSlots = missing, missingCounts = counts, frame = frame, storyReward = storyReward };
         }
 
         int[] SelectMainSlots(int orderIndex, RepairRobotDefinition robot, List<RepairRobotTarget.Slot> slots)
@@ -247,7 +269,7 @@ namespace MoonThemedGame.Scavenger
 
         void RerollEndless()
         {
-            if (!HasEndless || !dropper || accepted == orders[EndlessIndex]) return;
+            if (!HasEndless || !IsOrderUnlocked(EndlessIndex) || !dropper || accepted == orders[EndlessIndex]) return;
             orders[EndlessIndex] = GenerateEndless(orders[EndlessIndex]);
             selected = EndlessIndex;
             Refresh();
@@ -255,7 +277,7 @@ namespace MoonThemedGame.Scavenger
 
         void Accept()
         {
-            if (orders.Count == 0 || accepted != null || !dropper || orders[selected].completed) return;
+            if (!IsOrderUnlocked(selected) || accepted != null || !dropper || orders[selected].completed) return;
             delivery = dropper.TryDropOrder(orders[selected].missingSlots, orders[selected].robot);
             if (!delivery) return;
             accepted = orders[selected];
@@ -279,7 +301,11 @@ namespace MoonThemedGame.Scavenger
 
                 if (dropper && HasEndless && orders[EndlessIndex] == completed)
                     orders[EndlessIndex] = GenerateEndless(completed);
-                else UnlockEndlessIfReady();
+                else
+                {
+                    UnlockEndlessIfReady();
+                    selected = NextAvailableOrder();
+                }
             }
             Refresh();
         }
@@ -403,7 +429,7 @@ namespace MoonThemedGame.Scavenger
             preview.style.marginTop = preview.style.marginBottom = 8;
             preview.style.backgroundColor = new Color(0f, 0f, 0f, 0.4f);
             Border(preview, Edge);
-            preview.generateVisualContent += context => DrawWireframe(context, orders.Count > 0 ? orders[selected].frame : null, yaw, Color.white);
+            preview.generateVisualContent += context => DrawWireframe(context, OrderVisible(selected) ? orders[selected].frame : null, yaw, Color.white);
             details.Add(preview);
             parts = MakeLabel("", 15, Text);
             parts.style.whiteSpace = WhiteSpace.Normal;
@@ -428,13 +454,14 @@ namespace MoonThemedGame.Scavenger
         void Refresh()
         {
             if (heading == null) return;
+            ValidateSelection();
             bool ru = Loc.Russian;
             heading.text = ru ? "СООБЩЕНИЯ // ЗАКАЗЫ НА РЕМОНТ" : "MESSAGES // REPAIR ORDERS";
             queueHeading.text = ru ? "ОСНОВНЫЕ ЗАКАЗЫ" : "MAIN ORDERS";
             for (int i = 0; i < rows.Length; i++)
             {
                 int index = i;
-                bool present = index < orders.Count;
+                bool present = OrderVisible(index);
                 rows[i].style.display = present ? DisplayStyle.Flex : DisplayStyle.None;
                 if (!present) continue;
                 bool done = orders[index].completed;
@@ -443,7 +470,7 @@ namespace MoonThemedGame.Scavenger
                 strikes[i].style.display = done ? DisplayStyle.Flex : DisplayStyle.None;
                 rows[i].style.backgroundColor = index == selected ? new Color(1, 1, 1, 0.12f) : Color.clear;
             }
-            endlessSection.style.display = HasEndless ? DisplayStyle.Flex : DisplayStyle.None;
+            endlessSection.style.display = HasEndless && IsOrderUnlocked(EndlessIndex) ? DisplayStyle.Flex : DisplayStyle.None;
             if (HasEndless)
             {
                 endlessHeading.text = "ENDLESS MODE";
@@ -485,8 +512,9 @@ namespace MoonThemedGame.Scavenger
             bool hasOrder = orders.Count > 0;
             accept.style.display = hasOrder ? DisplayStyle.Flex : DisplayStyle.None;
             if (!hasOrder) return;
+            ValidateSelection();
             var order = orders[selected];
-            bool canAccept = !order.completed && accepted == null && dropper && dropper.CanDropOrder;
+            bool canAccept = IsOrderUnlocked(selected) && !order.completed && accepted == null && dropper && dropper.CanDropOrder;
             accept.text = order.completed ? (ru ? "[ВЫПОЛНЕНО]" : "[COMPLETE]")
                 : order == accepted ? (ru ? "[В РАБОТЕ]" : "[IN PROGRESS]")
                 : canAccept ? (ru ? "[ПРИНЯТЬ ЗАКАЗ]" : "[ACCEPT ORDER]")

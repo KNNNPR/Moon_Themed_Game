@@ -24,7 +24,7 @@ public static class SalvageShipSpawnSetup
             var hit=hits[0];var marker=new GameObject((49+i)+" "+parts[i]);marker.transform.SetParent(group,false);
             marker.transform.SetPositionAndRotation(hit.point,Quaternion.FromToRotation(Vector3.up,hit.normal));
             var point=marker.AddComponent<SalvageSpawnPoint>();point.part=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Parts/"+parts[i]+".prefab");
-            point.progressionTier=6;point.estimatedLoopSeconds=300;point.orderRoute=false;
+            point.progressionTier=7;point.estimatedLoopSeconds=300;point.orderRoute=false;
             point.routeNotes="Optional cache on the internal cargo floor of Cube.064. Open the ship gates with Button_Ship and the manipulator. Existing ship MeshCollider is used; no BoxCollider is added. Not a mandatory order route.";
         }
     }
