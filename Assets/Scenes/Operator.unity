@@ -24724,8 +24724,8 @@ MonoBehaviour:
   localForward: {x: 0, y: 0, z: 1}
   controllable: 0
   recoveryDelay: 0.6
-  chassisCollider: {fileID: 0}
-  chassisBody: {fileID: 0}
+  chassisCollider: {fileID: 8220263400000000004}
+  chassisBody: {fileID: 8220263400000000005}
 --- !u!1 &8220263400000000007
 GameObject:
   m_ObjectHideFlags: 0

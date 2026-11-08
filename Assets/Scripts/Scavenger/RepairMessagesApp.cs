@@ -26,6 +26,46 @@ namespace MoonThemedGame.Scavenger
             new[] { ("Battery", 1), ("Window_Robot", 1), ("Wheel", 3) }
         };
 
+        static readonly (string russian, string english, string endlessRussian, string endlessEnglish)[] OrderDescriptions =
+        {
+            (
+                "У этого ведра с гвоздями постоянно отваливаются колеса. Забейте их молотком предварительно, чтоб даже после удара метеоритом по нему колеса остались на месте!",
+                "The wheels keep falling off this bucket of bolts. Hammer them in so they stay put even after a meteorite hits it!",
+                "Закрепите детали так, чтоб даже после удара метеоритом они остались на месте!",
+                "Secure the parts so they stay put even after a meteorite hits the bot!"
+            ),
+            (
+                "У робота разбито стекло и отсутствует блок фар. Просьба заменить оба элемента и проверить видимость. В журнале последней экспедиции фигурируют стена гаража и команда «Полный вперёд». Судя по отметкам времени, именно в таком порядке.",
+                "The robot has a broken windshield and a missing headlight assembly. Please replace both and check visibility. The last expedition log mentions a garage wall and the command ‘Full speed ahead’. Judging by the timestamps, in that order.",
+                "В журнале последней экспедиции фигурируют стена гаража и команда «Полный вперёд». Судя по отметкам времени, именно в таком порядке.",
+                "The last expedition log mentions a garage wall and the command ‘Full speed ahead’. Judging by the timestamps, in that order."
+            ),
+            (
+                "Требуется полный ремонт задней части робота. Напоминаем, что использование робота в качестве наживки для водной фауны не предусмотрено.",
+                "The rear of the robot requires a complete overhaul. A reminder that this robot is not intended for use as bait for aquatic wildlife.",
+                "Напоминаем, что использование робота в качестве наживки для водной фауны не предусмотрено.",
+                "A reminder that this robot is not intended for use as bait for aquatic wildlife."
+            ),
+            (
+                "Требование о ремонте №188. История поломок показывает, что в экспедициях этот робот регулярно теряет именно те детали, которые дороже всего заменить и проще всего снять.",
+                "Repair requisition No. 188. The maintenance records show that on expeditions this robot regularly loses the parts that are most expensive to replace and easiest to remove.",
+                null,
+                null
+            ),
+            (
+                "Требуется ремонт поискового дрона. Для допуска к следующей экспедиции в глубины Хоксис-4 передние фары должны быть исправны.",
+                "The search drone needs repairs. Its headlights must be operational before it can be cleared for the next expedition into the depths of Hoxxes IV.",
+                "Завершите ремонт до отправки следующей экспедиции в глубины Хоксис-4.",
+                "Complete the repairs before the next expedition into the depths of Hoxxes IV."
+            ),
+            (
+                "Требование о комплексном ремонте ходовой части, аккумулятора и лобового стекла. Несмотря на название этой модели, на нём не рекомендуется делать «кикфлип».",
+                "Repair requisition for the running gear, battery and windshield. Despite the model name, we advise against attempting a kickflip with it.",
+                "Напоминаем, что кикфлип не входит в программу испытаний после ремонта.",
+                "A reminder that kickflips are not part of the post-repair test procedure."
+            )
+        };
+
         sealed class Order
         {
             public RepairRobotDefinition robot;
@@ -35,6 +75,7 @@ namespace MoonThemedGame.Scavenger
             public bool completed;
             public bool dismantle;
             public int storyReward = -1;
+            public int descriptionIndex;
             public int Reward => storyReward >= 0 ? storyReward : missingSlots.Length * CreditsPerMissingPart;
         }
 
@@ -190,11 +231,11 @@ namespace MoonThemedGame.Scavenger
                     {
                         var robot = types[i % types.Count];
                         var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
-                        if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot, StoryRewards[i]));
+                        if (slots.Count > 0) orders.Add(BuildOrder(SelectMainSlots(i, robot, slots), robot, i, StoryRewards[i]));
                     }
                     if(orders.Count==InitialOrders.Length)
                     {
-                        var final=BuildOrder(Array.Empty<int>(),dropper.DefaultDefinition,0);final.dismantle=true;orders.Add(final);
+                        var final=BuildOrder(Array.Empty<int>(),dropper.DefaultDefinition,0,0);final.dismantle=true;orders.Add(final);
                         if(StationRun.Mode==StationGameMode.Endless)
                         {
                             foreach(var order in orders)order.completed=true;
@@ -209,7 +250,7 @@ namespace MoonThemedGame.Scavenger
             Refresh();
         }
 
-        Order BuildOrder(int[] missing, RepairRobotDefinition robot, int storyReward = -1)
+        Order BuildOrder(int[] missing, RepairRobotDefinition robot, int descriptionIndex, int storyReward = -1)
         {
             // Keep a stable damage plan for the preview, text and eventual delivery.
             var slots = RepairRobotTarget.FindSlots(robot.prefab.transform, robot.parts);
@@ -226,7 +267,7 @@ namespace MoonThemedGame.Scavenger
                     if (mesh.IsChildOf(part)) return false;
                 return true;
             });
-            return new Order { robot = robot, missingSlots = missing, missingCounts = counts, frame = frame, storyReward = storyReward };
+            return new Order { robot = robot, missingSlots = missing, missingCounts = counts, frame = frame, storyReward = storyReward, descriptionIndex = descriptionIndex };
         }
 
         int[] SelectMainSlots(int orderIndex, RepairRobotDefinition robot, List<RepairRobotTarget.Slot> slots)
@@ -265,7 +306,7 @@ namespace MoonThemedGame.Scavenger
                     same &= counts[i] == previous.missingCounts[i];
                 if (same) missing = MakeDifferent(missing, minimum, maximum, slots);
             }
-            return BuildOrder(missing, robot);
+            return BuildOrder(missing, robot, endlessRandom.Next(OrderDescriptions.Length));
         }
 
         int[] MakeDifferent(int[] rolled, int minimum, int maximum, List<RepairRobotTarget.Slot> slots)
@@ -561,13 +602,17 @@ namespace MoonThemedGame.Scavenger
                     items.Add($"{SalvageField.PartName(order.robot.parts[i].prefab)} ×{order.missingCounts[i]}");
             parts.text = (ru ? "НЕДОСТАЮЩИЕ ДЕТАЛИ\n" : "MISSING PARTS\n") + string.Join("  /  ", items);
             reward.text = ru ? $"НАГРАДА  +{order.Reward} CR" : $"REWARD  +{order.Reward} CR";
-            description.text = ru
-                ? "Съешь ещё этих мягких французских булок, да выпей чаю. Пример короткого описания для проверки шрифта."
-                : "Lorem ipsum dolor sit amet, consectetur adipiscing elit. The quick brown fox jumps over the lazy dog.";
             if(order.dismantle)
             {
                 parts.text=ru?"РАЗБЕРИТЕ БОТА\nВаш SCAV_BOT недоступен во время этого заказа.":"DISMANTLE THE ROBOT\nYour SCAV_BOT is unavailable during this order.";
                 description.text=ru?FinalContent.russian:FinalContent.english;
+            }
+            else
+            {
+                var copy = OrderDescriptions[order.descriptionIndex];
+                description.text = selected == EndlessIndex
+                    ? (ru ? copy.endlessRussian ?? copy.russian : copy.endlessEnglish ?? copy.english)
+                    : (ru ? copy.russian : copy.english);
             }
             preview.MarkDirtyRepaint();
             RefreshAction();
