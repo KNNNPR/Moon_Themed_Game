@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Globalization;
 using UnityEngine;
@@ -266,6 +267,8 @@ namespace MoonThemedGame.Computer
                 icon.EnableInClassList("pointer-over", over);
                 if (over) HoveredIcon = icon.name;
             }
+            GameAudio.Hover(this,focused?HoveredIcon:null);
+            if(focused&&HoveredIcon!=null&&Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame)GameAudio.Ui(Sound.Icon);
         }
 
         public void HidePointer()

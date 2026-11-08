@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -104,6 +105,10 @@ namespace MoonThemedGame.Computer
                 foreach(var action in actions)action.element.EnableInClassList("mg-hover",pointer && action.element.enabledSelf && action.element.worldBound.Contains(point));
                 status.text=Time.time<noticeUntil?notice:T("Quotes update every ","Обновление котировок: ")+content.quoteInterval.ToString("0.#",CultureInfo.InvariantCulture)+T("s. Market runs while the app is closed."," с. Рынок работает и при закрытом приложении.");
             }
+            object audioHover=overIcon?(object)icon:null;
+            if(IsOpen&&pointer)foreach(var audioAction in actions)if(audioAction.element.enabledSelf&&audioAction.element.worldBound.Contains(point))audioHover=string.IsNullOrEmpty(audioAction.element.name)?(object)audioAction.element:audioAction.element.name;
+            GameAudio.Hover(this,audioHover);
+            if(audioHover!=null&&pointer&&Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame)GameAudio.Ui(Sound.Icon);
             if(!pointer || Mouse.current==null || !Mouse.current.leftButton.wasPressedThisFrame)return;
             if(overIcon){SetOpen(true);return;}
             if(!IsOpen || !window.worldBound.Contains(point))return;

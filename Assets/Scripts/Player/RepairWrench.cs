@@ -22,12 +22,14 @@ namespace MoonThemedGame.Repair
         Vector2 tangent;
         Vector2 circleSegment;
         float circleTime,directionEvidence,oppositeArc,initialArc;
+        float flexTarget,flexAmount,flexVelocity;
         bool hasInitialArc;
         int screwDirection;
         public bool Engaged => engage > .01f && working;
         public bool Working => session;
         public Vector3 WorkAxis => working ? working.transform.up : Vector3.up;
         public float WristAngle { get; private set; }
+        public float VisualFlexAngle=>flexAmount*(drives==Fastener.Bolt?6.5f:3.5f);
         public Vector3 HandleGrip
         {
             get
@@ -122,7 +124,7 @@ namespace MoonThemedGame.Repair
                     if(Mathf.Abs(delta.x)<.15f)return 0;
                     strokeDirection=delta.x<0?-1:1;
                 }
-                float raw = delta.x * (legacyReverseStroke?1:strokeDirection) / pixelsPerDegree;
+                float raw = delta.x * ComfortSettings.ToolSensitivity * (legacyReverseStroke?1:strokeDirection) / pixelsPerDegree;
                 float free = Mathf.Min(Mathf.Max(0, raw), Mathf.Max(0, highWater - strokeAngle));
                 float motion = raw < 0 ? raw : free + TorqueMotion(raw - free, strokeDirection);
                 float desired = Mathf.Clamp(strokeAngle + motion, 0, strokeDegrees);
@@ -135,7 +137,16 @@ namespace MoonThemedGame.Repair
                 WristAngle = strokeAngle * strokeDirection;
             }
             else ProcessCircle(delta,reverse,dt);
-            return working.Progress - before;
+            float progressDelta=working.Progress-before;
+            if(progressDelta>0)flexTarget=Mathf.Max(flexTarget,Mathf.InverseLerp(RepairBolt.FinalProgress,1,working.Progress));
+            return progressDelta;
+        }
+
+        internal void AdvanceVisualFlex(float dt)
+        {
+            if(dt<=0)return;
+            flexAmount=Mathf.SmoothDamp(flexAmount,flexTarget,ref flexVelocity,.075f,Mathf.Infinity,dt);
+            flexTarget=Mathf.MoveTowards(flexTarget,0,dt*(session?4:9));
         }
 
         void ResetCircle(){circleSegment=Vector2.zero;circleTime=directionEvidence=oppositeArc=initialArc=0;screwDirection=0;hasTangent=hasInitialArc=false;}
@@ -168,7 +179,7 @@ namespace MoonThemedGame.Repair
                 screwDirection=-screwDirection;arc=screwDirection*(oppositeArc-50);oppositeArc=0;
             }
             else oppositeArc=0;
-            float raw=Mathf.Abs(arc)*circleAssistance*screwSensitivity;
+            float raw=Mathf.Abs(arc)*circleAssistance*screwSensitivity*ComfortSettings.ToolSensitivity;
             screwAngle+=working.DriveAngle(TorqueMotion(raw,screwDirection)*screwDirection);
             WristAngle=Mathf.Clamp(screwAngle,-85,85);
         }
@@ -205,6 +216,7 @@ namespace MoonThemedGame.Repair
             }
             float desiredEngage = session ? 1 : valid && !target.Tight ? .5f : 0;
             engage = Mathf.MoveTowards(engage, desiredEngage, Time.deltaTime * 9);
+            AdvanceVisualFlex(Time.deltaTime);
             if (!Engaged) return;
             var filter = GetComponent<MeshFilter>(); if (!filter || !filter.sharedMesh) return;
             var bounds = filter.sharedMesh.bounds; var length = LongAxis(); var normal = working.transform.up;
@@ -219,6 +231,9 @@ namespace MoonThemedGame.Repair
                 if (along.sqrMagnitude < .01f) along = Vector3.Cross(normal, hand.transform.right).normalized;
                 rotation = Quaternion.AngleAxis(WristAngle, normal) * Quaternion.LookRotation(along, normal) * Quaternion.Inverse(Quaternion.LookRotation(length, thin));
             }
+            // Flex only the rendered tool around its contact point. WristAngle,
+            // accepted thread travel and the input thresholds remain authoritative.
+            rotation=Quaternion.AngleAxis(VisualFlexAngle,normal)*rotation;
             var tip = bounds.center + length * (Vector3.Dot(bounds.extents, length) * .88f);
             float pressure = Mathf.InverseLerp(RepairBolt.FinalProgress, 1, working.Progress);
             var contact = working.transform.position + normal * (Mathf.Lerp(.006f, .001f, pressure) * PlayerBody.Scale);
@@ -229,6 +244,7 @@ namespace MoonThemedGame.Repair
         protected override void OnPutAway()
         {
             EndWork(); engage = 0; working = target = null; WristAngle = strokeAngle = screwAngle = highWater = releaseLookUntil = 0;
+            flexTarget=flexAmount=flexVelocity=0;
         }
         protected override string CarryHint
         {
@@ -236,7 +252,7 @@ namespace MoonThemedGame.Repair
             {
                 if (!target) return T("Aim at a fitted fastener", "Наведитесь на установленное крепление");
                 if (target.Kind != drives) return T("Use the matching tool", "Возьмите подходящий инструмент");
-                if (!target.Seated) return T("Wait for fitting / seat the part with the hammer", "Дождитесь установки / подбейте деталь молотком");
+                if (!target.Seated) return target.SeatingHint;
                 if (!Near(target)) return T("Move closer to the fastener", "Подойдите ближе к креплению");
                 if(target.Dismantling && target.Progress<=.0001f)
                 {

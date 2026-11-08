@@ -1,0 +1,7 @@
+# Comfort settings
+
+The main **SETTINGS / НАСТРОЙКИ** screen offers independent human, rover-camera and tool sensitivity multipliers (20–300%), dynamic FOV strength (0–150%), camera shake on/off and crouch hold/toggle. These controls sit directly below master volume, with no extra category/page. Defaults preserve the authored feel (100%, shake enabled, hold crouch). Changes save automatically in PlayerPrefs `comfort.*` and survive scene changes and restarts. RESET PREFERENCES restores these six values; key bindings and master volume remain separate.
+
+Human sensitivity also applies inside Crazy Cosmonauts. Rover sensitivity affects mouse/gamepad orbit, independent of human look. Tool sensitivity affects wrench travel and screwdriver angular work without changing direction confirmation/hysteresis or the stationary-hold behavior. Toggle crouch uses the currently bound crouch key, and the existing ceiling clearance and fatigue rules still apply. Changing crouch mode resets its latch to prevent a stuck stance.
+
+Turning off shake removes walking bob/strafe tilt, cosmetic weapon camera roll/push, meteor impacts, rover landing impulses/corner bank, main-menu idle camera sway and small waking jitters. Alcohol retains blur but loses rolling/waves/double-image motion. Deliberate aiming, Q/E lean, camera orbit, inspection zoom and gameplay recoil that affects aim remain available. Dynamic FOV controls automatic rover speed/acceleration widening and waking/breathing lens changes; 0% retains the base lens. Inspection/PC/ADS zooms remain deliberate interactions.

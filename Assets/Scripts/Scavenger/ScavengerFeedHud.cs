@@ -72,7 +72,7 @@ namespace MoonThemedGame.Scavenger
         {
             if(prefab && neededParts.TryGetValue(prefab,out int count))neededParts[prefab]=Mathf.Max(0,count-1);
         }
-        void DrawOrderMarkers()
+        void DrawNavigationMarkers(bool showTargets)
         {
             var camera=link.robotCamera;if(!camera || !link.robot)return;
             if(Time.time>=nextMarkerRefresh){nextMarkerRefresh=Time.time+0.2f;RefreshOrderMarkers();}
@@ -80,7 +80,7 @@ namespace MoonThemedGame.Scavenger
             if(markerText==null)markerText=new GUIStyle(text){richText=false,fontSize=Mathf.Max(16,text.fontSize),alignment=TextAnchor.MiddleLeft};
             if(!markerDot)
             {
-                markerDot=new Texture2D(24,24,TextureFormat.RGBA32,false){name="Order target dot",hideFlags=HideFlags.HideAndDontSave,filterMode=FilterMode.Bilinear};
+                markerDot=new Texture2D(24,24,TextureFormat.RGBA32,false){name="Navigation target dot",hideFlags=HideFlags.HideAndDontSave,filterMode=FilterMode.Bilinear};
                 for(int y=0;y<24;y++)for(int x=0;x<24;x++)markerDot.SetPixel(x,y,new Color(1,1,1,Mathf.Clamp01(12-Vector2.Distance(new Vector2(x+0.5f,y+0.5f),new Vector2(12,12)))));
                 markerDot.Apply();
             }
@@ -111,9 +111,12 @@ namespace MoonThemedGame.Scavenger
                 markerText.normal.textColor=ink;GUI.Label(rect,label,markerText);GUI.color=saved;
             }
             var route=GetComponent<MoonThemedGame.Computer.RoutePlannerApp>();
-            foreach(var piece in orderMarkers)if(piece&&!piece.Collected&&(!route||!route.HasWaypoint||Vector3.Distance(piece.transform.position,route.Waypoint)>2))
+            foreach(var piece in orderMarkers)if(showTargets&&piece&&!piece.Collected&&(!route||!route.HasWaypoint||Vector3.Distance(piece.transform.position,route.Waypoint)>2))
                 Marker(piece.transform.position+Vector3.up*Mathf.Max(.4f,piece.radius*.5f),"",Color.white);
-            if(route&&route.HasWaypoint)Marker(route.Waypoint,Loc.Russian?"МЕТКА ":"WAYPOINT ",new Color(1,.8f,.38f));
+            if(showTargets&&route&&route.HasWaypoint&&Vector3.Distance(route.Waypoint,link.BaseWaypoint)>2)
+                Marker(route.Waypoint,Loc.Russian?"МЕТКА ":"WAYPOINT ",new Color(1,.8f,.38f));
+            // GPS home marker remains available without an order or a clear satellite picture.
+            Marker(link.BaseWaypoint,Loc.Russian?"БАЗА ":"BASE ",new Color(.65f,1,.8f));
         }
 
         void OnDestroy(){if(markerDot)Destroy(markerDot);if(stuntDrive)stuntDrive.SuccessfulFlip-=OnFlip;}
@@ -345,7 +348,7 @@ namespace MoonThemedGame.Scavenger
             bool signal = link.HasPicture;
             var inv = CultureInfo.InvariantCulture;
 
-            if(signal && (!patch || !patch.IsOpen))DrawOrderMarkers();
+            if(!patch || !patch.IsOpen)DrawNavigationMarkers(signal);
             if(signal && Time.time<flipUntil && (!patch || !patch.IsOpen))
                 Alert(new Rect(0,Screen.height*0.25f,Screen.width,unit*3),
                     (Loc.Russian?"КРУТОЙ ФЛИП":"NICE FLIP")+(flipCount>1?" x"+flipCount:""),Color.white,110);

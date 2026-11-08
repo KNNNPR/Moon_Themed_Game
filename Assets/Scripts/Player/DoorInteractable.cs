@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 
 namespace MoonThemedGame.Interactions
@@ -81,7 +82,7 @@ namespace MoonThemedGame.Interactions
 
         public override void Interact()
         {
-            if (isActiveAndEnabled && !locked) targetOpen = !targetOpen;
+            if (isActiveAndEnabled && !locked){targetOpen = !targetOpen;GameAudio.At(Sound.DoorSlide,movingPart?movingPart.position:transform.position);}
         }
 
         void OnEnable()

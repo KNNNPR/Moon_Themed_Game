@@ -52,7 +52,7 @@ namespace MoonThemedGame.Computer
         [Header("Editable English / Russian dialogue graph")]
         public MoonFinderProfile[] profiles=Array.Empty<MoonFinderProfile>();
         [Header("Apple chat")]
-        [Min(1)] public int appleClicksRequired=12;
+        [Min(1)] public int appleClicksRequired=5;
         public MoonFinderText appleMessage=new MoonFinderText("Apple.","Яблоко.");
         public MoonFinderText appleReply=new MoonFinderText("Apple!","Яблоко!");
         public MoonFinderText appleEnding=new MoonFinderText("A very large apple is waiting outside. Love grows.","Снаружи тебя ждёт очень большое яблоко. Любовь растёт.");

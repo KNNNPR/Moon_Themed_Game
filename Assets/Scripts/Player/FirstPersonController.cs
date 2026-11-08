@@ -40,6 +40,7 @@ public class FirstPersonController : MonoBehaviour
     private float crouchFatigue;
     private float timeSinceCrouch=float.PositiveInfinity;
     private bool wasCrouchRequested;
+    private bool crouchToggled,lastCrouchToggleMode;
     private Vector3 standingCenter,standingCameraPosition;
     private readonly Collider[] stanceOverlaps=new Collider[64];
 
@@ -65,6 +66,7 @@ public class FirstPersonController : MonoBehaviour
         standingHeight=controller.height;
         standingCenter=controller.center;
         if(cameraRoot)standingCameraPosition=cameraRoot.localPosition;
+        if(!GetComponent<MoonThemedGame.Interactions.OperatorFlashlight>())gameObject.AddComponent<MoonThemedGame.Interactions.OperatorFlashlight>();
     }
 
     private void OnEnable()
@@ -105,7 +107,7 @@ public class FirstPersonController : MonoBehaviour
         }
 
         UpdateLook();
-        if(!Noclip)UpdateCrouch(MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Crouch),Time.deltaTime);
+        if(!Noclip)UpdateCrouch(CrouchRequested(),Time.deltaTime);
         UpdateMovement();
     }
 
@@ -139,6 +141,15 @@ public class FirstPersonController : MonoBehaviour
         }
     }
 
+    internal bool CrouchRequested()
+    {
+        bool toggle=MoonThemedGame.Interactions.ComfortSettings.ToggleCrouch;
+        if(toggle!=lastCrouchToggleMode){crouchToggled=false;lastCrouchToggleMode=toggle;}
+        if(!toggle)return MoonThemedGame.Interactions.GameControls.Held(MoonThemedGame.Interactions.GameCommand.Crouch);
+        if(MoonThemedGame.Interactions.GameControls.Pressed(MoonThemedGame.Interactions.GameCommand.Crouch))crouchToggled=!crouchToggled;
+        return crouchToggled;
+    }
+
     private bool HasStandingRoom()
     {
         var scale=transform.lossyScale;
@@ -169,12 +180,13 @@ public class FirstPersonController : MonoBehaviour
 
     private void UpdateLook()
     {
-        if (LookFrozen || MoonThemedGame.Repair.RepairWrench.ConsumesLook) return;
+        if (LookFrozen || MoonThemedGame.Repair.RepairWrench.ConsumesLook||MoonThemedGame.Repair.RepairOrderTask.ConsumesLook) return;
         Vector2 look = lookAction.action.ReadValue<Vector2>();
 
-        transform.Rotate(Vector3.up, look.x * mouseSensitivity);
+        float sensitivity=mouseSensitivity*MoonThemedGame.Interactions.ComfortSettings.HumanSensitivity;
+        transform.Rotate(Vector3.up, look.x * sensitivity);
 
-        pitch -= look.y * mouseSensitivity;
+        pitch -= look.y * sensitivity;
         pitch = Mathf.Clamp(pitch, -pitchLimit, pitchLimit);
 
         cameraRoot.localRotation = Quaternion.Euler(pitch, 0f, 0f);

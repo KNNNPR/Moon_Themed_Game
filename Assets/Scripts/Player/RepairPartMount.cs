@@ -15,6 +15,7 @@ namespace MoonThemedGame.Repair
         public float PlayFraction => Mathf.Pow(1 - Tightness, 1.25f);
         internal List<RepairBolt> Fasteners { get; private set; }
         internal float InspectionPlay { get; set; }
+        internal Vector3 RestPosition=>home;
         RepairBolt lastSnugged;
         internal bool AllSnug
         {
@@ -84,6 +85,7 @@ namespace MoonThemedGame.Repair
         Collider[] colliders;
         bool[] colliderStates;
         bool initialized;
+        bool contactEffectPlayed;
         float age, size, phase, impactAge = 10;
 
         internal void Begin(RepairRobotTarget owner, List<RepairBolt> fasteners, Vector3 restPosition,
@@ -98,6 +100,7 @@ namespace MoonThemedGame.Repair
             phase = (GetInstanceID() & 1023) * .017f;
             age = 0; impactAge = 10; Tightness = 0;
             initialized = true; IsInstalling = true;
+            contactEffectPlayed=false;RepairFeedbackFx.For(gameObject)?.ResetForOrder(owner);
             var bodies = new List<Collider>();
             foreach (var collider in GetComponentsInChildren<Collider>(true))
                 if (!collider.GetComponentInParent<RepairBolt>()) bodies.Add(collider);
@@ -158,7 +161,7 @@ namespace MoonThemedGame.Repair
         }
         static Vector3 Abs(Vector3 vector) => new Vector3(Mathf.Abs(vector.x), Mathf.Abs(vector.y), Mathf.Abs(vector.z));
 
-        internal void SetSeatOffset(Vector3 offset) { seatOffset = offset; impactAge = 0; }
+        internal void SetSeatOffset(Vector3 offset) { seatOffset = offset; impactAge = 0;if(offset.sqrMagnitude<.00000001f)RepairFeedbackFx.For(gameObject)?.Seated(); }
 
         internal void Secure()
         {
@@ -212,9 +215,16 @@ namespace MoonThemedGame.Repair
             if (IsInstalling)
             {
                 float t = Mathf.Clamp01(age / fittingDuration); ApplyFlight(t);
+                if(!contactEffectPlayed&&t>=.78f){contactEffectPlayed=true;RepairFeedbackFx.For(gameObject)?.InitialContact();}
                 if (t < 1) return;
                 IsInstalling = false; RestoreColliders();
+                if(robot&&robot.Seated(gameObject))RepairFeedbackFx.For(gameObject)?.Seated();
                 robot.BoltTightened(gameObject);
+            }
+            if(robot&&robot.SpecialStep&&robot.SpecialStep.Part==gameObject&&
+                robot.SpecialStep.Pose(home,homeRotation,homeScale,outward,size,out var specialPosition,out var specialRotation))
+            {
+                transform.localScale=homeScale;transform.SetLocalPositionAndRotation(specialPosition,specialRotation);return;
             }
             float sum = 0, weight = .2f, radius = .0001f; Vector3 pivot = center * weight, pressure = Vector3.zero;
             foreach (var fastener in Fasteners)
@@ -241,7 +251,7 @@ namespace MoonThemedGame.Repair
             Vector3 translation = outward * (size * positionalPlay * play * (.35f + .65f * sway));
             Vector3 down = transform.parent ? transform.parent.InverseTransformVector(Vector3.down) : Vector3.down;
             translation += down * (size * positionalPlay * play * (.4f + .15f * twist));
-            float kick = Mathf.Exp(-impactAge * 16) * Mathf.Sin(impactAge * 32) * size * .016f;
+            float kick = Mathf.Exp(-impactAge * 16) * Mathf.Sin(impactAge * 32) * size * .024f;
             translation += outward * kick;
             transform.localScale = homeScale;
             transform.SetLocalPositionAndRotation(home + seatOffset + translation + homeRotation * Vector3.Scale(pivot, homeScale) - rotation * Vector3.Scale(pivot, homeScale), rotation);

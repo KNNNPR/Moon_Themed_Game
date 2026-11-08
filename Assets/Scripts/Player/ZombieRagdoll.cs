@@ -103,5 +103,27 @@ namespace MoonThemedGame.Repair
             if (hitBody && direction.sqrMagnitude > .0001f)
                 hitBody.AddForceAtPosition(direction.normalized * (deathImpulse * scale), point, ForceMode.Impulse);
         }
+
+        public void AddVehicleTumble(Vector3 direction,float speed,Vector3 impactPoint)
+        {
+            if(!IsActive)return;
+            float scale=Mathf.Max(.01f,Mathf.Abs(transform.lossyScale.y));
+            var axis=Vector3.Cross(Vector3.up,direction).normalized;
+            float spin=Mathf.Clamp(3+speed/scale*.28f,3,9);
+            float side=Vector3.Dot(impactPoint-transform.position,transform.right);
+            var angular=axis*spin+Vector3.up*Mathf.Clamp(side/scale,-1,1)*2;
+            Vector3 center=Vector3.zero;float mass=0;
+            foreach(var body in bodies)
+                if(body&&!body.isKinematic){center+=body.worldCenterOfMass*body.mass;mass+=body.mass;}
+            if(mass<=0)return;center/=mass;
+            foreach(var body in bodies)
+                if(body&&!body.isKinematic)
+                {
+                    // Matching point velocities let the joined suit rotate as a whole;
+                    // spinning each bone in place is otherwise cancelled by the joints.
+                    body.linearVelocity+=Vector3.Cross(angular,body.worldCenterOfMass-center);
+                    body.angularVelocity=angular;
+                }
+        }
     }
 }

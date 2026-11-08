@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
@@ -85,7 +86,7 @@ namespace MoonThemedGame.Computer
 
         void OnText(char c)
         {
-            if (!Accepting || char.IsControl(c)) return;
+            if (!Accepting || char.IsControl(c)) return;GameAudio.Ui(Sound.Keyboard);
             if (editingPassword) { if (typed.Length < maxLength) typed += c; }
             else if (user.Length < maxLength) user += c;
             status.text = "";
@@ -178,6 +179,7 @@ namespace MoonThemedGame.Computer
 
         void SetStatus(string value, Color color)
         {
+            if(color==Good)GameAudio.Ui(Sound.Confirm);else if(color==Alarm)GameAudio.Ui(Sound.Error);
             status.text = value;
             status.style.color = color;
         }

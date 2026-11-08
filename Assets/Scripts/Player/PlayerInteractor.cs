@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -50,6 +51,8 @@ namespace MoonThemedGame.Interactions
                 GameControls.Pressed(GameCommand.Interact))
             {
                 movement.GetComponentInChildren<FirstPersonCameraEffects>()?.ResetWeaponMotion();
+                if(target.TryGetComponent<Renderer>(out var buttonRenderer))foreach(var material in buttonRenderer.sharedMaterials)
+                    if(material&&(material.name.ToLowerInvariant().Contains("buttons")||material.name.ToLowerInvariant().StartsWith("red"))){GameAudio.At(Sound.Button,target.transform.position);break;}
                 target.Interact();
                 if (!CanUseInput() || !target || !target.CanInteract(viewCamera)) SetTarget(null);
             }

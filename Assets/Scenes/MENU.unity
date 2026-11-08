@@ -10539,8 +10539,8 @@ MonoBehaviour:
   viewCamera: {fileID: 1630513680}
   powerButton: {fileID: 2039757063}
   floatingMonitorParts:
-  - {fileID: 1691855518}
   - {fileID: 556438510}
+  - {fileID: 1691855518}
   overviewDistance: 3.1
   focusDuration: 1.15
   overviewFov: 50

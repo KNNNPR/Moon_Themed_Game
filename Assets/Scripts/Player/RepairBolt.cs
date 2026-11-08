@@ -41,10 +41,14 @@ namespace MoonThemedGame.Repair
         public int Turns => Kind == Fastener.Bolt ? 6 : 5;
         public int TurnsDone => Mathf.FloorToInt(turns + .0001f);
         public bool Tight => Progress >= .9999f;
+        internal GameObject Part=>part;
+        internal Vector3 SurfacePoint=>part?part.transform.TransformPoint(inLocal):transform.position;
+        internal float HeadRadius {get;private set;}
         public bool Dismantling=>robot && robot.IsDismantling;
         public bool NeedsHighlight => (Dismantling?Progress>.0001f:!Tight) || IsTurning;
         internal void PrepareForDismantling(){turns=visualTurns=Turns;RefreshHighlightState();}
         public bool Seated => !robot || (robot.Accepts && robot.Seated(part));
+        public string SeatingHint=>robot?robot.SeatingHint(part):"";
 
         public static Fastener KindFor(GameObject part)
         {
@@ -289,6 +293,7 @@ namespace MoonThemedGame.Repair
 
             var bolt = root.AddComponent<RepairBolt>();
             bolt.Kind = kind;
+            bolt.HeadRadius=size;
             bolt.robot = robot;
             bolt.part = part;
             bolt.outLocal = root.transform.localPosition;
@@ -367,7 +372,7 @@ namespace MoonThemedGame.Repair
         {
             float before = AngleAt(Progress);
             Drive(ProgressAt(before + degrees) - Progress, immediate);
-            return AngleAt(Progress) - before;
+            float accepted=AngleAt(Progress)-before;RepairRust.Turn(this,accepted);return accepted;
         }
 
         static float AngleAt(float progress) => progress <= SnugProgress ? progress / SnugProgress * 70 :

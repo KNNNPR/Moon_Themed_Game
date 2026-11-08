@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 namespace MoonThemedGame.Scavenger
 {
@@ -48,7 +49,7 @@ namespace MoonThemedGame.Scavenger
         public void Press()
         {
             if(requested)return;
-            requested=true;LocationMechanisms.Say(Loc.Russian?"МОСТ ОПУСКАЕТСЯ":"BRIDGE LOWERING");
+            requested=true;GameAudio.At(Sound.Bridge,transform.position);LocationMechanisms.Say(Loc.Russian?"МОСТ ОПУСКАЕТСЯ":"BRIDGE LOWERING");
         }
         public void Advance(float seconds)
         {

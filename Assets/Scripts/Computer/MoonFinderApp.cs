@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
@@ -11,7 +12,7 @@ namespace MoonThemedGame.Computer
     [DisallowMultipleComponent]
     public sealed class MoonFinderApp : MonoBehaviour
     {
-        sealed class Line { public MoonFinderText text;public bool player; }
+        sealed class Line { public MoonFinderText text;public bool player,pending;public int shown;public float begins;public bool romance; }
         sealed class Chat
         {
             public string node;
@@ -32,9 +33,14 @@ namespace MoonThemedGame.Computer
         ScrollView transcript;
         string selected;
         bool scrollToLatest;
+        bool typingRefreshPending;
+        float typingRefreshAt;
         int scrollAfterFrame;
         MoonFinderWorldRewards rewards;
         public MoonFinderContent content;
+        [Min(5)] public float charactersPerSecond=60;
+        public Vector2 replyDelay=new Vector2(.6f,1.1f);
+        public bool IsTyping=>selected!=null&&chats.TryGetValue(selected,out var chat)&&chat.history.Exists(l=>l.pending);
         public bool Purchased {get;private set;}
         public bool IsOpen=>window!=null && window.style.display==DisplayStyle.Flex;
         public VisualElement Window=>window;
@@ -64,34 +70,36 @@ namespace MoonThemedGame.Computer
         {
             if(chats.TryGetValue(id,out var chat))return chat;
             var profile=content.Find(id);chat=new Chat{node=profile.firstNode};
-            var first=profile.Find(chat.node);if(first!=null)chat.history.Add(new Line{text=first.reply});
+            var first=profile.Find(chat.node);if(first!=null)chat.history.Add(new Line{text=first.reply,pending=true,begins=float.PositiveInfinity});
             chats.Add(id,chat);return chat;
         }
         public bool SelectProfile(string id)
         {
             if(!Purchased || !content || content.Find(id)==null)return false;
-            selected=id;ChatFor(id);Refresh();return true;
+            selected=id;var chat=ChatFor(id);
+            foreach(var line in chat.history)if(line.pending&&float.IsPositiveInfinity(line.begins))line.begins=Time.unscaledTime+UnityEngine.Random.Range(replyDelay.x,replyDelay.y);
+            Refresh();return true;
         }
         public bool Choose(int index)
         {
-            if(!Purchased || CurrentNode==null || index<0 || index>=CurrentNode.choices.Length)return false;
+            if(!Purchased || IsTyping || CurrentNode==null || index<0 || index>=CurrentNode.choices.Length)return false;
             var profile=content.Find(selected);if(profile.apple)return false;
             var option=CurrentNode.choices[index];var next=profile.Find(option.next);if(next==null)return false;
             var chat=ChatFor(selected);chat.history.Add(new Line{text=option.text,player=true});
-            chat.node=next.id;chat.history.Add(new Line{text=next.reply});
+            chat.node=next.id;chat.history.Add(Reply(next.reply,next.romance));
             if(chat.history.Count>200)chat.history.RemoveRange(0,chat.history.Count-200);
-            if(next.romance && !chat.romanced){chat.romanced=true;rewards.Grant(profile.reward);}
+            GameAudio.Ui(next.emotion==MoonFinderEmotion.Angry?Sound.Error:Sound.Confirm);
             Refresh();return true;
         }
         public bool ClickApple()
         {
-            if(!Purchased || selected==null || !content.Find(selected).apple)return false;
+            if(!Purchased || IsTyping || selected==null || !content.Find(selected).apple)return false;
             var chat=ChatFor(selected);if(chat.romanced)return false;
             chat.appleClicks++;chat.history.Add(new Line{text=content.appleMessage,player=true});
-            chat.history.Add(new Line{text=content.appleReply});
+            chat.history.Add(Reply(content.appleReply));GameAudio.Ui(Sound.Confirm);
             if(chat.appleClicks>=content.appleClicksRequired)
             {
-                chat.romanced=true;chat.history.Add(new Line{text=content.appleEnding});
+                chat.romanced=true;var ending=Reply(content.appleEnding);ending.begins+=content.appleReply.Value.Length/Mathf.Max(5,charactersPerSecond)+.7f;chat.history.Add(ending);
                 rewards.Grant(content.Find(selected).reward);
             }
             Refresh();return true;
@@ -114,6 +122,7 @@ namespace MoonThemedGame.Computer
         void Update()
         {
             if(!content || !terminal || terminal.Root==null)return;
+            UpdateTyping();
             if(boundRoot!=terminal.Root)
             {
                 icon?.RemoveFromHierarchy();window?.RemoveFromHierarchy();icon=null;window=null;buttons.Clear();portraits.Clear();Build();
@@ -134,11 +143,41 @@ namespace MoonThemedGame.Computer
                     if(Mathf.Abs(wheel)>0.01f){scrollToLatest=false;transcript.scrollOffset+=Vector2.up*(-wheel*0.35f);}
                 }
             }
+            object audioHover=overIcon?(object)icon:null;
+            if(IsOpen&&pointer)foreach(var audioAction in buttons)if(true&&audioAction.element.worldBound.Contains(point))audioHover=string.IsNullOrEmpty(audioAction.element.name)?(object)audioAction.element:audioAction.element.name;
+            GameAudio.Hover(this,audioHover);
+            if(audioHover!=null&&pointer&&Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame)GameAudio.Ui(Sound.Icon);
             if(!pointer || Mouse.current==null || !Mouse.current.leftButton.wasPressedThisFrame)return;
             if(overIcon){SetOpen(true);return;}
             if(!IsOpen)return;
             // Refresh rebuilds the action list; invoke only one action per click.
             for(int i=buttons.Count-1;i>=0;i--)if(buttons[i].element.worldBound.Contains(point)){buttons[i].action();break;}
+        }
+        Line Reply(MoonFinderText text,bool romance=false)=>new Line{text=text,pending=true,begins=Time.unscaledTime+UnityEngine.Random.Range(replyDelay.x,replyDelay.y),romance=romance};
+        void UpdateTyping()
+        {
+            if(GameSettingsMenu.BlockGameplayInput)return;
+            bool refresh=false,completed=false;
+            foreach(var pair in chats)
+            {
+                var chat=pair.Value;
+                foreach(var line in chat.history)
+                {
+                    if(!line.pending||Time.unscaledTime<line.begins)continue;
+                    int shown=Mathf.Clamp(Mathf.FloorToInt((Time.unscaledTime-line.begins)*Mathf.Max(5,charactersPerSecond)),0,line.text.Value.Length);
+                    if(line.shown!=shown)
+                    {
+                        if(IsOpen&&selected==pair.Key&&terminal.IsFocused){GameAudio.Ui(Sound.Keyboard);refresh=true;}
+                        line.shown=shown;
+                    }
+                    if(shown<line.text.Value.Length)continue;
+                    line.pending=false;completed=true;if(selected==pair.Key)refresh=true;
+                    if(line.romance&&!chat.romanced){chat.romanced=true;rewards.Grant(content.Find(pair.Key).reward);}
+                }
+            }
+            if(refresh)typingRefreshPending=true;
+            if(typingRefreshPending&&(completed||Time.unscaledTime>=typingRefreshAt))
+            {typingRefreshPending=false;typingRefreshAt=Time.unscaledTime+.07f;Refresh();}
         }
         void LateUpdate()
         {
@@ -189,17 +228,18 @@ namespace MoonThemedGame.Computer
             foreach(var line in chat.history)
             {
                 var message=Text((line.player?L("YOU","ВЫ"):person.name.Value)+": "+line.text.Value,line.player?"mf-message mf-outgoing":"mf-message");
+                if(line.pending)message.text=(line.player?L("YOU","ВЫ"):person.name.Value)+": "+(line.shown<=0?L("Typing...","Печатает..."):line.text.Value.Substring(0,Mathf.Min(line.shown,line.text.Value.Length)));
                 transcript.Add(message);
             }
             choices.Clear();appleButton=null;
-            if(person.apple)
+            if(person.apple&&!IsTyping)
             {
                 appleButton=Box("mf-apple");appleButton.name="moonfinder-apple";
                 appleButton.Add(new Image{vectorImage=content.appleIcon,scaleMode=ScaleMode.ScaleToFit,pickingMode=PickingMode.Ignore});
-                appleButton.Add(Text(chat.romanced?"<3":$"{chat.appleClicks} / {content.appleClicksRequired}","mf-muted"));choices.Add(appleButton);
+                if(chat.romanced)appleButton.Add(Text("<3","mf-muted"));choices.Add(appleButton);
                 buttons.Add((appleButton,()=>ClickApple()));
             }
-            else if(CurrentNode!=null)
+            else if(CurrentNode!=null&&!IsTyping)
             {
                 if(chat.choiceNode!=chat.node || chat.choiceOrder==null || chat.choiceOrder.Length!=CurrentNode.choices.Length)
                 {
@@ -217,7 +257,7 @@ namespace MoonThemedGame.Computer
                     int option=chat.choiceOrder[i];var button=Text("> "+CurrentNode.choices[option].text.Value,"mf-option");button.name="moonfinder-choice-"+i;choices.Add(button);buttons.Add((button,()=>Choose(option)));
                 }
             }
-            state.text=chat.romanced?L("<3 CONNECTION ESTABLISHED","<3 СВЯЗЬ УСТАНОВЛЕНА"):L("ENCRYPTED [NO READ RECEIPTS]","ЗАШИФРОВАНО [БЕЗ ОТМЕТОК О ПРОЧТЕНИИ]");
+            state.text=IsTyping?L("INCOMING MESSAGE [TYPING]","ВХОДЯЩЕЕ СООБЩЕНИЕ [ПЕЧАТАЕТ]"):chat.romanced?L("<3 CONNECTION ESTABLISHED","<3 СВЯЗЬ УСТАНОВЛЕНА"):L("ENCRYPTED [NO READ RECEIPTS]","ЗАШИФРОВАНО [БЕЗ ОТМЕТОК О ПРОЧТЕНИИ]");
             // The next layout pass measures wrapped messages and updates the scroll range.
             scrollToLatest=true;scrollAfterFrame=Time.frameCount+2;
         }

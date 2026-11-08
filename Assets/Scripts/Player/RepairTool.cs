@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 
 namespace MoonThemedGame.Repair
@@ -29,7 +30,7 @@ namespace MoonThemedGame.Repair
             cooldown -= Time.deltaTime;
             if (MouseClicked() && cooldown <= 0)
             {
-                swing = 1;
+                swing = 1;GameAudio.At(Sound.Hammer,target?target.transform.position:transform.position);
                 cooldown = 0.35f;
                 if (target) robot.Strike(target);
             }
@@ -40,7 +41,8 @@ namespace MoonThemedGame.Repair
         }
 
         protected override string CarryHint => target
-            ? Loc.F("LMB — knock the part in  {0}/{1}", RepairRobotTarget.HammerHits - robot.HitsLeft(target), RepairRobotTarget.HammerHits)
+            ? robot.SpecialStep&&robot.SpecialStep.PendingFor(target)?robot.SpecialStep.Instruction:
+                Loc.F("LMB — knock the part in  {0}/{1}", RepairRobotTarget.HammerHits - robot.HitsLeft(target), RepairRobotTarget.HammerHits)
             : Loc.T("Aim at a part that sticks out");
     }
 }

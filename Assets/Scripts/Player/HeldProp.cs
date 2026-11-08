@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -70,8 +71,11 @@ namespace MoonThemedGame.Interactions
         }
         void RefreshStations()
         {
-            stations.Clear();if(radioTrack)stations.Add(radioTrack);
-            if(radioStations!=null)foreach(var track in radioStations)if(track && !stations.Contains(track))stations.Add(track);
+            stations.Clear();
+            bool radio=radioTrack || (radioStations!=null&&radioStations.Length>0) || name.ToLowerInvariant().StartsWith("radio");
+            if(radio&&GameAudio.Catalog)foreach(var track in GameAudio.Catalog.RadioTracks)if(track)stations.Add(track);
+            void Add(AudioClip clip){if(clip&&!stations.Exists(c=>c==clip||c.name==clip.name))stations.Add(clip);}
+            Add(radioTrack);if(radioStations!=null)foreach(var track in radioStations)Add(track);
             RadioStationIndex=stations.Count>0?Mathf.Clamp(RadioStationIndex,0,stations.Count-1):0;
         }
         void EnsureRadioAudio()
@@ -81,7 +85,7 @@ namespace MoonThemedGame.Interactions
                 audioSource = gameObject.AddComponent<AudioSource>();
                 audioSource.loop = true; audioSource.playOnAwake = false; audioSource.spatialBlend = 1;
                 audioSource.minDistance = 2; audioSource.maxDistance = 22; audioSource.rolloffMode = AudioRolloffMode.Linear;
-                audioSource.volume = 0.65f;
+                audioSource.volume = 0.65f;GameAudio.RouteRadio(audioSource);
             }
         }
         public bool CycleRadioStation(int direction=1)
@@ -95,9 +99,29 @@ namespace MoonThemedGame.Interactions
             RefreshStations();if(stations.Count==0)return;EnsureRadioAudio();
             var track=stations[RadioStationIndex];
             if(!restart && radioOn && audioSource.clip==track && audioSource.isPlaying)return;
-            audioSource.Stop();audioSource.clip=track;audioSource.time=0;audioSource.Play();radioOn=true;
+            audioSource.Stop();audioSource.clip=track;UpdateRadioMix();audioSource.time=0;audioSource.Play();radioOn=true;
         }
         public void StopRadio(){if(audioSource)audioSource.Stop();radioOn=false;}
+        void UpdateRadioMix()
+        {
+            if(!audioSource||!audioSource.clip)return;
+            var listener=GameAudio.RadioOperatorCamera;
+            float volume=GameAudio.RadioVolume(audioSource.clip);
+            if(listener)
+            {
+                // Unity's active listener is on the rover. Keep this one source
+                // audible from the operator's room without restarting its track.
+                var offset=transform.position-listener.transform.position;
+                float attenuation=1-Mathf.InverseLerp(audioSource.minDistance,audioSource.maxDistance,offset.magnitude);
+                audioSource.spatialBlend=0;
+                audioSource.panStereo=Vector3.Dot(offset.normalized,listener.transform.right)*.65f;
+                audioSource.volume=volume*attenuation*.55f;
+            }
+            else
+            {
+                audioSource.spatialBlend=1;audioSource.panStereo=0;audioSource.volume=volume;
+            }
+        }
         // The shot is dispatched only after the pistol's wall/obstruction raycasts succeed.
         public bool ReactToPistolHit(Vector3 direction,Material particleMaterial)
         {
@@ -113,6 +137,7 @@ namespace MoonThemedGame.Interactions
             if (held || !Camera.main) return;
             if (collisionRestore != null) { StopCoroutine(collisionRestore); collisionRestore = null; }
             held = this; hand = Camera.main; heldRotation = Quaternion.Inverse(hand.transform.rotation) * transform.rotation;
+            GameAudio.At(Sound.ToolPickup,transform.position);
             body.linearVelocity = Vector3.zero; body.angularVelocity = Vector3.zero; body.isKinematic = true;
             var player = hand.GetComponentInParent<FirstPersonController>();
             playerColliders = player ? player.GetComponentsInChildren<Collider>() : new Collider[0];
@@ -129,6 +154,7 @@ namespace MoonThemedGame.Interactions
         }
         void LateUpdate()
         {
+            if(audioSource&&radioOn)UpdateRadioMix();
             if (!hand) return;
             if (GameSettingsMenu.BlockGameplayInput) return;
             if (Keyboard.current != null && GameControls.Pressed(GameCommand.Throw)) { Drop(); return; }

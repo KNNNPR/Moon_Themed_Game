@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -40,13 +41,14 @@ namespace MoonThemedGame.Interactions
                     Physics.DefaultRaycastLayers,QueryTriggerInteraction.Ignore);
             }
         }
-        public override void Interact()=>TryDispense(out _);
+        public override void Interact(){GameAudio.At(Sound.Button,transform.position);TryDispense(out _);}
         public bool TryDispense(out HeldProp apple)
         {
             apple=null;
             if(!isActiveAndEnabled || !assets || !assets.applePrefab ||
                 GameSettingsMenu.BlockGameplayInput || Time.time<nextDispense ||
                 NearbyCount>=maximumNearbyApples || !TrayIsClear)return false;
+            GameAudio.At(Sound.Dispenser,transform.position);
             var fruit=Instantiate(assets.applePrefab);
             fruit.name="Suspicious Apple";
             SceneManager.MoveGameObjectToScene(fruit,gameObject.scene);

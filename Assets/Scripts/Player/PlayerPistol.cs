@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Interactions;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -68,7 +69,7 @@ namespace MoonThemedGame.Repair
             var animation=GetComponent<Animation>();if(animation)animation.enabled=false;
             sound=gameObject.AddComponent<AudioSource>();sound.playOnAwake=false;
             sound.spatialBlend=.8f;sound.minDistance=1;sound.maxDistance=45;sound.dopplerLevel=0;
-            sound.rolloffMode=AudioRolloffMode.Logarithmic;
+            sound.rolloffMode=AudioRolloffMode.Logarithmic;GameAudio.Route(sound);
         }
         protected override void OnPickedUp()
         {
@@ -127,6 +128,7 @@ namespace MoonThemedGame.Repair
             activeReload=Ammo==0 && emptyReloadClip?emptyReloadClip:reloadClip;
             if(!activeReload)return false;
             IsReloading=true;reloadTime=0;reloadStage=0;
+            if(!magazineOutSound&&!magazineInSound&&!slideSound)GameAudio.At(Sound.GunReload,transform.position);
             activeReload.SampleAnimation(gameObject,0);
             return true;
         }
@@ -183,7 +185,7 @@ namespace MoonThemedGame.Repair
                 }
             }
             PistolEffects.Shot(origin,transform.rotation,PlayerBody.Scale,effectMaterial,casingMaterial);
-            Play(shotSound,.9f);
+            GameAudio.PistolShot(shotSound,origin);
             kick+=new Vector3(muzzleKick*Mathf.Lerp(1,.85f,AimAmount),Random.Range(-1.6f,1.6f),Random.Range(-3,3));
             kick=Vector3.Min(kick,new Vector3(24,8,8));kickVelocity=Vector3.zero;
             var cameraKick=Vector2.Lerp(hipCameraKick,aimCameraKick,AimAmount);

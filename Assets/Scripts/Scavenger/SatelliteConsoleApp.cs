@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Computer;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -73,6 +74,9 @@ namespace MoonThemedGame.Scavenger
                 close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
                 map.MarkDirtyRepaint();
             }
+            object audioHover=pointer&&icon.worldBound.Contains(point)?icon:null;
+            if(IsOpen&&pointer){if(close.worldBound.Contains(point))audioHover=close;foreach(var c in cards)if(c.root.worldBound.Contains(point))audioHover=c.root;}
+            GameAudio.Hover(this,audioHover);if(audioHover!=null&&pointer&&Clicked())GameAudio.Ui(Sound.Icon);
             if (pointer && Clicked()) HandleClick(point);
             if (IsOpen && Time.time >= nextRefresh) Refresh();
         }

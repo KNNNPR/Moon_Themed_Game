@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using MoonThemedGame.Computer;
@@ -158,6 +159,9 @@ namespace MoonThemedGame.Scavenger
             close.style.color = pointer && close.worldBound.Contains(point) ? Color.white : Muted;
             for (int i = 0; i < rows.Length; i++)
                 Border(rows[i], OrderVisible(i) && (selected == i || (pointer && rows[i].worldBound.Contains(point))) ? Text : Edge);
+            object audioHover=null;
+            if(pointer){if(close.worldBound.Contains(point))audioHover=close;else if(accept.worldBound.Contains(point))audioHover=accept;else foreach(var row in rows)if(row.worldBound.Contains(point))audioHover=row;}
+            GameAudio.Hover(this,audioHover);if(audioHover!=null&&pointer&&Clicked())GameAudio.Ui(Sound.Icon);
             RefreshAction();
             if (terminal.IsFocused)
             {
@@ -294,13 +298,17 @@ namespace MoonThemedGame.Scavenger
             if (!IsOrderUnlocked(selected) || accepted != null || !dropper || orders[selected].completed) return;
             delivery = dropper.TryDropOrder(orders[selected].missingSlots, orders[selected].robot);
             if (!delivery) return;
-            accepted = orders[selected];
+            accepted = orders[selected];GameAudio.Ui(Sound.Confirm);
             if(accepted.dismantle)
             {
                 GetComponent<ScavengerLink>()?.Salvage?.ClearOrderSupply();
                 delivery.gameObject.AddComponent<AurinkoDismantling>().Configure(delivery);
             }
-            else GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
+            else
+            {
+                delivery.ConfigureSpecialStep(completedOrders+1,accepted.missingSlots);
+                GetComponent<ScavengerLink>()?.Salvage?.ApplyOrderProgression(completedOrders+1);
+            }
             Refresh();
         }
 

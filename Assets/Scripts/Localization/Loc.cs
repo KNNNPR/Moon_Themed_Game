@@ -143,6 +143,7 @@ namespace MoonThemedGame
             { "Crouch (hold)", "Присесть (удерживать)" },
             { "Jump (operator)", "Прыжок (человек)" },
             { "Sprint (hold)", "Бег (удерживать)" },
+            { "Flashlight (operator)", "Фонарик (человек)" },
             { "[{0}] RIGHT THE ROBOT", "[{0}] ПОСТАВИТЬ БОТА НА КОЛЁСА" },
             { "ROBOT BACK ON WHEELS", "БОТ СНОВА НА КОЛЁСАХ" },
 
@@ -201,6 +202,9 @@ namespace MoonThemedGame
             { "DEEP NIGHT", "ГЛУБОКАЯ НОЧЬ" },
             { "CRYOGENIC FRONT", "КРИОГЕННЫЙ ФРОНТ" },
             { "ASHEN CALM", "ПЕПЕЛЬНЫЙ ШТИЛЬ" },
+            { "THE HORDE", "ОРДА" },
+            { "Zombies drain energy on contact. Ram them at high speed.", "Зомби отнимают энергию при контакте. Сбивайте их на большой скорости." },
+            { "HORDE CONTACT [ENERGY LOST]", "АТАКА ОРДЫ [ПОТЕРЯ ЭНЕРГИИ]" },
             { "Almost total darkness. Use your headlights.", "Почти полная темнота. Используйте фары." },
             { "Faster battery drain. Reduced grip. Frost on the camera.", "Батарея садится быстрее. Сцепление хуже. Иней на камере." },
             { "Slowly falling ash. No penalties.", "Медленно оседающий пепел. Без штрафов." },
@@ -353,7 +357,7 @@ namespace MoonThemedGame
             { "CH{0} JAMMED", "КАН{0} ЗАГЛУШЁН" },
             { "CH{0} FREE", "КАН{0} СВОБОДЕН" },
             { "{0} TUNER  {1}", "{0} ТЮНЕР  {1}" },
-            { "[ LOCK CARRIER ]", "[ ЗАХВАТИТЬ НЕСУЩУЮ ]" },
+            { "[ TAKE OVER BOT ]", "[ ПЕРЕХВАТИТЬ БОТА ]" },
             { "> CLICK A CHANNEL, THEN THE TUNER", "> КЛИК ПО КАНАЛУ, ПОТОМ ПО ТЮНЕРУ" },
 
             // SAT-LINK

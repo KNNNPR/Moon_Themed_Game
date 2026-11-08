@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 462797df588f431a9f070513ee949ddf, type: 3}
+  m_Name: RepairSpecialStepSettings
+  m_EditorClassIdentifier: Assembly-CSharp::MoonThemedGame.Repair.RepairSpecialStepSettings
+  enableSpecialRepairs: 1
+  panelHits: 2
+  alignmentPixels: 150
+  alignmentTolerance: 0.16
+  seatingPixels: 90
+  dentMeshes:
+  - source: {fileID: -5004313556557082245, guid: 9e808c7e7945c074f83bc93133414310, type: 3}
+    blend: {fileID: 4300000, guid: 51a37752a334a0c44bb07aefb34c8fe1, type: 2}
+  - source: {fileID: 4300000, guid: f855d6135134a7048a6868018dd372af, type: 2}
+    blend: {fileID: 4300000, guid: 1af3f735bfe94ca498c70f84743099f0, type: 2}
+  - source: {fileID: 4300000, guid: bb92ebda5af349a41b3e108643a27596, type: 2}
+    blend: {fileID: 4300000, guid: c63befc791b1b484e956ad1d82ad2011, type: 2}
