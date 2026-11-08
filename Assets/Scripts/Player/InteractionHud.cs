@@ -31,13 +31,16 @@ namespace MoonThemedGame.Interactions
             float scale=Mathf.Clamp(Screen.height/900f,1,1.3f);
             int mainSize=Mathf.RoundToInt(size*scale),smallSize=Mathf.Max(14,mainSize-2);
             float padding=Mathf.Round(13*scale),gap=Mathf.Round(5*scale);
-            var lines=text.Split('\n');float width=0;
+            var lines=text.Split('\n');
+            for(int i=0;i<lines.Length;i++)
+                lines[i]=keys.Replace(lines[i],match=>"<color=#B6D7C2>"+match.Value+"</color>");
+            float width=0;
             for(int i=0;i<lines.Length;i++)width=Mathf.Max(width,Style(i==0?mainSize:smallSize).CalcSize(new GUIContent(lines[i])).x);
-            width=Mathf.Clamp(width+padding*2,100,Mathf.Min(650*scale,Screen.width-32));
+            width=Mathf.Clamp(Mathf.Ceil(width)+padding*2+2,100,Mathf.Min(650*scale,Screen.width-32));
             float inner=width-padding*2,height=padding*2;
             var heights=new float[lines.Length];
             for(int i=0;i<lines.Length;i++)
-            {heights[i]=Style(i==0?mainSize:smallSize).CalcHeight(new GUIContent(lines[i]),inner);height+=heights[i]+(i>0?gap:0);}
+            {heights[i]=Mathf.Ceil(Style(i==0?mainSize:smallSize).CalcHeight(new GUIContent(lines[i]),inner));height+=heights[i]+(i>0?gap:0);}
             var rect=new Rect(Mathf.Round(Mathf.Clamp(centerX-width/2,16,Screen.width-width-16)),
                 Mathf.Round(Mathf.Clamp(top,16,Mathf.Max(16,Screen.height-height-16))),Mathf.Ceil(width),Mathf.Ceil(height));
             var previous=GUI.color;
@@ -49,9 +52,8 @@ namespace MoonThemedGame.Interactions
             float y=rect.y+padding;
             for(int i=0;i<lines.Length;i++)
             {
-                string marked=keys.Replace(lines[i],match=>"<color=#B6D7C2>"+match.Value+"</color>");
                 var row=new Rect(rect.x+padding,y,inner,heights[i]);
-                GUI.color=new Color(1,1,1,(i==0?1:0.8f)*opacity);GUI.Label(row,marked,Style(i==0?mainSize:smallSize));
+                GUI.color=new Color(1,1,1,(i==0?1:0.8f)*opacity);GUI.Label(row,lines[i],Style(i==0?mainSize:smallSize));
                 y+=heights[i]+gap;
             }
             GUI.color=previous;return rect;

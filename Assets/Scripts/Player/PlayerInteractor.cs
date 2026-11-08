@@ -81,7 +81,27 @@ namespace MoonThemedGame.Interactions
             if (!first) return null;
             var fixedZone = first.GetComponent<DoorInteractionZone>();
             Interactable candidate = fixedZone ? fixedZone.door : first.GetComponentInParent<Interactable>();
-            if (!fixedZone && candidate is DoorInteractable) return null;
+            if (!fixedZone && candidate is DoorInteractable door)
+            {
+                // The panel can be slightly in front of its fixed trigger.
+                // Ignore that panel only when looking into the doorway itself.
+                float zoneDistance = float.PositiveInfinity;
+                float obstructionDistance = float.PositiveInfinity;
+                foreach (var hit in hits)
+                {
+                    var collider = hit.collider;
+                    if (collider.transform.IsChildOf(transform)) continue;
+                    if (collider.TryGetComponent<DoorInteractionZone>(out var zone))
+                    {
+                        if (zone.door == door) zoneDistance = Mathf.Min(zoneDistance, hit.distance);
+                        else obstructionDistance = Mathf.Min(obstructionDistance, hit.distance);
+                    }
+                    else if (!collider.isTrigger && collider.GetComponentInParent<DoorInteractable>() != door)
+                        obstructionDistance = Mathf.Min(obstructionDistance, hit.distance);
+                }
+                if (zoneDistance >= obstructionDistance) return null;
+                nearest = zoneDistance;
+            }
             return candidate && nearest <= candidate.interactionDistance &&
                 candidate.CanInteract(viewCamera) ? candidate : null;
         }
