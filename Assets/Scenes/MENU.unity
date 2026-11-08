@@ -875,6 +875,8 @@ MonoBehaviour:
   toxicEnergyMultiplier: 4
   coldEnergyMultiplier: 2
   coldGripMultiplier: 0.45
+  frostBuildSeconds: 14
+  frostMeltSeconds: 10
   warningSeconds: 5
   fallSeconds: 1.6
   meteorDiameterRange: {x: 4, y: 8}
@@ -1814,6 +1816,7 @@ MonoBehaviour:
   openEuler: {x: 0, y: 90, z: 0}
   duration: 1.4
   locked: 1
+  fixedZone: {fileID: 0}
 --- !u!65 &190620250
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -6108,6 +6111,7 @@ MonoBehaviour:
   openEuler: {x: 0, y: 90, z: 0}
   duration: 0.65
   locked: 0
+  fixedZone: {fileID: 0}
 --- !u!23 &567262736
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10535,8 +10539,8 @@ MonoBehaviour:
   viewCamera: {fileID: 1630513680}
   powerButton: {fileID: 2039757063}
   floatingMonitorParts:
-  - {fileID: 556438510}
   - {fileID: 1691855518}
+  - {fileID: 556438510}
   overviewDistance: 3.1
   focusDuration: 1.15
   overviewFov: 50
@@ -11724,6 +11728,9 @@ MonoBehaviour:
   stepLength: 1.5
   enableTilt: 1
   maxTilt: 0.7
+  leanAngle: 14
+  leanDistance: 0.19
+  leanResponse: 0.18
   referenceSpeed: 3.5
   movementThreshold: 0.05
   positionResponse: 14
@@ -14884,6 +14891,7 @@ MonoBehaviour:
       \u043A\u043E\u0440\u043F\u0443\u0441\u0430"
   - prefab: {fileID: 1538884545711486060, guid: f591656478f624444a76522781cc5b8c, type: 3}
     displayName: "\u0421\u0442\u0435\u043A\u043B\u043E"
+  robotCatalog: {fileID: 0}
   landingPoint: {fileID: 1290877595}
   dropHeight: 5
   gravity: 9.81
@@ -21993,8 +22001,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4821878c7a6ce1e46a4b2e55fa1a3935, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMaterial: {fileID: 0}
+  targets: []
   widthPixels: 2
   outlineColor: {r: 0.78, g: 0.95, b: 0.8, a: 1}
   fadeSpeed: 14
@@ -22008,8 +22018,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 279dd71b565150840a150d0c560f4fa5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -135,9 +135,11 @@ namespace MoonThemedGame.Scavenger
 
         [SerializeField] BoxCollider chassisCollider;
         [SerializeField] Rigidbody chassisBody;
+        bool initialized;
 
         public void Setup(Vector3 forward)
         {
+            if(initialized)return;
             localForward = forward;
             var renderers = GetComponentsInChildren<Renderer>();
             var local = LocalBounds(renderers);
@@ -180,10 +182,12 @@ namespace MoonThemedGame.Scavenger
                 wheel.rearAxle = Vector3.Dot(transform.TransformPoint(wheel.anchor)-world.center, Forward.normalized) <= rear+wheelBase*0.2f;
             }
             foreach (var wheel in wheels) wheel.length = wheel.radius * travel;
-            body = chassisBody ? chassisBody : GetComponent<Rigidbody>();
-            hull = chassisCollider;
-            if (!hull && body) TryGetComponent(out hull);
-            if (!hull) hull = gameObject.AddComponent<BoxCollider>();
+            hull = chassisCollider&&chassisCollider.gameObject==gameObject?chassisCollider:GetComponent<BoxCollider>();
+            if(!hull)hull=gameObject.AddComponent<BoxCollider>();
+            chassisCollider=hull;
+            // Existing scene colliders were disabled above with the imported model's
+            // collision shapes. Re-enable the selected chassis for the driven body.
+            hull.enabled=true;hull.isTrigger=false;
             // A repair delivery can be missing every wheel/track. In that case its
             // surviving body must rest on the stand rather than falling through a raised hull.
             float bottom = local.min.y + (wheels.Count > 0 ? wheelRadius * 1.5f / Mathf.Max(0.001f, transform.lossyScale.y) : 0);
@@ -197,7 +201,9 @@ namespace MoonThemedGame.Scavenger
             hull.enabled = true;
             own = new Collider[] { hull };
 
-            if (!body) body = gameObject.AddComponent<Rigidbody>();
+            body = chassisBody&&chassisBody.gameObject==gameObject?chassisBody:GetComponent<Rigidbody>();
+            if(!body)body=gameObject.AddComponent<Rigidbody>();
+            chassisBody=body;body.isKinematic=false;
             body.mass = mass;
             body.useGravity = false;
             body.interpolation = RigidbodyInterpolation.Interpolate;
@@ -211,6 +217,7 @@ namespace MoonThemedGame.Scavenger
             float sag = travel * wheelRadius * 0.5f;
             stiffness = mass * gravity / count / Mathf.Max(0.001f, sag);
             damper = 2 * dampingRatio * Mathf.Sqrt(stiffness * mass / count);
+            initialized=true;
         }
 
         Bounds LocalBounds(Renderer[] renderers)

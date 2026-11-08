@@ -139,8 +139,8 @@ namespace MoonThemedGame.Weather
             root.Q<Label>("weather-energy").text = Loc.F("ENERGY DRAIN x{0}", multiplier.ToString("0.0", CultureInfo.InvariantCulture));
             root.Q<Label>("weather-notice").text = weather.Current == WeatherKind.MeteoriteRain
                 ? Loc.F("IMPACT ZONES MARKED {0}s BEFORE", Mathf.Max(5,weather.warningSeconds).ToString("0",CultureInfo.InvariantCulture))
-                : Loc.T("BASE INTERIOR / SHELTERED");
-            root.Q<Label>("weather-clock").text = Loc.F("SURFACE FORECAST / T+{0}", Clock(Time.time));
+                : Loc.T("BASE INTERIOR [SHELTERED]");
+            root.Q<Label>("weather-clock").text = Loc.F("SURFACE FORECAST [T+{0}]", Clock(Time.time));
         }
         void SetIcon(string id, WeatherKind kind)
         {

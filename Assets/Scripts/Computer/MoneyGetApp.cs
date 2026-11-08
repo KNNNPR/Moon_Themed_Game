@@ -54,7 +54,7 @@ namespace MoonThemedGame.Computer
                 Say(result==MoneyGetMarket.Failure.NotEnoughCredits?T("NOT ENOUGH CREDITS","НЕДОСТАТОЧНО КРЕДИТОВ"):result==MoneyGetMarket.Failure.AlreadyOpen?T("CLOSE THE EXISTING POSITION FIRST","СНАЧАЛА ЗАКРОЙТЕ ТЕКУЩУЮ ПОЗИЦИЮ"):T("INVALID ORDER","НЕВЕРНАЯ ЗАЯВКА"));return false;
             }
             terminal.SetCredits(terminal.Credits-debit);
-            Say(Market.Quotes[stock].definition.company+" // "+(side==1?"LONG":"SHORT")+" "+count+" x"+multiplier+T(" OPENED"," ОТКРЫТ"));Refresh();return true;
+            Say(Market.Quotes[stock].definition.company+" ["+(side==1?"LONG":"SHORT")+" "+count+" x"+multiplier+T(" OPENED]"," ОТКРЫТ]"));Refresh();return true;
         }
         public bool ClosePosition(int stock)
         {
@@ -66,7 +66,7 @@ namespace MoonThemedGame.Computer
         {
             terminal.SetCredits((int)Math.Min(int.MaxValue,(long)terminal.Credits+result.payout));
             string reason=result.reason==MoneyGetMarket.Exit.Liquidated?T("LIQUIDATED","ЛИКВИДАЦИЯ"):result.reason==MoneyGetMarket.Exit.StopLoss?"STOP-LOSS":result.reason==MoneyGetMarket.Exit.TakeProfit?"TAKE-PROFIT":T("CLOSED","ЗАКРЫТО");
-            Say(Market.Quotes[result.stock].definition.company+" // "+reason+" "+Signed(result.profit)+" CR");
+            Say(Market.Quotes[result.stock].definition.company+" ["+reason+" "+Signed(result.profit)+" CR]");
         }
         void Say(string message){notice=message;noticeUntil=Time.time+7;if(status!=null)status.text=message;}
         public void SetOpen(bool open)
@@ -75,6 +75,7 @@ namespace MoonThemedGame.Computer
             window.style.display=open?DisplayStyle.Flex:DisplayStyle.None;if(!open)return;
             GetComponent<ShopApp>()?.Close();GetComponent<SatelliteConsoleApp>()?.Close();GetComponent<RepairMessagesApp>()?.Close();GetComponent<MoonFinderApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             window.BringToFront();terminal.Root.Q("screen-cursor")?.BringToFront();Refresh();
         }
         public void Close(){if(window!=null)window.style.display=DisplayStyle.None;}
@@ -92,7 +93,7 @@ namespace MoonThemedGame.Computer
                 }
                 if(lastCredits!=terminal.Credits)Refresh();
             }
-            if(GameSettingsMenu.BlockGameplayInput || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
+            if(GameSettingsMenu.BlockGameplayInput || terminal.RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
             bool pointer=terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point=terminal.PointerPosition;
             bool free=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false) && !(GetComponent<MoonFinderApp>()?.IsOpen??false);
@@ -155,12 +156,12 @@ namespace MoonThemedGame.Computer
         void Refresh()
         {
             if(window==null || Market==null)return;lastCredits=terminal.Credits;
-            icon.style.display=Purchased?DisplayStyle.Flex:DisplayStyle.None;iconName.text=content.Title;heading.text=content.Title+" // "+T("LUNAR EXCHANGE","ЛУННАЯ БИРЖА");
+            icon.style.display=Purchased?DisplayStyle.Flex:DisplayStyle.None;iconName.text=content.Title;heading.text=content.Title+" ["+T("LUNAR EXCHANGE","ЛУННАЯ БИРЖА")+"]";
             int floating=0,equity=0;foreach(var p in Market.Positions){floating+=Market.Profit(p);equity+=Market.Equity(p);}
             wallet.text=T("CASH ","БАЛАНС ")+terminal.Credits+" CR    "+T("IN POSITIONS ","В ПОЗИЦИЯХ ")+equity+" CR    P/L "+Signed(floating)+" CR    "+T("REALIZED ","ЗАКРЫТО ")+Signed(Market.RealizedProfit)+" CR";
-            if(Market.NewsStock<0)news.text=T("MARKET OPEN // Earth uplink unstable. Expect volatility.","БИРЖА ОТКРЫТА // Связь с Землёй нестабильна. Ожидаются колебания.");
-            else {var def=Market.Quotes[Market.NewsStock].definition;news.text=def.company+" // "+(Market.NewsUp?T(def.goodNews,def.goodNewsRu):T(def.badNews,def.badNewsRu));}
-            window.Q<Label>("moneyget-market-heading").text=T("COMPANY / PRICE / CHANGE","КОМПАНИЯ / ЦЕНА / ИЗМЕНЕНИЕ");
+            if(Market.NewsStock<0)news.text=T("MARKET OPEN [Earth uplink unstable. Expect volatility.]","БИРЖА ОТКРЫТА [Связь с Землёй нестабильна. Ожидаются колебания.]");
+            else {var def=Market.Quotes[Market.NewsStock].definition;news.text=def.company+" ["+(Market.NewsUp?T(def.goodNews,def.goodNewsRu):T(def.badNews,def.badNewsRu))+"]";}
+            window.Q<Label>("moneyget-market-heading").text=T("COMPANY [PRICE] [CHANGE]","КОМПАНИЯ [ЦЕНА] [ИЗМЕНЕНИЕ]");
             for(int i=0;i<Market.Quotes.Length;i++)
             {
                 var q=Market.Quotes[i];double change=(q.price/q.opening-1)*100;
@@ -173,7 +174,7 @@ namespace MoonThemedGame.Computer
                     positionLabels[i].style.color=Market.Profit(p)>=0?Good:Bad;
                 }
             }
-            var current=Market.Quotes[selected];quoteTitle.text=current.definition.company+"  /  "+Price(current.price)+" CR";
+            var current=Market.Quotes[selected];quoteTitle.text=current.definition.company+"  ["+Price(current.price)+" CR]";
             double min=double.MaxValue,max=0;foreach(double value in current.history){min=Math.Min(min,value);max=Math.Max(max,value);}
             chartRange.text="MIN "+Price(min)+"   MAX "+Price(max)+"   "+T("LAST ","ПОСЛЕДНИЕ ")+current.history.Count+T(" QUOTES"," КОТИРОВОК");chart.MarkDirtyRepaint();
             quantity.text=T("SHARES ","АКЦИЙ ")+shares;
@@ -181,7 +182,7 @@ namespace MoonThemedGame.Computer
             int margin=MoneyGetMarket.RequiredMargin(current.price,shares,leverage);
             order.text=T("MARGIN ","ЗАЛОГ ")+margin+" CR  /  "+T("MAX LOSS ","МАКС. УБЫТОК ")+margin+" CR";
             bool can=Purchased && terminal.Credits>=margin && Market.Find(selected)==null;longButton.SetEnabled(can);shortButton.SetEnabled(can);
-            portfolio.text=T("OPEN POSITIONS ","ОТКРЫТЫЕ ПОЗИЦИИ ")+Market.Positions.Count+T("  // ENTRY > NOW / P&L","  // ВХОД > СЕЙЧАС / ПРИБЫЛЬ");
+            portfolio.text=T("OPEN POSITIONS ","ОТКРЫТЫЕ ПОЗИЦИИ ")+Market.Positions.Count+T("  [ENTRY > NOW / P&L]","  [ВХОД > СЕЙЧАС / ПРИБЫЛЬ]");
             window.Q<Label>("moneyget-risk").text=T("LONG: profit on rises. SHORT: profit on falls. SL/TP use margin %. At zero equity: liquidation. Exits use the next quote; no debt.","ЛОНГ: прибыль при росте. ШОРТ: при падении. SL/TP: % от залога. При нуле: ликвидация. Выход по новой котировке; без долга.");
             foreach(var refresh in refreshText)refresh();
         }

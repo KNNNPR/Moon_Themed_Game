@@ -24,9 +24,9 @@ namespace MoonThemedGame.Repair
             get
             {
                 if (!IsRunning) return Passed ? T("[OK] ROBOT READY", "[OK] РОБОТ ГОТОВ") : T("[!] CHECK FAILED", "[!] ПРОВЕРКА НЕ ПРОЙДЕНА");
-                return Phase == RepairDiagnosticPhase.Power ? T("SYSTEM CHECK // POWER", "ПРОВЕРКА // ПИТАНИЕ") :
-                    Phase == RepairDiagnosticPhase.Lights ? T("SYSTEM CHECK // LIGHTS", "ПРОВЕРКА // ФАРЫ") :
-                    T("SYSTEM CHECK // RUNNING GEAR", "ПРОВЕРКА // ХОДОВАЯ");
+                return Phase == RepairDiagnosticPhase.Power ? T("SYSTEM CHECK [POWER]", "ПРОВЕРКА [ПИТАНИЕ]") :
+                    Phase == RepairDiagnosticPhase.Lights ? T("SYSTEM CHECK [LIGHTS]", "ПРОВЕРКА [ФАРЫ]") :
+                    T("SYSTEM CHECK [RUNNING GEAR]", "ПРОВЕРКА [ХОДОВАЯ]");
             }
         }
         readonly List<Fault> faults = new List<Fault>();
@@ -116,6 +116,7 @@ namespace MoonThemedGame.Repair
 
         void OnGUI()
         {
+            if(InteractionHud.Suppressed)return;
             if ((!IsRunning && Time.time >= resultUntil) || !owner || owner.IsBeingCollected || GameSettingsMenu.IsOpen || DeveloperConsole.IsOpen) return;
             var camera = Camera.main; if (!camera) return;
             var player = camera.GetComponentInParent<FirstPersonController>();

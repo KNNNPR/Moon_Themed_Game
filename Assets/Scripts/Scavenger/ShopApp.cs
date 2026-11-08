@@ -69,7 +69,7 @@ namespace MoonThemedGame.Scavenger
             if (!terminal) return;
             if (window == null && terminal.Root != null) Build();
             if (window == null) return;
-            if (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false) return;
+            if (terminal.RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false)) return;
 
             bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point = terminal.PointerPosition;
@@ -178,6 +178,7 @@ namespace MoonThemedGame.Scavenger
             GetComponent<MoonFinderApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             if (TryGetComponent(out RepairMessagesApp messages)) messages.Close();
             window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront();
@@ -313,7 +314,7 @@ namespace MoonThemedGame.Scavenger
         void Refresh()
         {
             if (heading == null) return;
-            heading.text = Loc.Russian?"СКЛАД // ДЕТАЛИ И ПРОГРАММЫ":"DEPOT // PARTS & SOFTWARE";
+            heading.text = Loc.Russian?"СКЛАД [ДЕТАЛИ И ПРОГРАММЫ]":"DEPOT [PARTS & SOFTWARE]";
             foreach (var card in cards)
             {
                 if (card.crazy)

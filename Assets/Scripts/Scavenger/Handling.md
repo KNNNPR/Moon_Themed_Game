@@ -66,6 +66,12 @@ Wheel suspension never substitutes a virtual plane when a cast misses. Driving
 beside or off a bridge falls to the real collider below; the spawn marker controls
 position only and cannot support the bot in mid-air.
 
+`ScavengerDrive.Setup` reuses an authored root Rigidbody and BoxCollider when present,
+including when the Inspector chassis references are empty. The selected collider is
+re-enabled after imported collision shapes are disabled. Repeated setup is idempotent,
+so it cannot add another body, collider or set of wheel springs. This keeps custom
+gravity and suspension initialized on scene-authored rovers as well as spawned ones.
+
 `ScavengerHandlingValidation.Run` uses the actual bot mesh and PhysX in an isolated
 project copy. It checks progressive acceleration, coast, reversing, drift initiation,
 handbrake yaw/speed retention, a sustained U-turn, countersteer, grip recovery,

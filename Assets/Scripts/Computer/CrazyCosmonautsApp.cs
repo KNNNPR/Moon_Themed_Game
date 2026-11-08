@@ -80,6 +80,7 @@ namespace MoonThemedGame.Computer
             if (boundRoot != terminal.Root) Build();
             GetComponent<ShopApp>()?.Close(); GetComponent<SatelliteConsoleApp>()?.Close(); GetComponent<RepairMessagesApp>()?.Close();
             GetComponent<MoonFinderApp>()?.Close(); GetComponent<MoneyGetApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             State = RetryRemaining > 0 ? CrazyCosmonautsState.Dead : CrazyCosmonautsState.Ready;
             window.style.display = DisplayStyle.Flex; window.BringToFront();
             terminal.Root.Q("screen-cursor")?.BringToFront(); Refresh();
@@ -201,7 +202,7 @@ namespace MoonThemedGame.Computer
             bool pointer = terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point = terminal.PointerPosition;
             bool free = !(GetComponent<ShopApp>()?.IsOpen ?? false) && !(GetComponent<MoonFinderApp>()?.IsOpen ?? false) && !(GetComponent<MoneyGetApp>()?.IsOpen ?? false)
-                && !(GetComponent<RepairMessagesApp>()?.IsOpen ?? false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen ?? false);
+                && !terminal.RouteMapOpen && !(GetComponent<RepairMessagesApp>()?.IsOpen ?? false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen ?? false);
             bool hover = Purchased && !IsOpen && free && pointer && icon.worldBound.Contains(point);
             icon.EnableInClassList("pointer-over", hover);
             foreach (var action in actions) action.element.style.backgroundColor = pointer && action.element.worldBound.Contains(point) ? new Color(1, 1, 1, .14f) : Color.clear;
@@ -267,9 +268,9 @@ namespace MoonThemedGame.Computer
         {
             if (icon == null || !content) return;
             icon.style.display = Purchased ? DisplayStyle.Flex : DisplayStyle.None; iconName.text = content.Title;
-            title.text = content.Title.ToUpperInvariant() + " // PALE HORSE ARCADE";
+            title.text = content.Title.ToUpperInvariant() + " [PALE HORSE ARCADE]";
             hp.text = Health.ToString("000"); ammo.text = player ? player.Reloading ? T("RELOADING", "ПЕРЕЗАРЯДКА") : player.Ammo + " / 8" : "8 / 8";
-            waveLabel.text = T("WAVE ", "ВОЛНА ") + Mathf.Max(1, Wave) + "   //   " + T("INFECTED ", "ЗАРАЖЁННЫЕ ") + (AliveCount + PendingSpawns);
+            waveLabel.text = T("WAVE ", "ВОЛНА ") + Mathf.Max(1, Wave) + "   [" + T("INFECTED ", "ЗАРАЖЁННЫЕ ") + (AliveCount + PendingSpawns) + "]";
             controls.text = T("WASD MOVE   LMB FIRE   RMB AIM   [R] RELOAD   [ESC] PAUSE", "WASD ДВИЖЕНИЕ   ЛКМ ОГОНЬ   ПКМ ПРИЦЕЛ   [R] ПЕРЕЗАРЯДКА   [ESC] ПАУЗА");
             overlay.style.display = State == CrazyCosmonautsState.Playing ? DisplayStyle.None : DisplayStyle.Flex;
             window.Q("crazy-crosshair").style.display = State == CrazyCosmonautsState.Playing ? DisplayStyle.Flex : DisplayStyle.None;

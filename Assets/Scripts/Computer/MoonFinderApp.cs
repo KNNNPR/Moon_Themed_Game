@@ -105,6 +105,7 @@ namespace MoonThemedGame.Computer
             GetComponent<ShopApp>()?.Close();GetComponent<SatelliteConsoleApp>()?.Close();
             GetComponent<RepairMessagesApp>()?.Close();
             GetComponent<MoneyGetApp>()?.Close();
+            GetComponent<RoutePlannerApp>()?.Close();
             GetComponent<CrazyCosmonautsApp>()?.Close();
             window.BringToFront();terminal.Root.Q("screen-cursor")?.BringToFront();
             if(selected==null && content.profiles.Length>0)SelectProfile(content.profiles[0].id);else Refresh();
@@ -117,7 +118,7 @@ namespace MoonThemedGame.Computer
             {
                 icon?.RemoveFromHierarchy();window?.RemoveFromHierarchy();icon=null;window=null;buttons.Clear();portraits.Clear();Build();
             }
-            if(GameSettingsMenu.BlockGameplayInput || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
+            if(GameSettingsMenu.BlockGameplayInput || terminal.RouteMapOpen || (GetComponent<CrazyCosmonautsApp>()?.IsOpen ?? false))return;
             bool pointer=terminal.IsFocused && terminal.PointerActive && PcLogin.IsUnlocked(terminal);
             var point=terminal.PointerPosition;
             bool desktopFree=!(GetComponent<ShopApp>()?.IsOpen??false) && !(GetComponent<SatelliteConsoleApp>()?.IsOpen??false) && !(GetComponent<RepairMessagesApp>()?.IsOpen??false) && !(GetComponent<MoneyGetApp>()?.IsOpen??false);
@@ -171,7 +172,7 @@ namespace MoonThemedGame.Computer
         void Refresh()
         {
             if(window==null || !content)return;
-            subtitle.text=L("  // PRIVATE LUNAR CONNECTIONS","  // ЛИЧНЫЕ ЛУННЫЕ СВЯЗИ");
+            subtitle.text=L("  [PRIVATE LUNAR CONNECTIONS]","  [ЛИЧНЫЕ ЛУННЫЕ СВЯЗИ]");
             buttons.Clear();portraits.Clear();buttons.Add((close,Close));people.Clear();
             foreach(var profile in content.profiles)
             {
@@ -216,7 +217,7 @@ namespace MoonThemedGame.Computer
                     int option=chat.choiceOrder[i];var button=Text("> "+CurrentNode.choices[option].text.Value,"mf-option");button.name="moonfinder-choice-"+i;choices.Add(button);buttons.Add((button,()=>Choose(option)));
                 }
             }
-            state.text=chat.romanced?L("<3 CONNECTION ESTABLISHED","<3 СВЯЗЬ УСТАНОВЛЕНА"):L("ENCRYPTED // NO READ RECEIPTS","ЗАШИФРОВАНО // БЕЗ ОТМЕТОК О ПРОЧТЕНИИ");
+            state.text=chat.romanced?L("<3 CONNECTION ESTABLISHED","<3 СВЯЗЬ УСТАНОВЛЕНА"):L("ENCRYPTED [NO READ RECEIPTS]","ЗАШИФРОВАНО [БЕЗ ОТМЕТОК О ПРОЧТЕНИИ]");
             // The next layout pass measures wrapped messages and updates the scroll range.
             scrollToLatest=true;scrollAfterFrame=Time.frameCount+2;
         }
