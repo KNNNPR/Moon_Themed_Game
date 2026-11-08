@@ -20,7 +20,11 @@ public static class SalvageOrderProgressionSetup
             point.estimatedLoopSeconds=number switch{1=>42,2=>68,3=>79,4=>108,5=>159,6=>199,7=>211,8=>254,9=>208,10=>230,11=>290,13=>300,_=>260};
             point.orderRoute=number==1 || number==2 || number==3 || number==4 || number==5 || number==9;
             point.requiresManipulator=!point.orderRoute;
-            point.minimumOrderTier=number==6 || number==7?4:5;
+            point.minimumOrderTier=number==6 || number==7?3:5;
+            point.accessButton=number==6 || number==7?"Cylinder.046":number==8 || number==11?"Cylinder.049":number==10 || number==12?"Cylinder.045":number==13?"button_ship":"";
+            point.shipInterior=number==13;
+            point.chargerRouteSeconds=number==6 || number==7?114:0;
+            if(point.shipInterior)point.minimumOrderTier=0;
         }
     }
     [MenuItem("Tools/Moon Game/Salvage/Prepare Order Progression")]

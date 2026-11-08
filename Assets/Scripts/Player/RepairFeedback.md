@@ -1,0 +1,20 @@
+# Repair feedback
+
+Cosmetic feedback follows the existing repair events on SCAV_BOT, FinderBot and SkateBot.
+
+- The final part of the magnetic fitting motion sheds a small grey dust burst from the joint. Wheel/casing seating still uses the same hammer or preparation action.
+- A fastener's first accepted turn sheds several larger angular flakes. Later turns shed fewer, smaller particles. Holding still or turning against a mechanical limit produces no new work effect.
+- Persistent surface-wear/scuff marks are disabled. Tool motion still sheds rust, and hammer strikes still shed coating particles. Old runtime marks are removed when the feedback component is re-enabled after a script reload.
+- Connector indicators and hammer impact positions are projected onto real FBX triangles. Deformed casing meshes are baked temporarily for projection. Probe colliders are disabled and destroyed immediately after querying; visual effects add no permanent colliders.
+- Final tightening adds up to 6.5 degrees of visible wrench flex, or 3.5 for the screwdriver. The hand follows the rendered handle and wrist pose. A damped return relaxes the tool when effort ends. Thread progress, required mouse travel, resistance settings, seating rules and physics are unchanged.
+- A seated battery/headlight has a tiny contact indicator which briefly flickers while loose, then steadies after fastening and power connection.
+- A loose electrical module with a supply can occasionally emit a few short contact sparks. A battery carries its own charge; headlights need robot power. Failed electrical diagnostics can trigger the same pulse. Secured modules, wheels and final AURINKO dismantling do not spark. There is a minimum three-second gap between actual sparks.
+- Each wheel sheds its first-start dust once when the existing wheel test begins. A newly secured power module releases one faint puff of dust/condensation from its upper seam. This also works when another battery already powers the robot. Repeating a diagnostic does not loop these first-start effects.
+
+`RepairFeedbackFx` lives on the affected module. Its VFX-only children are under **Repair / contact VFX**. Runtime counters on the component expose contact, hammer, spark, wheel and vent bursts for inspection. `RepairRust` remains on the fastener; visual tool flex lives on `RepairWrench`.
+
+The resource material is **Assets/Resources/RepairFeedbackParticle.mat**, referencing the existing Weather Particle shader so effects work without a weather manager and the shader is retained in builds. Systems are created lazily and capped at 48/64 live particles. Dust/steam puffs use 1.8× particle size and 1.5× count, with stronger opacity and longer lifetime; angular debris, sparks, connector indicators and visual tool/panel response are also enlarged. No new audio, camera shake, damage or forces are added. Particle randomness is independent of gameplay randomness.
+
+Crane grasp feedback lives on **CraneGrabFx**, added to the crane at its first real grab. **Crane / grasp dust and updraft** emits 30 contact puffs, then a short rising trail during the actual upward motion of the claw. **Crane / contact sparks** emits three small sparks once. The world-space systems remain under the crane, allowing dust to fade after the collected robot disappears. Budgets are 128 dust particles and 16 sparks; take animation, attachment pose and collection timing are unchanged.
+
+**RoverDriveDust** is installed when ScavengerDrive finishes setup. It reads the suspension's existing wheel hits, so particles originate at actual ground contacts. Speed, tyre slip and drifting increase the dust/grit output. No new particles are emitted while stationary, airborne, overturned, kinematic or with the drive disabled. Surface classification shares the material/submesh logic of driving audio: lunar soil, LAND, terrain and rock can shed dust, while concrete and metal do not. World-space trails stay behind the wheels; teleport/placement clears old particles. Budgets are 192 dust particles and 96 grit fragments, with no colliders, forces or additional audio.

@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using MoonThemedGame.Repair;
 using MoonThemedGame.Weather;
@@ -15,6 +16,7 @@ namespace MoonThemedGame.Scavenger
         public Vector2 spawnDistance = new Vector2(12, 55);
         public LayerMask groundLayers = ~0;
         [Min(1)] public float targetSpacing=18;
+        [Tooltip("Chance to use an already-open restricted cache without the arm. With an arm, one eligible hard target is preferred from order 3.")]
         [Range(0,1)] public float manipulatorCacheChance=.5f;
 
         ScavengerLink link;
@@ -32,7 +34,7 @@ namespace MoonThemedGame.Scavenger
         readonly HashSet<SalvageSpawnPoint> usedThisOrder=new HashSet<SalvageSpawnPoint>();
         readonly HashSet<SalvageSpawnPoint> previousOrderPoints=new HashSet<SalvageSpawnPoint>();
         float orderEndurance;
-        bool chooseManipulatorCache;
+        bool chooseManipulatorCache,chooseShipCache;
         bool HasOrder=>messages&&messages.HasSalvageOrder;
 
         public IReadOnlyList<GameObject> Cargo => cargo;
@@ -78,19 +80,20 @@ namespace MoonThemedGame.Scavenger
         }
 
         bool Allowed(SalvageSpawnPoint point)=>point && point.isActiveAndEnabled && point.progressionTier>=OrderTier &&
-            (!point.requiresManipulator || RobotUpgrades.HasArm);
+            point.AccessAvailable;
         bool Owns(SalvagePiece piece)=>piece&&(piece.SpawnPoint?
             orderAssignments.TryGetValue(piece.SpawnPoint,out var assigned)&&assigned==piece.prefab&&piece.SpawnPoint.Piece==piece:
             fallbackPieces.Contains(piece));
         public bool IsOrderTarget(SalvagePiece piece)=>HasOrder&&piece&&!piece.Collected&&Owns(piece);
         float Endurance=>link && link.state?link.state.capacity/Mathf.Max(.01f,link.state.drainPerSecond)*RobotUpgrades.SpeedScale*.93f:93;
-        bool CanSupply(SalvageSpawnPoint point)=>Allowed(point) && point.estimatedLoopSeconds<=orderEndurance &&
+        bool CanSupply(SalvageSpawnPoint point)=>Allowed(point) &&
+            (point.shipInterior ? orderNumber>=6 : point.RouteSeconds<=orderEndurance) &&
             (point.requiresManipulator ? point.minimumOrderTier<=OrderTier : point.orderRoute && point.progressionTier==OrderTier);
         public void ApplyOrderProgression(int number)
         {
             orderNumber=Mathf.Max(orderNumber,number);
-            // Six story repairs use six progressively farther safe supply routes.
-            int wanted=Mathf.Clamp(orderNumber-1,0,5);
+            // From order three, skip the old northern-junction distance band.
+            int wanted=orderNumber<=2?orderNumber-1:Mathf.Min(5,orderNumber);
             float endurance=Endurance;
             int available=0;
             foreach(var point in spawnPoints)
@@ -102,7 +105,8 @@ namespace MoonThemedGame.Scavenger
             // Freeze the new plan until collection or the next accepted order; purchasing an
             // upgrade must not move markers while the rover is on its way to them.
             ClearOrderSupply();
-            chooseManipulatorCache=RobotUpgrades.HasArm && Random.value<manipulatorCacheChance;
+            chooseShipCache=orderNumber==6 && RobotUpgrades.HasArm;
+            chooseManipulatorCache=orderNumber>=3 && (RobotUpgrades.HasArm || Random.value<manipulatorCacheChance);
             EnsureOrderSupply();
         }
         void RemovePiece(SalvagePiece piece)
@@ -140,13 +144,14 @@ namespace MoonThemedGame.Scavenger
                     if(!TrySpawn(needed))break;
                     orderNeeds[needed]--;continue;
                 }
-                var point=chooseManipulatorCache?ChooseSupplyPoint(true):null;
+                var point=chooseShipCache?ChooseSupplyPoint(true,true):null;
+                if(!point&&chooseManipulatorCache)point=ChooseSupplyPoint(true);
                 if(!point)point=ChooseSupplyPoint(false);
                 if(!point)break;
                 SpawnAt(point,needed);
                 if(!point.Piece)continue;
                 orderAssignments[point]=needed;usedThisOrder.Add(point);orderNeeds[needed]--;
-                if(point.requiresManipulator)chooseManipulatorCache=false;
+                if(point.requiresManipulator){chooseManipulatorCache=false;chooseShipCache=false;}
             }
         }
         GameObject NextNeededPart()
@@ -157,12 +162,13 @@ namespace MoonThemedGame.Scavenger
             foreach(var pair in orderNeeds){pick-=Mathf.Max(0,pair.Value);if(pick<0)return pair.Key;}
             return null;
         }
-        SalvageSpawnPoint ChooseSupplyPoint(bool manipulator)
+        SalvageSpawnPoint ChooseSupplyPoint(bool manipulator,bool shipOnly=false)
         {
             SalvageSpawnPoint best=null;float bestScore=-1;
             foreach(var point in spawnPoints)
             {
                 if(!CanSupply(point) || point.requiresManipulator!=manipulator ||
+                    (shipOnly?!point.shipInterior:point.shipInterior) ||
                     (link.robot && Flat(link.robot.position-point.transform.position).magnitude<4))continue;
                 if(orderAssignments.ContainsKey(point) && !point.Free)continue;
                 float separation=targetSpacing*3;
@@ -264,7 +270,7 @@ namespace MoonThemedGame.Scavenger
             if(!orderNeeds.TryGetValue(Near.prefab,out int needed)||needed<=0){EnsureOrderSupply();return;}
             if (Full) { hud.Notify(Loc.T("CARGO FULL - UNLOAD AT THE CHARGE STATION")); return; }
             var piece = Near;
-            cargo.Add(piece.prefab);
+            cargo.Add(piece.prefab);GameAudio.At(Sound.ItemGet,link.robot.position);
             if(link.state)link.state.Cargo=cargo.Count;
             piece.Collect(link.robot);
             Near = null;
@@ -274,7 +280,7 @@ namespace MoonThemedGame.Scavenger
         internal bool CanPickUp(SalvagePiece piece)
         {
             if(!HasOrder||!Owns(piece)||!piece || piece.Collected || !link || !link.robot ||
-                (piece.SpawnPoint && piece.SpawnPoint.requiresManipulator && !RobotUpgrades.HasArm))return false;
+                (piece.SpawnPoint && !piece.SpawnPoint.AccessAvailable))return false;
             float length=link.Drive?link.Drive.Length:1.5f;
             var origin=link.robot.position+Vector3.up*(length*.25f);
             var offset=piece.PickupPosition-origin;
@@ -302,6 +308,7 @@ namespace MoonThemedGame.Scavenger
                 else i++;
             }
             if(count==0)return;
+            GameAudio.At(Sound.Pipe,link.robot?link.robot.position:transform.position);
             if (link.state) link.state.Cargo = cargo.Count;
             var hud = link.GetComponent<ScavengerFeedHud>();
             if (hud) hud.Notify(Loc.Russian

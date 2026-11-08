@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -80,6 +81,7 @@ namespace MoonThemedGame.Scavenger
 
         public void Pull()
         {
+            GameAudio.At(Sound.Button,transform.position);
             if (button) pressed = 0;
             on = !on;
             if (gate) gate.Press(LocationMechanisms.Presser);

@@ -559,7 +559,7 @@ MonoBehaviour:
       emotion: 0
       romance: 0
       choices: []
-  appleClicksRequired: 12
+  appleClicksRequired: 5
   appleMessage:
     english: Apple.
     russian: "\u042F\u0431\u043B\u043E\u043A\u043E."

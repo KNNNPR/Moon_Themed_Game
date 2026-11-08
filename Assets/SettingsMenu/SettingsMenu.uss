@@ -21,6 +21,7 @@
 .settings-home { align-items: flex-start; }
 .audio-row { flex-direction: row; align-items: center; height: 28px; margin-bottom: 12px; width: 440px; max-width: 100%; }
 .audio-label { width: 165px; font-size: 14px; }
+.settings-preferences .audio-row { margin-bottom: 8px; }
 .volume-slider { flex-grow: 1; margin-left: 0; margin-right: 16px; }
 .volume-value { width: 42px; font-size: 14px; }
 .volume-slider .unity-base-slider__tracker { height: 1px; background-color: rgb(68,83,79); }

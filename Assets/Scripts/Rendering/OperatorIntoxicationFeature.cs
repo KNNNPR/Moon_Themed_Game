@@ -15,6 +15,8 @@ namespace MoonThemedGame.Rendering
             if(!passMaterial)return;
             passMaterial.SetFloat("_Strength",state.Strength);
             passMaterial.SetFloat("_Phase",state.Phase);
+            passMaterial.SetFloat("_MotionScale",ComfortSettings.CameraShake?1:0);
+            passMaterial.SetFloat("_FovScale",ComfortSettings.DynamicFov);
             base.AddRenderPasses(renderer,ref renderingData);
         }
     }

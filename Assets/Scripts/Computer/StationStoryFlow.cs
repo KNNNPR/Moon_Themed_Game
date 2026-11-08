@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
 using MoonThemedGame.Repair;
@@ -255,11 +256,14 @@ namespace MoonThemedGame.Computer
             var uv=new Vector2(position.x/UnityEngine.Screen.width,position.y/UnityEngine.Screen.height);
             if(creditsTube)uv=PcMonitorTerminal.WarpUV(uv,Time.unscaledTime,creditsTube);
             var point=new Vector2(uv.x*1280,(1-uv.y)*800);
+            object audioHover=null;
             foreach(var entry in creditActions)
             {
                 bool hover=entry.button.worldBound.Contains(point);entry.button.style.color=hover?Color.white:new Color(.92f,.88f,.72f);
-                if(hover&&mouse.leftButton.wasPressedThisFrame){entry.action();break;}
+                if(hover)audioHover=entry.button;
+                if(hover&&mouse.leftButton.wasPressedThisFrame){GameAudio.Ui(Sound.Icon);entry.action();break;}
             }
+            GameAudio.Hover(this,audioHover);
         }
         internal void RenderCredits()
         {

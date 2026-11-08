@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,7 +22,7 @@ namespace MoonThemedGame.Interactions
         public static bool IsOpen {get;private set;}
         public static bool BlockGameplayInput=>IsOpen || consumedFrame==Time.frameCount;
         static readonly string[] commands={"help","credits","balance","parts","spawn","deliver","weather","repair","end","dismantle","speed","pistol","noclip","clear","close"};
-        static readonly string[] weatherNames={"sunny","fog","radiation","meteors","night","cryogenic","ash"};
+        static readonly string[] weatherNames={"sunny","fog","radiation","meteors","night","cryogenic","ash","horde","zombie"};
         readonly List<string> lines=new List<string>(),history=new List<string>();
         public IReadOnlyList<string> Lines=>lines;
         public VisualElement Root=>root;
@@ -97,7 +98,7 @@ namespace MoonThemedGame.Interactions
             input.RegisterCallback<KeyDownEvent>(OnInputKey,TrickleDown.TrickleDown);
             input.RegisterCallback<PointerDownEvent>(evt=>ResetCaret(),TrickleDown.TrickleDown);
             input.RegisterCallback<FocusInEvent>(evt=>ResetCaret());
-            input.RegisterValueChangedCallback(evt=>ResetCaret());
+            input.RegisterValueChangedCallback(evt=>{ResetCaret();if(IsOpen)GameAudio.Ui(Sound.Keyboard);});
             row.Add(new Button(Submit){text="Submit",name="console-submit"});
             var footer=new Label("F3 + F4: toggle    ESC: close    UP/DOWN: history    TAB: complete");footer.AddToClassList("console-footer");window.Add(footer);
             Write("PALE HORSE developer console");Write("Type help for commands.");
@@ -185,7 +186,7 @@ namespace MoonThemedGame.Interactions
                 Write("spawn zombie              Spawn a zombie near the human operator");
                 Write("deliver <part> [count]    Send through Tube_For_Scrap (1-20)");
                 Write("weather                   Show current weather and available presets");
-                Write("weather <preset>          Set sunny, fog, radiation, meteors, night, cryogenic or ash");
+                Write("weather <preset>          Set sunny, fog, radiation, meteors, night, cryogenic, ash, horde or zombie");
                 Write("repair                    Fully repair the robot in the repair bay");
                 Write("end                       Skip to and accept seventh story order AURINKO");
                 Write("dismantle                 Instantly dismantle final AURINKO; then call the crane");
@@ -279,7 +280,8 @@ namespace MoonThemedGame.Interactions
                     case "night": case "deepnight": kind=WeatherKind.DeepNight;break;
                     case "cryogenic": case "cold": case "snow": case "cryo": kind=WeatherKind.CryogenicFront;break;
                     case "ash": case "ashencalm": case "wind": kind=WeatherKind.AshenCalm;break;
-                    default: Write("Usage: weather <sunny|fog|radiation|meteors|night|cryogenic|ash>");return;
+                    case "horde": case "zombie": kind=WeatherKind.Horde;break;
+                    default: Write("Usage: weather <sunny|fog|radiation|meteors|night|cryogenic|ash|horde|zombie>");return;
                 }
                 weather.SetWeather(kind);
                 Write("Weather set: "+MoonWeatherSystem.Name(kind)+". Close console to resume simulation.");

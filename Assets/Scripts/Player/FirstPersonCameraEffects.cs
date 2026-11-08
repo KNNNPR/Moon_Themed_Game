@@ -92,7 +92,7 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
         Vector3 targetOffset = Vector3.zero;
         float targetTilt = 0f;
 
-        if (walking)
+        if (walking && MoonThemedGame.Interactions.ComfortSettings.CameraShake)
         {
             float intensity = Mathf.Clamp01(speed / Mathf.Max(0.1f, referenceSpeed));
 
@@ -122,6 +122,7 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
         float tiltBlend = 1f - Mathf.Exp(-tiltResponse * dt);
         bobOffset = Vector3.Lerp(bobOffset, targetOffset, positionBlend);
         tilt = Mathf.Lerp(tilt, targetTilt, tiltBlend);
+        if(!MoonThemedGame.Interactions.ComfortSettings.CameraShake){bobOffset=Vector3.zero;tilt=0;weaponRoll=weaponPush=rollVelocity=pushVelocity=0;}
 
         transform.localPosition = restPosition + bobOffset;
         transform.localRotation = restRotation * Quaternion.Euler(0f, 0f, tilt);
@@ -145,7 +146,7 @@ public sealed class FirstPersonCameraEffects : MonoBehaviour
     }
 
     public void AddWeaponImpulse(float roll,float push)
-    {weaponRoll=Mathf.Clamp(weaponRoll+roll,-3,3);weaponPush=Mathf.Min(weaponPush+push,.04f*MoonThemedGame.Repair.PlayerBody.Scale);rollVelocity=pushVelocity=0;}
+    {if(!MoonThemedGame.Interactions.ComfortSettings.CameraShake)return;weaponRoll=Mathf.Clamp(weaponRoll+roll,-3,3);weaponPush=Mathf.Min(weaponPush+push,.04f*MoonThemedGame.Repair.PlayerBody.Scale);rollVelocity=pushVelocity=0;}
     public void ResetWeaponMotion()
     {
         lean=leanVelocity=weaponRoll=rollVelocity=weaponPush=pushVelocity=0;

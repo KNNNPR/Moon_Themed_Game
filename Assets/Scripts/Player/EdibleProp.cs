@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -25,12 +26,12 @@ namespace MoonThemedGame.Interactions
         public bool TryEat()
         {
             if(!CanEat)return false;
-            elapsed=0;IsEating=true;SetHighlightOff();return true;
+            elapsed=0;IsEating=true;GameAudio.At(intoxicationDose>0?Sound.SuspiciousApple:Sound.AppleEating,transform.position);SetHighlightOff();return true;
         }
         public bool ShatterFromShot(Vector3 direction,Material particleMaterial)
         {
             if(!isActiveAndEnabled || IsConsumed)return false;
-            IsConsumed=true;IsEating=false;
+            IsConsumed=true;IsEating=false;GameAudio.At(Sound.AppleDestroyed,transform.position);
             var renderer=GetComponent<Renderer>();
             var bounds=renderer?renderer.bounds:new Bounds(transform.position,Vector3.one*.3f);
             var body=GetComponent<Rigidbody>();

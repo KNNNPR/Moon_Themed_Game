@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Interactions;
 using UnityEngine;
 
@@ -23,7 +24,7 @@ namespace MoonThemedGame.Repair
         }
         public override void Interact()
         {
-            if (crane) crane.TryCollect();
+            GameAudio.At(Sound.Button,transform.position);if (crane) crane.TryCollect();
         }
     }
 }

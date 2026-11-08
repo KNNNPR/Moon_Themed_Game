@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using System.Text;
 using MoonThemedGame.Interactions;
@@ -11,7 +12,7 @@ namespace MoonThemedGame.Repair
     [DefaultExecutionOrder(200), DisallowMultipleComponent]
     public sealed class RepairRobotFinalTest : MonoBehaviour
     {
-        internal enum Reason { Missing, Installing, Unseated, Fasteners }
+        internal enum Reason { Missing, Installing, Unseated, Fasteners, SpecialStep }
         internal struct Fault { public GameObject visual, prefab; public Reason reason; public int count; }
         [Min(1.5f)] public float duration = 3.4f;
         [Min(1)] public float resultDuration = 6;
@@ -48,7 +49,8 @@ namespace MoonThemedGame.Repair
             if (IsRunning || !owner || !owner.Accepts || !revival) return false;
             IsRunning = true; Passed = false; elapsed = 0; resultUntil = 0;
             owner.GetDiagnosticFaults(faults);
-            Phase = RepairDiagnosticPhase.Power;
+            foreach(var fault in faults)if(fault.visual&&fault.reason==Reason.Fasteners)RepairFeedbackFx.For(fault.visual)?.ContactFault();
+            Phase = RepairDiagnosticPhase.Power;GameAudio.CheckRobot(transform);
             revival.SetInspection(Phase, 0);
             return true;
         }
@@ -106,7 +108,7 @@ namespace MoonThemedGame.Repair
                 var fault = faults[i];
                 text.Append('\n').Append(SalvageField.PartName(fault.prefab)).Append(": ");
                 text.Append(fault.reason == Reason.Missing ? T("MISSING", "НЕТ ДЕТАЛИ") :
-                    fault.reason == Reason.Installing ? T("FITTING", "УСТАНОВКА") :
+                    fault.reason == Reason.Installing ? T("FITTING", "УСТАНОВКА") : fault.reason==Reason.SpecialStep&&owner.SpecialStep?owner.SpecialStep.Instruction:
                     fault.reason == Reason.Unseated ? T("SEAT WITH HAMMER", "ПОДБЕЙТЕ МОЛОТКОМ") : T("TIGHTEN FASTENERS", "ЗАТЯНИТЕ КРЕПЛЕНИЯ"));
                 if (fault.reason == Reason.Fasteners) text.Append(" ×").Append(fault.count);
             }

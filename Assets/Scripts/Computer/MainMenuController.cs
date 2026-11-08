@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
@@ -120,7 +121,7 @@ namespace MoonThemedGame.Computer
         {
             foreach(var script in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
             {
-                if(script==this || script is GameSettingsMenu || script is DeveloperConsole || script is MenuZeroGravity ||
+                if(script==this || script is GameAudio || script is GameSettingsMenu || script is DeveloperConsole || script is MenuZeroGravity ||
                     script is InteractionOutline || script is Rendering.VisualStyleSwitcher || script is Scavenger.RepairBayFogVolume ||
                     script is ChargeMonitorDisplay)continue;
                 if(script is FirstPersonController || script is FirstPersonCameraEffects || (script.GetType().Namespace??"").StartsWith("MoonThemedGame",StringComparison.Ordinal))script.enabled=false;
@@ -266,7 +267,7 @@ namespace MoonThemedGame.Computer
             if(replace)floatingApples.Enqueue(drift);
             var velocity=(ray.GetPoint(UnityEngine.Random.Range(3.2f,3.8f))-launch)*1.05f;
             drift.spin=new Vector3(UnityEngine.Random.Range(-24f,24f),UnityEngine.Random.Range(20f,45f),UnityEngine.Random.Range(-18f,18f));
-            drift.Toss(launch,UnityEngine.Random.rotation,velocity,replace);
+            drift.Toss(launch,UnityEngine.Random.rotation,velocity,replace);GameAudio.Ui(Sound.AppleThrow);
         }
         void Update()
         {
@@ -294,14 +295,16 @@ namespace MoonThemedGame.Computer
                 else if(click && !hit && !PointerOverMonitor(ray))TossApple(ray);
                 else if(Powered && powerOff<.02f && IsFocused && focus>.97f)
                 {
-                    int index=0;
+                    int index=0;object audioHover=null;
                     var visible=VisibleButtons();
                     foreach(var pair in visible)
                     {
                         bool hover=hit && pair.Value.worldBound.Contains(panelPoint);
                         pair.Value.EnableInClassList("is-hovered",keyboardButton>=0?index==keyboardButton:hover);
+                        if(hover||(keyboardButton>=0&&index==keyboardButton))audioHover=pair.Key;
                         if(click && hover)Activate(pair.Key);index++;
                     }
+                    GameAudio.Hover(this,audioHover,Sound.MenuHover);
                     if(keys!=null && (keys.downArrowKey.wasPressedThisFrame || keys.upArrowKey.wasPressedThisFrame))
                         keyboardButton=keyboardButton<0?(keys.downArrowKey.wasPressedThisFrame?0:visible.Count-1):(keyboardButton+(keys.downArrowKey.wasPressedThisFrame?1:visible.Count-1))%visible.Count;
                     if(keys!=null && keys.enterKey.wasPressedThisFrame && keyboardButton>=0)
@@ -326,8 +329,8 @@ namespace MoonThemedGame.Computer
             var normal=surface.transform.TransformDirection(screenLocalNormal).normalized;
             var up=surface.transform.TransformDirection(screenLocalUp).normalized;
             var close=center+normal*focusDistance;
-            var sway=(anchorRight*Mathf.Sin(time*.37f)*.012f+anchorUp*Mathf.Sin(time*.51f)*.009f)*(1-t*.8f);
-            viewCamera.transform.SetPositionAndRotation(Vector3.Lerp(overview,close,t)+sway,Quaternion.Slerp(rotation,Quaternion.LookRotation(-normal,up),t)*Quaternion.Euler(Mathf.Sin(time*.42f)*.12f,Mathf.Cos(time*.31f)*.15f,Mathf.Sin(time*.27f)*.08f));
+            var sway=ComfortSettings.CameraShake?(anchorRight*Mathf.Sin(time*.37f)*.012f+anchorUp*Mathf.Sin(time*.51f)*.009f)*(1-t*.8f):Vector3.zero;
+            viewCamera.transform.SetPositionAndRotation(Vector3.Lerp(overview,close,t)+sway,Quaternion.Slerp(rotation,Quaternion.LookRotation(-normal,up),t)*(ComfortSettings.CameraShake?Quaternion.Euler(Mathf.Sin(time*.42f)*.12f,Mathf.Cos(time*.31f)*.15f,Mathf.Sin(time*.27f)*.08f):Quaternion.identity));
             viewCamera.fieldOfView=Mathf.Lerp(overviewFov,FocusFov,t);viewCamera.nearClipPlane=.03f;
         }
         public bool TryScreenPoint(Vector2 pointer,out Vector2 point)
@@ -346,6 +349,7 @@ namespace MoonThemedGame.Computer
         }
         public void TogglePower()
         {
+            GameAudio.Ui(Sound.Button);
             if(IsLoading)return;
             Powered=!Powered;
             if(!screenMaterial.HasProperty("_PowerOff"))screenMaterial.SetTexture("_BaseMap",Powered?display:Texture2D.blackTexture);
@@ -353,6 +357,7 @@ namespace MoonThemedGame.Computer
         }
         public void Activate(string id)
         {
+            GameAudio.Ui(Sound.Icon);
             if(!Powered || IsLoading)return;
             switch(id){case "wake":ShowModes(true);break;case "story":StartGame(StationGameMode.Story);break;case "endless":StartGame(StationGameMode.Endless);break;case "back":ShowModes(false);break;case "settings":OpenSettings();break;case "exit":RequestExit();break;case "language":Loc.Toggle();break;}
         }

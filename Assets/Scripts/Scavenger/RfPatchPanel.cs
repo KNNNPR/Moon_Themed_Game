@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 using Cursor = UnityEngine.Cursor;
 
@@ -58,6 +59,7 @@ namespace MoonThemedGame.Scavenger
             if (!IsOpen) return;
             IsOpen = false;
             held = -1;
+            GameAudio.Hover(this,null);
             Cursor.lockState = previousLock;
             Cursor.visible = previousVisible;
         }
@@ -77,6 +79,7 @@ namespace MoonThemedGame.Scavenger
             var network = Network;
             if (!Ready)
             {
+                GameAudio.Ui(Sound.Error);
                 bool attack = network.Rival == RivalPhase.Incoming;
                 network.PenalizeLock();
                 string reason = plugged < 0 ? Loc.T("TUNER IS EMPTY") : Loc.F("CH{0} IS JAMMED", plugged + 1);
@@ -85,6 +88,7 @@ namespace MoonThemedGame.Scavenger
             }
             bool repelled = network.Rival != RivalPhase.None;
             network.Repel(plugged);
+            GameAudio.Ui(Sound.Confirm);
             Say(repelled ? Loc.F("CARRIER LOCKED CH{0} - {1} LOST THE SIGNAL", plugged + 1, network.rivalName) : Loc.F("CARRIER STABLE CH{0}", plugged + 1), false);
             if (repelled) closeAt = Time.time + 1.4f;
         }
@@ -137,6 +141,11 @@ namespace MoonThemedGame.Scavenger
             var dim = phosphor * 0.6f;
             var warning = Warning;
             var mouse = Pointer;
+            object audioHover=null;
+            if(lockButton.Contains(mouse))audioHover="lock";
+            else if(Vector2.Distance(mouse,tuner)<reach*1.5f)audioHover="tuner";
+            else for(int i=0;i<outputs.Length;i++)if(Vector2.Distance(mouse,outputs[i])<reach){audioHover=i;break;}
+            GameAudio.Hover(this,audioHover);
 
             Fill(panel, new Color(0.004f, 0.012f, 0.008f, 0.96f));
             Frame(panel, dim, 1);
@@ -198,7 +207,7 @@ namespace MoonThemedGame.Scavenger
             if (ready || lockHover) Fill(lockButton, ready ? phosphor * (lockHover ? 0.85f : 0.6f) : phosphor * 0.15f);
             Frame(lockButton, ready ? phosphor : dim, 1);
             center.normal.textColor = ready ? new Color(0.01f, 0.03f, 0.02f) : dim;
-            GUI.Label(lockButton, Loc.T("[ LOCK CARRIER ]"), center);
+            GUI.Label(lockButton, Loc.T("[ TAKE OVER BOT ]"), center);
 
             var messageRect = new Rect(panel.x + pad, lockButton.y, w * 0.6f, lockButton.height);
             if (message != null && Time.time < messageUntil)
@@ -216,19 +225,21 @@ namespace MoonThemedGame.Scavenger
             var e = Event.current;
             if (e.type != EventType.MouseDown) return;
             var mouse = Pointer;
-            if (e.button == 1) { held = -1; e.Use(); return; }
+            if (e.button == 1) { if(held>=0)GameAudio.Ui(Sound.Icon);held = -1; e.Use(); return; }
             if (e.button != 0) return;
             e.Use();
-            if (lockButton.Contains(mouse)) { held = -1; TryLock(); return; }
+            if (lockButton.Contains(mouse)) { GameAudio.Ui(Sound.Icon);held = -1; TryLock(); return; }
             for (int i = 0; i < outputs.Length; i++)
                 if (Vector2.Distance(mouse, outputs[i]) < reach)
                 {
+                    GameAudio.Ui(Sound.Icon);
                     if (plugged == i) plugged = -1;
                     held = i;
                     return;
                 }
             if (Vector2.Distance(mouse, tuner) < reach * 1.5f)
             {
+                GameAudio.Ui(Sound.Icon);
                 int previous = plugged;
                 if (held >= 0) plugged = held;
                 else plugged = -1;

@@ -12,6 +12,7 @@ namespace MoonThemedGame.Weather
         public Font font;
         public VectorImage sunny, dust, toxicity, meteors;
         public VectorImage night,snow,wind;
+        public VectorImage horde;
         public Material screenMaterial, atmosphereMaterial, particleMaterial, warningMaterial;
         public GameObject meteoritePrefab;
         public Vector2Int resolution = new Vector2Int(640, 1080);
@@ -19,7 +20,7 @@ namespace MoonThemedGame.Weather
         {
             WeatherKind.MoonDust => dust, WeatherKind.Radiation => toxicity,
             WeatherKind.MeteoriteRain => meteors,WeatherKind.DeepNight=>night,
-            WeatherKind.CryogenicFront=>snow,WeatherKind.AshenCalm=>wind, _ => sunny
+            WeatherKind.CryogenicFront=>snow,WeatherKind.AshenCalm=>wind,WeatherKind.Horde=>horde?horde:toxicity, _ => sunny
         };
     }
 }

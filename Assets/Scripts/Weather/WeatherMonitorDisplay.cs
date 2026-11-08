@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Cursor = UnityEngine.Cursor;
@@ -19,6 +20,7 @@ namespace MoonThemedGame.Weather
         public bool IsTransitioning => transitionDirection != 0;
         Camera focusedCamera;
         FirstPersonController movement;
+        readonly Dictionary<Renderer,bool> hiddenPlayerRenderers=new Dictionary<Renderer,bool>();
         Vector3 previousPosition, focusPosition;
         Quaternion previousRotation, focusRotation;
         float previousFov, transition;
@@ -78,6 +80,7 @@ namespace MoonThemedGame.Weather
             previousPosition = focusedCamera.transform.position; previousRotation = focusedCamera.transform.rotation;
             previousFov = focusedCamera.fieldOfView; previousLock = Cursor.lockState; previousCursorVisible = Cursor.visible;
             movement = focusedCamera.GetComponentInParent<FirstPersonController>();
+            if(movement)HidePlayerBody(movement);
             if (movement && !movement.enabled) movement = null;
             if (movement) movement.enabled = false;
             float tangent = Mathf.Tan(42 * 0.5f * Mathf.Deg2Rad);
@@ -111,11 +114,30 @@ namespace MoonThemedGame.Weather
             if (transitionDirection > 0) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
             else
             {
+                RestorePlayerBody();
                 if (movement) movement.enabled = true;
                 Cursor.lockState = previousLock; Cursor.visible = previousCursorVisible;
                 focusedCamera = null; movement = null; IsFocused = false;
             }
             transitionDirection = 0;
+        }
+
+        void HidePlayerBody(FirstPersonController player)
+        {
+            // The close-up can move behind the standing player's chest. Keep the
+            // body and carried equipment out of view for both camera transitions.
+            foreach(var renderer in player.GetComponentsInChildren<Renderer>(true))
+            {
+                hiddenPlayerRenderers[renderer]=renderer.forceRenderingOff;
+                renderer.forceRenderingOff=true;
+            }
+        }
+
+        void RestorePlayerBody()
+        {
+            // Do not overwrite enabled states changed by the toolbox/held-item logic.
+            foreach(var entry in hiddenPlayerRenderers)if(entry.Key)entry.Key.forceRenderingOff=entry.Value;
+            hiddenPlayerRenderers.Clear();
         }
         public void Refresh()
         {
@@ -153,6 +175,7 @@ namespace MoonThemedGame.Weather
         void OnDisable()
         {
             ExitFocus(true);
+            RestorePlayerBody();
             var interactable = GetComponent<WeatherMonitorInteractable>();
             if (interactable) interactable.SetHighlighted(false);
             if (screenRenderer && assets && screenRenderer.sharedMaterial == material) screenRenderer.sharedMaterial = assets.screenMaterial;

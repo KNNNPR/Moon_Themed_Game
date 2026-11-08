@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using MoonThemedGame.Computer;
@@ -25,7 +26,9 @@ namespace MoonThemedGame.Interactions
         UIDocument document;
         enum Page { Home, Controls, Quit }
         Page page;
-        VisualElement root, homePanel, controlsPanel, quitPanel;
+        VisualElement root, homePanel, controlsPanel, comfortPanel, quitPanel;
+        readonly List<(Label label,string en,string ru)> comfortLabels=new List<(Label,string,string)>();
+        readonly List<(Slider slider,Label value,Func<float> read)> comfortSliders=new List<(Slider,Label,Func<float>)>();
         Label bindStatus;
         GameCommand? capturing;
         int captureFrame;
@@ -100,7 +103,7 @@ namespace MoonThemedGame.Interactions
             if (restorePlayer) player.enabled = false;
             if(root==null) BuildUI();
             if(root!=null) root.style.display=DisplayStyle.Flex;
-            ShowPage(Page.Home);
+            ShowPage(Page.Home);GameAudio.WireUi(root);
             RefreshBindings();
             IsOpen = true; Time.timeScale = 0; Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
         }
@@ -178,6 +181,15 @@ namespace MoonThemedGame.Interactions
             var controlActions=Box("text-actions"); controlsPanel.Add(controlActions);
             var reset=ActionButton("RESTORE DEFAULTS",()=>{capturing=null;GameControls.ResetBindings(); bindStatus.text=Loc.T("Default keys restored.");},"reset-keys"); reset.AddToClassList("small-action"); controlActions.Add(reset);
             var back=ActionButton("BACK",()=>ShowPage(Page.Home),"back-controls"); back.AddToClassList("small-action"); controlActions.Add(back);
+            comfortPanel=Box("settings-preferences");comfortPanel.name="settings-preferences";homePanel.Insert(2,comfortPanel);
+            comfortPanel.style.marginBottom=8;
+            ComfortSlider("human-sensitivity","HUMAN CAMERA","КАМЕРА ЧЕЛОВЕКА",.2f,3,()=>ComfortSettings.HumanSensitivity,v=>ComfortSettings.HumanSensitivity=v);
+            ComfortSlider("robot-sensitivity","BOT CAMERA","КАМЕРА БОТА",.2f,3,()=>ComfortSettings.RobotSensitivity,v=>ComfortSettings.RobotSensitivity=v);
+            ComfortSlider("tool-sensitivity","TOOLS","ИНСТРУМЕНТЫ",.2f,3,()=>ComfortSettings.ToolSensitivity,v=>ComfortSettings.ToolSensitivity=v);
+            ComfortSlider("dynamic-fov","DYNAMIC FOV","ИЗМЕНЕНИЕ FOV",0,1.5f,()=>ComfortSettings.DynamicFov,v=>ComfortSettings.DynamicFov=v);
+            comfortPanel.Add(ActionButton("",()=>ComfortSettings.CameraShake=!ComfortSettings.CameraShake,"camera-shake"));
+            comfortPanel.Add(ActionButton("",()=>ComfortSettings.ToggleCrouch=!ComfortSettings.ToggleCrouch,"crouch-mode"));
+            var resetComfort=ActionButton("",ComfortSettings.RestoreDefaults,"reset-comfort");resetComfort.AddToClassList("small-action");resetComfort.style.height=24;comfortPanel.Add(resetComfort);
             quitPanel=Box("quit-confirm"); quitPanel.name="quit-confirm"; body.Add(quitPanel);
             quitPanel.Add(Text("EXIT TO DESKTOP?","section-title"));
             var quitButtons=Box("text-actions"); quitPanel.Add(quitButtons);
@@ -189,11 +201,33 @@ namespace MoonThemedGame.Interactions
             GameControls.Changed+=RefreshBindings;
             Loc.Stamp(root); Loc.Apply(root);
             Loc.Changed+=Relocalize;
+            ComfortSettings.Changed+=RefreshComfort;RefreshComfort();
+        }
+        Label ComfortText(string en,string ru,string css,VisualElement parent)
+        {var label=Text(en,css);parent.Add(label);comfortLabels.Add((label,en,ru));return label;}
+        void ComfortSlider(string id,string en,string ru,float min,float max,Func<float> read,Action<float> write)
+        {
+            var row=Box("audio-row");comfortPanel.Add(row);ComfortText(en,ru,"audio-label",row);
+            var slider=new Slider(min,max){name=id,value=read()};slider.AddToClassList("volume-slider");row.Add(slider);
+            var value=Text("","volume-value");row.Add(value);comfortSliders.Add((slider,value,read));
+            slider.RegisterValueChangedCallback(evt=>write(evt.newValue));
+        }
+        void RefreshComfort()
+        {
+            if(root==null)return;
+            foreach(var row in comfortLabels)row.label.text=Loc.Russian?row.ru:row.en;
+            foreach(var row in comfortSliders){float value=row.read();row.slider.SetValueWithoutNotify(value);row.value.text=Mathf.RoundToInt(value*100)+"%";}
+            root.Q<Button>("camera-shake").text=(Loc.Russian?"ТРЯСКА КАМЕРЫ [":"CAMERA SHAKE [")+(ComfortSettings.CameraShake?(Loc.Russian?"ВКЛ":"ON"):(Loc.Russian?"ВЫКЛ":"OFF"))+"]";
+            root.Q<Button>("crouch-mode").text=(Loc.Russian?"ПРИСЕД [":"CROUCH [")+(ComfortSettings.ToggleCrouch?(Loc.Russian?"НАЖАТИЕ":"TOGGLE"):(Loc.Russian?"УДЕРЖАНИЕ":"HOLD"))+"]";
+            root.Q<Button>("reset-comfort").text=Loc.Russian?"СБРОСИТЬ ПАРАМЕТРЫ":"RESET PREFERENCES";
+            root.Q<Slider>("dynamic-fov").tooltip=Loc.Russian?"0% отключает расширение FOV при разгоне.":"0% disables FOV widening at speed.";
+            RefreshBindings();
         }
         void Relocalize()
         {
             Loc.Apply(root);
             RefreshBindings();
+            RefreshComfort();
         }
         void ShowPage(Page next)
         {
@@ -254,6 +288,7 @@ namespace MoonThemedGame.Interactions
         {
             GameControls.Changed-=RefreshBindings;
             Loc.Changed-=Relocalize;
+            ComfortSettings.Changed-=RefreshComfort;
             if(panel) Destroy(panel);
         }
     }

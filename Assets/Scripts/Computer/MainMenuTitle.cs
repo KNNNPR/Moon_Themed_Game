@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -73,6 +74,7 @@ namespace MoonThemedGame.Computer
             float visibility=1-Mathf.SmoothStep(0,1,Mathf.Clamp01(focus*3));
             captionGroup.style.opacity=visibility;holder.SetActive(visibility>.001f);
             float step=Mathf.Min(dt,.04f);float radius=Mathf.Max(1,Screen.height)*.19f;
+            object audioLetter=null;
             foreach(var letter in letters)
             {
                 var screen=camera.WorldToScreenPoint(letter.transform.position);
@@ -81,6 +83,7 @@ namespace MoonThemedGame.Computer
                 {
                     Vector2 away=distance>.5f?delta/distance:new Vector2(Mathf.Cos(letter.phase),Mathf.Sin(letter.phase));
                     var world=camera.transform.right*away.x+camera.transform.up*away.y;
+                    if(distance<radius*.5f)audioLetter=letter;
                     float weight=1-distance/radius;
                     letter.velocity+=holder.transform.InverseTransformDirection(world)*weight*height*(click?5.3f:8*step);
                     letter.velocity.z+=weight*height*(click?.8f:.25f*step);
@@ -96,6 +99,7 @@ namespace MoonThemedGame.Computer
                 letter.transform.localScale=Vector3.one*height*visibility;
                 MaximumDisplacement=Mathf.Max(MaximumDisplacement,letter.offset.magnitude);
             }
+            GameAudio.Hover(this,audioLetter,Sound.BigHover);
         }
         public void Dispose()
         {

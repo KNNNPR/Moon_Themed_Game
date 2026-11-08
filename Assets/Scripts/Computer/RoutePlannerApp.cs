@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
@@ -191,6 +192,10 @@ namespace MoonThemedGame.Computer
                 }
                 else panning=false;
             }
+            object audioHover=hover?(object)icon:null;
+            if(IsOpen&&pointer)foreach(var audioAction in actions)if(true&&audioAction.label.worldBound.Contains(point))audioHover=string.IsNullOrEmpty(audioAction.label.name)?(object)audioAction.label:audioAction.label.name;
+            GameAudio.Hover(this,audioHover);
+            if(audioHover!=null&&pointer&&Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame)GameAudio.Ui(Sound.Icon);
             if(!pointer||mouse==null||!mouse.leftButton.wasPressedThisFrame)return;
             if(hover){Open();return;}
             if(IsOpen)HandleClick(point);

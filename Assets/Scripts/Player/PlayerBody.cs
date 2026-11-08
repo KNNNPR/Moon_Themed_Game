@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Interactions;
 using MoonThemedGame.Scavenger;
 using UnityEngine;
@@ -410,7 +411,7 @@ namespace MoonThemedGame.Repair
                     foreach (var slot in slots) if (Available(slot)) count++;
                     int position = Mathf.Clamp(startIndex + Mathf.RoundToInt(selectX / SelectStep), 0, Mathf.Max(0, count - 1));
                     int index = SlotAt(position);
-                    if (index != selected) { Highlight(selected, false); selected = index; Highlight(selected, true); }
+                    if (index != selected) { Highlight(selected, false); selected = index; Highlight(selected, true);GameAudio.Ui(Sound.BigHover); }
                     if (!mouse.middleButton.isPressed) Close(true);
                 }
             }
@@ -516,7 +517,7 @@ namespace MoonThemedGame.Repair
                 cosmonaut.PoseHands(leftTarget,rightTarget,stride,walk,Time.deltaTime,
                     heldPistol?(Quaternion?)heldPistol.RightHandRotation:null);
                 if(carried is RepairWrench wrench && wrench.Engaged && !open)
-                    cosmonaut.TwistRightWrist(wrench.WorkAxis,wrench.WristAngle);
+                    cosmonaut.TwistRightWrist(wrench.WorkAxis,wrench.WristAngle+wrench.VisualFlexAngle);
                 if(carried && (carried is RepairWrench || carried is RepairTool) && !open && !(carried is RepairWrench working && working.Engaged))
                     carried.transform.position+=cosmonaut.RightPalm-Grip(carried,carried.RendererBounds());
             }
@@ -577,7 +578,7 @@ namespace MoonThemedGame.Repair
             if ((carried && carriedSlot == null) || HeldProp.Holding) { Message(Loc.T("Hands full")); return; }
             if (carriedSlot != null) { Stow(carriedSlot); carriedSlot.blend = 0; }
             if (SlotAt(0) < 0) return;
-            open = true;
+            open = true;GameAudio.Ui(Sound.ToolboxOpen);
             returned = carriedSlot;
             selectX = 0;
             int count = 0;
@@ -589,6 +590,7 @@ namespace MoonThemedGame.Repair
 
         void Close(bool confirm)
         {
+            if(open)GameAudio.Ui(Sound.ToolboxOpen);
             open = false;
             BeltOpen = false;
             FirstPersonController.LookFrozen = false;

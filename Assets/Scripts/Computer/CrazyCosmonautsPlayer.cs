@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Interactions;
 using MoonThemedGame.Repair;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace MoonThemedGame.Computer
 
         public void Initialize(CrazyCosmonautsApp app, RenderTexture texture)
         {
-            game = app; motor = GetComponent<CharacterController>();
+            game = app; motor = GetComponent<CharacterController>();GameAudio.Footsteps(gameObject,true);
             motor.height = 1.8f; motor.radius = .28f; motor.center = Vector3.up * .9f; motor.stepOffset = .25f;
             var cameraObject = new GameObject("Crazy Cosmonauts / camera"); cameraObject.transform.SetParent(transform, false);
             cameraObject.transform.localPosition = Vector3.up * 1.65f;
@@ -62,7 +63,7 @@ namespace MoonThemedGame.Computer
             var mouse = Mouse.current;
             if (mouse != null)
             {
-                var delta = mouse.delta.ReadValue(); transform.Rotate(Vector3.up, delta.x * .11f);
+                var delta = mouse.delta.ReadValue()*ComfortSettings.HumanSensitivity; transform.Rotate(Vector3.up, delta.x * .11f);
                 pitch = Mathf.Clamp(pitch - delta.y * .11f, -80, 80);
             }
             view.transform.localRotation = Quaternion.Euler(pitch, 0, 0);
@@ -93,12 +94,12 @@ namespace MoonThemedGame.Computer
         public bool Reload()
         {
             if (!game || !game.GameplayActive || Reloading || Ammo == 8) return false;
-            reloadTime = 2.2f; return true;
+            reloadTime = 2.2f;GameAudio.Ui(Sound.GameReload); return true;
         }
         public bool Fire()
         {
             if (!game || !game.GameplayActive || !game.FireInputReady || !view || Reloading || Ammo <= 0 || Time.time < nextShot) return false;
-            nextShot = Time.time + .19f; Ammo--; ShotsFired++;
+            nextShot = Time.time + .19f; Ammo--; ShotsFired++;GameAudio.Ui(Sound.GameShot);
             var direction = view.transform.forward;
             RaycastHit nearest = default; bool found = false;
             foreach (var hit in Physics.RaycastAll(view.transform.position, direction, 100, 1 << 30, QueryTriggerInteraction.Ignore))

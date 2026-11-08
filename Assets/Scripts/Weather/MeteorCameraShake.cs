@@ -14,6 +14,7 @@ namespace MoonThemedGame.Weather
         public bool IsShaking => Time.time < until;
         public static void Kick(Vector3 impact, float range)
         {
+            if(!MoonThemedGame.Interactions.ComfortSettings.CameraShake)return;
             foreach (var camera in Camera.allCameras)
             {
                 float proximity = 1 - Vector3.Distance(camera.transform.position, impact) / Mathf.Max(1, range);
@@ -31,7 +32,7 @@ namespace MoonThemedGame.Weather
         }
         void Begin(ScriptableRenderContext context, Camera camera)
         {
-            if (camera != view || !IsShaking || applied) return;
+            if (camera != view || !IsShaking || applied || !MoonThemedGame.Interactions.ComfortSettings.CameraShake) return;
             savedPosition = transform.position; savedRotation = transform.rotation; applied = true;
             float amount = strength * Mathf.Clamp01((until - Time.time) / 0.55f);
             float x = Mathf.Sin(Time.time * 67), y = Mathf.Sin(Time.time * 83 + 1);
@@ -43,7 +44,7 @@ namespace MoonThemedGame.Weather
         {
             if (!applied) return; transform.SetPositionAndRotation(savedPosition, savedRotation); applied = false;
         }
-        void Update() { if (!IsShaking) strength = 0; }
+        void Update() { if(!MoonThemedGame.Interactions.ComfortSettings.CameraShake){until=0;Restore();}if (!IsShaking) strength = 0; }
         void OnDisable()
         {
             RenderPipelineManager.beginCameraRendering -= Begin; RenderPipelineManager.endCameraRendering -= End; Restore();

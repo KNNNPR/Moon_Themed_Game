@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Scavenger;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -43,6 +44,7 @@ namespace MoonThemedGame.Repair
             if (slot && MouseClicked())
             {
                 if (!slotRobot.TryAttachLoose(slot, hand.transform.position, transform)) return;
+                GameAudio.At(Sound.PartDrop,slot.transform.position);
                 ShowGhost(null);
                 Release();
                 Destroy(gameObject);
@@ -66,7 +68,7 @@ namespace MoonThemedGame.Repair
             get
             {
                 string name = SalvageField.PartName(prefab);
-                if (slot) return Loc.F("LMB — fit {0}", name);
+                if (slot) return Loc.F("LMB — fit {0}", name)+(slotRobot.SpecialStep&&slotRobot.SpecialStep.PendingFor(slot)?"\n"+slotRobot.SpecialStep.Description:"");
                 foreach (var robot in FindObjectsByType<RepairRobotTarget>(FindObjectsSortMode.None))
                     if (robot.Needs(prefab))
                         return robot.Accepts ? Loc.F("Aim at the empty {0} slot on the robot", name) : Loc.T("Wait until the robot has landed");

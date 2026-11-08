@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
 using UnityEngine;
@@ -43,7 +44,7 @@ namespace MoonThemedGame.Repair
 
         void Awake()
         {
-            Health = maximumHealth;
+            Health = maximumHealth;GameAudio.WatchZombie(this);
             motor = GetComponent<CharacterController>();
             if (!ragdoll) ragdoll = GetComponent<ZombieRagdoll>();
             if (!ragdoll) ragdoll = ZombieRagdoll.Configure(this);
@@ -144,12 +145,47 @@ namespace MoonThemedGame.Repair
             ZombieImpact.Emit(point, normal, Unit, impactMaterial);
             if (IsDead)
             {
-                var velocity = motor.velocity;
+                var velocity = motor.enabled ? motor.velocity : Vector3.zero;
                 memory = 0; motor.enabled = false;
                 ragdoll.Activate(zone, point, direction, velocity);
                 Destroy(gameObject, corpseLifetime);
             }
             return true;
+        }
+
+        public float PushByVehicle(Vector3 direction,float distance)
+        {
+            if(IsDead||!motor||!motor.enabled||distance<=0)return 0;
+            direction=Vector3.ProjectOnPlane(direction,Vector3.up).normalized;
+            if(direction.sqrMagnitude<.01f)return 0;
+            var before=transform.position;
+            motor.Move(direction*distance);
+            float moved=Vector3.ProjectOnPlane(transform.position-before,Vector3.up).magnitude;
+            if(moved>.001f)
+            {
+                knockback=direction*Mathf.Max(knockback.magnitude,Unit*.8f);
+                stagger=Time.time+.25f;
+                LastHitPart=ZombieBodyPart.Torso;hitDirection=direction;reactionUntil=Time.time+.3f;
+            }
+            return moved;
+        }
+
+        public bool RunOver(Vector3 point,Vector3 direction,Vector3 vehicleVelocity)
+        {
+            if(IsDead)return false;
+            var zone=System.Array.Find(GetComponentsInChildren<ZombieHitZone>(),z=>z.bodyPart==ZombieBodyPart.Torso);
+            if(!zone)return false;
+            Health=0;memory=0;
+            var velocity=motor.enabled?motor.velocity:Vector3.zero;motor.enabled=false;
+            ZombieImpact.Emit(point,-direction,Unit,impactMaterial);
+            var planar=Vector3.ProjectOnPlane(vehicleVelocity,Vector3.up);
+            float speed=planar.magnitude;
+            var forward=planar.sqrMagnitude>.01f?planar.normalized:Vector3.ProjectOnPlane(direction,Vector3.up).normalized;
+            float lift=Mathf.Min(4*Unit,speed*.22f+.7f*Unit);
+            var launch=velocity*.2f+forward*Mathf.Min(speed*.95f,24*Unit)+Vector3.up*lift;
+            ragdoll.Activate(zone,point,forward,launch);
+            ragdoll.AddVehicleTumble(forward,speed,point);
+            Destroy(gameObject,corpseLifetime);return true;
         }
 
         void LateUpdate()

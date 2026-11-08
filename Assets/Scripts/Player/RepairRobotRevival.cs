@@ -220,6 +220,7 @@ namespace MoonThemedGame.Repair
                 if (secure != part.secure)
                 {
                     part.secure = secure; part.revision++;
+                    if(secure&&part.kind==Kind.Battery)RepairFeedbackFx.For(part.visual)?.BootVent();
                     if (!secure && current != null && (current.part == part || current.synchronized)) EndCurrent(false);
                     if (secure && wasPowered && part.kind != Kind.Battery && inspectionPhase == RepairDiagnosticPhase.None) Queue(part);
                 }
@@ -233,7 +234,7 @@ namespace MoonThemedGame.Repair
                 return;
             }
             if (!Powered) StopTests();
-            else if (!wasPowered) { StopTests(); QueueBoot(); }
+            else if (!wasPowered) { StopTests();QueueBoot(); }
             else if (allWheels && !allWheelsWereSecure) queue.Enqueue(new Reaction { synchronized = true });
             allWheelsWereSecure = allWheels;
             if (current != null)
@@ -248,8 +249,8 @@ namespace MoonThemedGame.Repair
                     if (reaction.synchronized ? !AllWheelsSecure() : !reaction.part.secure || reaction.revision != reaction.part.revision) continue;
                     current = reaction; timer = 0;
                     if (reaction.synchronized)
-                    { foreach (var part in parts) if (part.kind == Kind.Wheel) AddWheelVisuals(part); }
-                    else if (reaction.part.kind == Kind.Wheel) AddWheelVisuals(reaction.part);
+                    { foreach (var part in parts) if (part.kind == Kind.Wheel) {AddWheelVisuals(part);RepairFeedbackFx.For(part.visual)?.WheelStarted();} }
+                    else if (reaction.part.kind == Kind.Wheel){AddWheelVisuals(reaction.part);RepairFeedbackFx.For(reaction.part.visual)?.WheelStarted();}
                     break;
                 }
             UpdateLamps(Time.deltaTime);
@@ -387,7 +388,7 @@ namespace MoonThemedGame.Repair
             if (phase == RepairDiagnosticPhase.RunningGear && Powered && !inspectionGearStarted)
             {
                 inspectionGearStarted = true;
-                foreach (var part in parts) if (part.kind == Kind.Wheel && part.fitted) AddWheelVisuals(part);
+                foreach (var part in parts) if (part.kind == Kind.Wheel && part.fitted){AddWheelVisuals(part);RepairFeedbackFx.For(part.visual)?.WheelStarted();}
             }
             if (!Powered && wheels.Count > 0) EndCurrent(false);
         }

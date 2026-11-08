@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using MoonThemedGame.Computer;
 using UnityEngine;
@@ -103,6 +104,9 @@ namespace MoonThemedGame.Scavenger
                 card.yaw += Time.deltaTime * (hover ? 60 : 12);
                 card.preview.MarkDirtyRepaint();
             }
+            object audioHover=pointer&&close.worldBound.Contains(point)?close:null;
+            if(pointer&&listings.contentViewport.worldBound.Contains(point))foreach(var c in cards)if(c.root.worldBound.Contains(point))audioHover=c.root;
+            GameAudio.Hover(this,audioHover);if(audioHover!=null&&pointer&&Clicked())GameAudio.Ui(Sound.Icon);
             balance.text = Loc.F("BALANCE {0} CR", terminal.Credits);
             if (Time.time > statusUntil) status.text = "";
         }
@@ -160,6 +164,7 @@ namespace MoonThemedGame.Scavenger
 
         void Say(string text, Color color)
         {
+            if(color==Good)GameAudio.Ui(Sound.Confirm);else if(color==Alarm)GameAudio.Ui(Sound.Error);
             status.text = text;
             status.style.color = color;
             statusUntil = Time.time + 3;

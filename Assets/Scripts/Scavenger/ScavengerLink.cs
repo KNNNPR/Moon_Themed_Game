@@ -1,4 +1,5 @@
 using System;
+using MoonThemedGame.Audio;
 using System.Collections;
 using MoonThemedGame.Computer;
 using MoonThemedGame.Weather;
@@ -84,15 +85,20 @@ namespace MoonThemedGame.Scavenger
         public LinkPhase Phase { get; private set; }
         public SatelliteNetwork Network { get; private set; }
         public UplinkStatus Uplink { get; private set; } = UplinkStatus.Ok;
+        // Satellite used for the last evaluated status; selection may change later in this frame.
+        public int UplinkSatelliteIndex { get; private set; } = -1;
         public float UplinkQuality { get; private set; } = 1;
         public bool Powered => !state || state.HasSignal;
         public ScavengerDrive Drive { get; private set; }
+        // Fixed return/evacuation point in the main base, independent of rover movement.
+        public Vector3 BaseWaypoint => homePosition;
         // Near the station the feed goes through the base antenna, not a satellite.
         public bool ViaRelay { get; private set; }
         public float Cover { get; private set; }
         public event Action<UplinkStatus> UplinkChanged;
         public float PhaseTime => Time.time - phaseStart;
         public bool Connected => Phase != LinkPhase.Off;
+        public Camera OperatorCamera => operatorCamera;
         public float Degradation => Uplink == UplinkStatus.Ok ? 1 - UplinkQuality : 1;
         public float Noise
         {
@@ -501,7 +507,7 @@ namespace MoonThemedGame.Scavenger
 
         public void Terminate()
         {
-            if (Phase == LinkPhase.Connecting || Phase == LinkPhase.Live) SetPhase(LinkPhase.Terminating);
+            if (Phase == LinkPhase.Connecting || Phase == LinkPhase.Live){GameAudio.RoverExiting();SetPhase(LinkPhase.Terminating);}
         }
 
         // A runtime copy of the shared ASCII material with bigger, sparser glyphs for the robot feed.
@@ -519,6 +525,7 @@ namespace MoonThemedGame.Scavenger
 
         void OnRivalChanged(RivalPhase phase)
         {
+            if(Connected&&phase==RivalPhase.Incoming)GameAudio.RoverAttacked();
             if (phase != RivalPhase.Hijacked || !terminal) return;
             int stolen = Mathf.Min(Network.hijackCreditLoss, terminal.Credits);
             if (stolen > 0) terminal.SetCredits(terminal.Credits - stolen);
@@ -549,6 +556,7 @@ namespace MoonThemedGame.Scavenger
             else status = Network.Evaluate(robot.TransformPoint(antenna), robotColliders, out quality, out cover);
             UplinkQuality = quality;
             Cover = cover;
+            UplinkSatelliteIndex = Network.ActiveIndex;
             if (status == Uplink && relay == ViaRelay) return;
             Uplink = status;
             ViaRelay = relay;
@@ -611,6 +619,7 @@ namespace MoonThemedGame.Scavenger
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
             SetPhase(LinkPhase.Connecting);
+            GameAudio.RoverConnecting();
             RefreshUplink();
             hud.OnConnected();
             UpdateFeed();
@@ -619,6 +628,7 @@ namespace MoonThemedGame.Scavenger
         public void Disconnect()
         {
             if (!Connected) return;
+            GameAudio.RoverReturned();
             if (robotCamera)
             {
                 robotCamera.enabled = false;

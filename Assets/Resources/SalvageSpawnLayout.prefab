@@ -53,6 +53,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &219811456248124307
 GameObject:
   m_ObjectHideFlags: 0
@@ -106,6 +109,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &601966011566633819
 GameObject:
   m_ObjectHideFlags: 0
@@ -159,6 +165,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &655226674359103883
 GameObject:
   m_ObjectHideFlags: 0
@@ -247,6 +256,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &828269712897661296
 GameObject:
   m_ObjectHideFlags: 0
@@ -300,6 +312,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &928496275403264945
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,6 +403,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1094686030581850089
 GameObject:
   m_ObjectHideFlags: 0
@@ -441,6 +459,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1360783608361931817
 GameObject:
   m_ObjectHideFlags: 0
@@ -494,6 +515,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1405348667159543396
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,6 +606,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1506260681130743790
 GameObject:
   m_ObjectHideFlags: 0
@@ -635,6 +662,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1627787475405802185
 GameObject:
   m_ObjectHideFlags: 0
@@ -688,6 +718,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1804351700398505436
 GameObject:
   m_ObjectHideFlags: 0
@@ -740,6 +773,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &1903447246338083322
 GameObject:
   m_ObjectHideFlags: 0
@@ -863,6 +899,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &2322593215993555687
 GameObject:
   m_ObjectHideFlags: 0
@@ -950,6 +989,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &2577861221566620281
 GameObject:
   m_ObjectHideFlags: 0
@@ -1003,6 +1045,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &2625453403511784279
 GameObject:
   m_ObjectHideFlags: 0
@@ -1056,6 +1101,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &2793881225235108254
 GameObject:
   m_ObjectHideFlags: 0
@@ -1109,6 +1157,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &2811384459692116064
 GameObject:
   m_ObjectHideFlags: 0
@@ -1160,7 +1211,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 199
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &3005063064342339253
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,6 +1268,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &3022640451870541756
 GameObject:
   m_ObjectHideFlags: 0
@@ -1266,7 +1323,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 211
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &3060458836882160653
 GameObject:
   m_ObjectHideFlags: 0
@@ -1388,7 +1448,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 199
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &3436380902280940942
 GameObject:
   m_ObjectHideFlags: 0
@@ -1442,6 +1505,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &3520554012725720404
 GameObject:
   m_ObjectHideFlags: 0
@@ -1495,6 +1561,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &3549035495496974035
 GameObject:
   m_ObjectHideFlags: 0
@@ -1548,6 +1617,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &3557695237120569466
 GameObject:
   m_ObjectHideFlags: 0
@@ -1600,6 +1672,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &3886165665173117949
 GameObject:
   m_ObjectHideFlags: 0
@@ -1647,12 +1722,15 @@ MonoBehaviour:
   part: {fileID: 3828490195956850790, guid: f58960cf909f5dd4182b776de4762669, type: 3}
   routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
     gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
-    no BoxCollider is added. Not a mandatory order route.
+    no BoxCollider is added. Order 6 target when the manipulator is installed. Recharge at station 2 and improve battery efficiency before descending into the ship.
   progressionTier: 7
   estimatedLoopSeconds: 300
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 5
+  minimumOrderTier: 0
+  accessButton: button_ship
+  shipInterior: 1
+  chargerRouteSeconds: 0
 --- !u!1 &3916801779915039713
 GameObject:
   m_ObjectHideFlags: 0
@@ -1706,6 +1784,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4012254611959536338
 GameObject:
   m_ObjectHideFlags: 0
@@ -1758,7 +1839,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 211
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &4298959463195185045
 GameObject:
   m_ObjectHideFlags: 0
@@ -1811,6 +1895,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4454494452797111133
 GameObject:
   m_ObjectHideFlags: 0
@@ -1863,6 +1950,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4456246365405754853
 GameObject:
   m_ObjectHideFlags: 0
@@ -1916,6 +2006,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4542959464622744676
 GameObject:
   m_ObjectHideFlags: 0
@@ -1968,7 +2061,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 211
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &4588590441676105216
 GameObject:
   m_ObjectHideFlags: 0
@@ -2022,6 +2118,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4611639310905139763
 GameObject:
   m_ObjectHideFlags: 0
@@ -2075,6 +2174,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4619163481975064956
 GameObject:
   m_ObjectHideFlags: 0
@@ -2163,6 +2265,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &4917801158180805392
 GameObject:
   m_ObjectHideFlags: 0
@@ -2251,6 +2356,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5137092838292847158
 GameObject:
   m_ObjectHideFlags: 0
@@ -2304,6 +2412,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5213911551893585124
 GameObject:
   m_ObjectHideFlags: 0
@@ -2355,7 +2466,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 199
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &5304900932550292603
 GameObject:
   m_ObjectHideFlags: 0
@@ -2409,6 +2523,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5323547722147523935
 GameObject:
   m_ObjectHideFlags: 0
@@ -2461,7 +2578,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 211
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &5489816100678533937
 GameObject:
   m_ObjectHideFlags: 0
@@ -2515,6 +2635,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5570114715472325752
 GameObject:
   m_ObjectHideFlags: 0
@@ -2568,6 +2691,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5583274952652629519
 GameObject:
   m_ObjectHideFlags: 0
@@ -2621,6 +2747,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5689681378715875783
 GameObject:
   m_ObjectHideFlags: 0
@@ -2674,6 +2803,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5775566520683160168
 GameObject:
   m_ObjectHideFlags: 0
@@ -2726,6 +2858,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5866289418981907473
 GameObject:
   m_ObjectHideFlags: 0
@@ -2779,6 +2914,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5878118158307796490
 GameObject:
   m_ObjectHideFlags: 0
@@ -2832,6 +2970,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &5955001428257835428
 GameObject:
   m_ObjectHideFlags: 0
@@ -2885,6 +3026,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6040118723213052428
 GameObject:
   m_ObjectHideFlags: 0
@@ -2937,6 +3081,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6050723076877014689
 GameObject:
   m_ObjectHideFlags: 0
@@ -2990,6 +3137,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6075806784208696736
 GameObject:
   m_ObjectHideFlags: 0
@@ -3216,6 +3366,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6691319867194715251
 GameObject:
   m_ObjectHideFlags: 0
@@ -3269,6 +3422,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6717587140891874141
 GameObject:
   m_ObjectHideFlags: 0
@@ -3322,6 +3478,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6738915652119973339
 GameObject:
   m_ObjectHideFlags: 0
@@ -3375,6 +3534,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6740460262989881683
 GameObject:
   m_ObjectHideFlags: 0
@@ -3463,6 +3625,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &6780248487535774663
 GameObject:
   m_ObjectHideFlags: 0
@@ -3515,6 +3680,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7004485402666077938
 GameObject:
   m_ObjectHideFlags: 0
@@ -3603,6 +3771,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7146207428964544364
 GameObject:
   m_ObjectHideFlags: 0
@@ -3656,6 +3827,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7183714329886677295
 GameObject:
   m_ObjectHideFlags: 0
@@ -3744,6 +3918,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7590122325717972319
 GameObject:
   m_ObjectHideFlags: 0
@@ -3797,6 +3974,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7616674335312121166
 GameObject:
   m_ObjectHideFlags: 0
@@ -3850,6 +4030,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7648540958676754382
 GameObject:
   m_ObjectHideFlags: 0
@@ -3903,6 +4086,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &7784101057453883400
 GameObject:
   m_ObjectHideFlags: 0
@@ -3954,7 +4140,10 @@ MonoBehaviour:
   estimatedLoopSeconds: 199
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 4
+  minimumOrderTier: 3
+  accessButton: Cylinder.046
+  shipInterior: 0
+  chargerRouteSeconds: 114
 --- !u!1 &7913781278995112533
 GameObject:
   m_ObjectHideFlags: 0
@@ -4008,6 +4197,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8294387707638463093
 GameObject:
   m_ObjectHideFlags: 0
@@ -4061,6 +4253,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8499510162985409298
 GameObject:
   m_ObjectHideFlags: 0
@@ -4114,6 +4309,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8518090384072852664
 GameObject:
   m_ObjectHideFlags: 0
@@ -4161,12 +4359,15 @@ MonoBehaviour:
   part: {fileID: 1027065472598066643, guid: 780783e862cd7d64c81248396593bb80, type: 3}
   routeNotes: Optional cache on the internal cargo floor of Cube.064. Open the ship
     gates with Button_Ship and the manipulator. Existing ship MeshCollider is used;
-    no BoxCollider is added. Not a mandatory order route.
+    no BoxCollider is added. Order 6 target when the manipulator is installed. Recharge at station 2 and improve battery efficiency before descending into the ship.
   progressionTier: 7
   estimatedLoopSeconds: 300
   orderRoute: 0
   requiresManipulator: 1
-  minimumOrderTier: 5
+  minimumOrderTier: 0
+  accessButton: button_ship
+  shipInterior: 1
+  chargerRouteSeconds: 0
 --- !u!1 &8572760383763249988
 GameObject:
   m_ObjectHideFlags: 0
@@ -4220,6 +4421,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8612233791863322220
 GameObject:
   m_ObjectHideFlags: 0
@@ -4273,6 +4477,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8787108322304671217
 GameObject:
   m_ObjectHideFlags: 0
@@ -4396,6 +4603,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.045
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8842893322457597820
 GameObject:
   m_ObjectHideFlags: 0
@@ -4449,6 +4659,9 @@ MonoBehaviour:
   orderRoute: 0
   requiresManipulator: 1
   minimumOrderTier: 5
+  accessButton: Cylinder.049
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8879488121263371106
 GameObject:
   m_ObjectHideFlags: 0
@@ -4502,6 +4715,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &8894366870011335458
 GameObject:
   m_ObjectHideFlags: 0
@@ -4555,6 +4771,9 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 5
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0
 --- !u!1 &9068186053417467463
 GameObject:
   m_ObjectHideFlags: 0
@@ -4643,3 +4862,6 @@ MonoBehaviour:
   orderRoute: 1
   requiresManipulator: 0
   minimumOrderTier: 4
+  accessButton:
+  shipInterior: 0
+  chargerRouteSeconds: 0

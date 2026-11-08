@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Scavenger;
 using UnityEngine;
 
@@ -19,6 +20,7 @@ namespace MoonThemedGame.Repair
         bool attached;
         Vector3 contactCorrection, appliedCorrection;
         int takeState, idleState;
+        CraneGrabFx grabFx;
 
         public static void ConnectScene(RepairRobotDropper source)
         {
@@ -83,7 +85,7 @@ namespace MoonThemedGame.Repair
             candidate = robot;
             attached = false;
             RemoveContactCorrection();
-            IsBusy = true;
+            IsBusy = true;GameAudio.At(Sound.Crane,grip.position);
             craneAnimator.enabled = true;
             // Sample the grasp pose before the first rendered animation frame.
             // Move the crane down to the robot instead of moving the robot up to it.
@@ -167,6 +169,7 @@ namespace MoonThemedGame.Repair
             else candidate.CancelCollection();
             candidate = null;
             IsBusy = false;
+            if(grabFx)grabFx.StopLift();
         }
 
         void Attach()
@@ -190,10 +193,14 @@ namespace MoonThemedGame.Repair
             // The robot follows the claw from here; no interpolation toward it.
             robot.transform.SetParent(grip, true);
             attached = true;
+            if(!grabFx)grabFx=GetComponent<CraneGrabFx>();
+            if(!grabFx)grabFx=gameObject.AddComponent<CraneGrabFx>();
+            grabFx.Grasp(grip,candidate);
         }
 
         void Cancel()
         {
+            if(grabFx)grabFx.StopLift();
             RemoveContactCorrection();
             if (candidate && !attached) candidate.CancelCollection();
             if (attached && candidate)

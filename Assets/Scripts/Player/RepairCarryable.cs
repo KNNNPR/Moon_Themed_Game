@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using MoonThemedGame.Interactions;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -97,6 +98,7 @@ namespace MoonThemedGame.Repair
             foreach (var a in colliders) foreach (var b in playerColliders) if (a && b) Physics.IgnoreCollision(a, b, true);
             foreach (var c in colliders) if (c) c.enabled = false;
             SetHighlighted(false);
+            GameAudio.Carried(this,false);
             OnPickedUp();
         }
 
@@ -193,6 +195,7 @@ namespace MoonThemedGame.Repair
         public void Drop(bool toss)
         {
             if (!IsCarried) return;
+            if(toss)GameAudio.Carried(this,true);
             OnPutAway();
             Current = null;
             var direction = hand ? hand.transform.forward : Vector3.zero;

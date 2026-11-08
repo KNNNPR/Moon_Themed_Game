@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using UnityEngine;
 
 namespace MoonThemedGame.Scavenger
@@ -71,6 +72,7 @@ namespace MoonThemedGame.Scavenger
 
         public void Press(Vector3 presser)
         {
+            GameAudio.At(open?Sound.DoorSlide:Sound.GateOpen,transform.position);
             if (!unlocked)
             {
                 unlocked = true;

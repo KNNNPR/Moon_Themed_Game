@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using MoonThemedGame.Scavenger;
@@ -6,7 +7,7 @@ using UnityEngine.Rendering;
 
 namespace MoonThemedGame.Weather
 {
-    public enum WeatherKind { Sunny, MoonDust, Radiation, MeteoriteRain, DeepNight, CryogenicFront, AshenCalm }
+    public enum WeatherKind { Sunny, MoonDust, Radiation, MeteoriteRain, DeepNight, CryogenicFront, AshenCalm, Horde }
     public readonly struct WeatherForecast
     {
         public readonly WeatherKind kind;
@@ -23,6 +24,14 @@ namespace MoonThemedGame.Weather
         public WeatherKind startingWeather = WeatherKind.Sunny;
         [Min(10)] public float sunnyDuration = 90, dustDuration = 75, toxicityDuration = 75, meteorDuration = 90;
         [Min(10)] public float nightDuration=100, cryogenicDuration=80, ashDuration=65;
+        [Header("The Horde (unlocked by clearing Crazy Cosmonauts wave 2)")]
+        [Min(10)] public float hordeDuration=90;
+        [Range(1,24)] public int maximumHordeZombies=12;
+        [Min(.5f)] public float hordeSpawnInterval=2.5f;
+        [Min(0)] public float hordeContactDamage=8;
+        [Min(.1f)] public float hordeRamSpeed=5;
+        public bool HordeUnlocked {get;private set;}
+        HordeWeatherEvent horde;
         public int forecastSeed = 415;
         [Header("Sealed base / world coordinates")]
         public Vector3 shelterCenter;
@@ -68,6 +77,7 @@ namespace MoonThemedGame.Weather
         // Keep dust above the retro post-process black threshold so it reads as haze.
         static readonly Color DustTint = new Color(0.22f, 0.235f, 0.25f);
         static readonly Color RadiationTint = new Color(0.17f, 0.43f, 0.08f);
+        static readonly Color HordeTint = new Color(.95f,.17f,.035f);
         public Color AtmosphereTint { get; private set; } = DustTint;
         public float OpacityLimit { get; private set; } = 0.96f;
         public int PendingStrikes { get; private set; }
@@ -105,7 +115,7 @@ namespace MoonThemedGame.Weather
         {
             WeatherKind.MoonDust => "FOG [MOON DUST]", WeatherKind.Radiation => "RADIATION",
             WeatherKind.MeteoriteRain => "METEORITE RAIN", WeatherKind.DeepNight=>"DEEP NIGHT",
-            WeatherKind.CryogenicFront=>"CRYOGENIC FRONT",WeatherKind.AshenCalm=>"ASHEN CALM", _ => "SUNNY"
+            WeatherKind.CryogenicFront=>"CRYOGENIC FRONT",WeatherKind.AshenCalm=>"ASHEN CALM",WeatherKind.Horde=>"THE HORDE", _ => "SUNNY"
         };
         public static string Effect(WeatherKind kind) => kind switch
         {
@@ -115,6 +125,7 @@ namespace MoonThemedGame.Weather
             WeatherKind.DeepNight=>"Almost total darkness. Use your headlights.",
             WeatherKind.CryogenicFront=>"Faster battery drain. Reduced grip. Frost on the camera.",
             WeatherKind.AshenCalm=>"Slowly falling ash. No penalties.",
+            WeatherKind.Horde=>"Zombies drain energy on contact. Ram them at high speed.",
             _ => "Perfect Weather"
         };
 
@@ -129,13 +140,14 @@ namespace MoonThemedGame.Weather
             nextMeteor = MeteorInterval();
             CreateParticles();
             SnapAtmosphere();
+            horde=gameObject.AddComponent<HordeWeatherEvent>();horde.Initialize(this);
         }
 
         public float Duration(WeatherKind kind) => Mathf.Max(1, kind switch
         {
             WeatherKind.MoonDust => dustDuration, WeatherKind.Radiation => toxicityDuration,
             WeatherKind.MeteoriteRain => meteorDuration,WeatherKind.DeepNight=>nightDuration,
-            WeatherKind.CryogenicFront=>cryogenicDuration,WeatherKind.AshenCalm=>ashDuration, _ => sunnyDuration
+            WeatherKind.CryogenicFront=>cryogenicDuration,WeatherKind.AshenCalm=>ashDuration,WeatherKind.Horde=>hordeDuration, _ => sunnyDuration
         });
         public WeatherForecast Forecast(int index) => index == 0
             ? new WeatherForecast(nextOne, Remaining, Duration(nextOne))
@@ -192,7 +204,18 @@ namespace MoonThemedGame.Weather
                 frost.amount=Mathf.MoveTowards(frost.amount,target,Mathf.Max(0,dt)/Mathf.Max(.1f,duration));
             }
         }
-        static WeatherKind Following(WeatherKind kind)=>(WeatherKind)(((int)kind+1)%KindCount);
+        WeatherKind Following(WeatherKind kind)
+        {
+            int count=HordeUnlocked?KindCount:KindCount-1;
+            if((int)kind>=count)return WeatherKind.Sunny;
+            return (WeatherKind)(((int)kind+1)%count);
+        }
+        public void RecordCosmonautsWaveCleared(int wave)
+        {
+            if(wave<2||HordeUnlocked||gameObject.scene.name!="Operator")return;
+            HordeUnlocked=true;
+            SetWeather(WeatherKind.Horde,immediate:false);
+        }
         void PublishLighting()
         {
             Shader.SetGlobalFloat("_MoonDeepNight",NightIntensity);
@@ -218,9 +241,9 @@ namespace MoonThemedGame.Weather
 
         public void SnapAtmosphere()
         {
-            Density = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
-            AtmosphereTint = Current == WeatherKind.Radiation ? RadiationTint : DustTint;
-            OpacityLimit = Current == WeatherKind.Radiation ? toxicOpacity : 0.96f;
+            Density = TargetDensity * Intensity;
+            AtmosphereTint = TargetTint;
+            OpacityLimit = TargetOpacity;
             PublishLighting();
         }
 
@@ -262,18 +285,22 @@ namespace MoonThemedGame.Weather
 
         WeatherKind PickAfter(WeatherKind previous)
         {
-            return (WeatherKind)(((int)previous + 1 + random.Next(KindCount-1)) % KindCount);
+            int count=HordeUnlocked?KindCount:KindCount-1;
+            return (WeatherKind)(((int)previous + 1 + random.Next(count-1)) % count);
         }
+        float TargetDensity=>Current==WeatherKind.MoonDust?dustDensity:Current==WeatherKind.Radiation?toxicDensity:Current==WeatherKind.Horde?.012f:0;
+        Color TargetTint=>Current==WeatherKind.Radiation?RadiationTint:Current==WeatherKind.Horde?HordeTint:DustTint;
+        float TargetOpacity=>Current==WeatherKind.Radiation?toxicOpacity:Current==WeatherKind.Horde?.42f:.96f;
 
         void Update()
         {
             AdvanceSchedule(Time.deltaTime);
             UpdateFrost(Time.deltaTime);
-            float target = (Current == WeatherKind.MoonDust ? dustDensity : Current == WeatherKind.Radiation ? toxicDensity : 0) * Intensity;
+            float target = TargetDensity * Intensity;
             float blend = 1 - Mathf.Exp(-Time.deltaTime * 4 / Mathf.Max(0.1f, atmosphereTransition));
             Density = Mathf.Lerp(Density, target, blend);
-            AtmosphereTint = Color.Lerp(AtmosphereTint, Current == WeatherKind.Radiation ? RadiationTint : DustTint, blend);
-            OpacityLimit = Mathf.Lerp(OpacityLimit, Current == WeatherKind.Radiation ? toxicOpacity : 0.96f, blend);
+            AtmosphereTint = Color.Lerp(AtmosphereTint, TargetTint, blend);
+            OpacityLimit = Mathf.Lerp(OpacityLimit, TargetOpacity, blend);
             PublishLighting();
             UpdateParticles();
             if (Current == WeatherKind.MeteoriteRain && assets && assets.meteoritePrefab)
@@ -389,7 +416,7 @@ namespace MoonThemedGame.Weather
                     if (link && link.state == state) link.GetComponent<ScavengerFeedHud>()?.Notify(Loc.T("METEOR IMPACT - ENERGY LOST"));
                 }
             }
-            WeatherImpactFx.Spawn(this, point, normal,diameter);
+            GameAudio.At(Sound.Meteor,point);WeatherImpactFx.Spawn(this, point, normal,diameter);
             MeteorCameraShake.Kick(point, shakeDistance);
             Impact?.Invoke(point);
         }
@@ -404,6 +431,7 @@ namespace MoonThemedGame.Weather
         [ContextMenu("Weather / Deep Night")] void Night()=>SetWeather(WeatherKind.DeepNight);
         [ContextMenu("Weather / Cryogenic Front")] void Cold()=>SetWeather(WeatherKind.CryogenicFront);
         [ContextMenu("Weather / Ashen Calm")] void Ash()=>SetWeather(WeatherKind.AshenCalm);
+        [ContextMenu("Weather / The Horde")] void Horde()=>SetWeather(WeatherKind.Horde);
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] static void ResetState(){Active = null;Shader.SetGlobalFloat("_MoonDeepNight",0);Shader.SetGlobalVector("_MoonWeatherCamera",Vector4.zero);}
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void RestoreActive()

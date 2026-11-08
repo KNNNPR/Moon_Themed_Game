@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections;
 using System.Collections.Generic;
 using MoonThemedGame.Computer;
@@ -29,6 +30,7 @@ namespace MoonThemedGame.Interactions
         Camera view;
         bool waiting,playing,restoreMovement,restoreEffects,restoreBody,ownsContent;
         float elapsed;
+        OperatorTutorialContent.Line spokenLine;int spokenWord=-1;
         Quaternion initialRotation,localRotation;
         Vector3 localPosition;
         readonly Dictionary<Renderer,bool> renderers=new Dictionary<Renderer,bool>();
@@ -71,7 +73,7 @@ namespace MoonThemedGame.Interactions
             if(!radio)
                 foreach(var prop in FindObjectsByType<HeldProp>(FindObjectsSortMode.None))
                     if(prop.gameObject.scene==gameObject.scene&&prop.IsRadio){radio=prop.transform;break;}
-            Active=this;waiting=false;playing=true;elapsed=0;
+            Active=this;waiting=false;playing=true;elapsed=0;spokenLine=null;spokenWord=-1;
             initialRotation=view.transform.rotation;localPosition=view.transform.localPosition;localRotation=view.transform.localRotation;
             restoreMovement=player.enabled;player.enabled=false;
             effects=view.GetComponentInParent<FirstPersonCameraEffects>();restoreEffects=effects&&effects.enabled;if(effects)effects.enabled=false;
@@ -117,7 +119,8 @@ namespace MoonThemedGame.Interactions
         {
             if(!playing||DeveloperConsole.IsOpen)return;
             var keys=Keyboard.current;
-            if(keys!=null&&(keys.spaceKey.wasPressedThisFrame||keys.escapeKey.wasPressedThisFrame)){Finish();return;}
+            if(keys!=null&&keys.escapeKey.wasPressedThisFrame){Finish();return;}
+            if(keys!=null&&keys.spaceKey.wasPressedThisFrame){NextLine();return;}
             elapsed+=Time.deltaTime;RefreshSubtitle();
             if(elapsed>=TotalDuration)Finish();
         }
@@ -125,16 +128,35 @@ namespace MoonThemedGame.Interactions
         {
             get{float duration=turnDuration+.5f;if(content&&content.radioLines!=null)foreach(var line in content.radioLines)if(line!=null)duration+=Mathf.Max(1,line.seconds);return duration;}
         }
+        public void NextLine()
+        {
+            if(!playing)return;
+            // During the camera turn, Space reveals the first line rather than dropping it.
+            float boundary=turnDuration;
+            if(elapsed<boundary){elapsed=boundary+.2f;RefreshSubtitle();return;}
+            if(content&&content.radioLines!=null)
+                foreach(var line in content.radioLines)
+                {
+                    if(line==null)continue;
+                    boundary+=Mathf.Max(1,line.seconds);
+                    if(elapsed<boundary){elapsed=boundary+.2f;if(elapsed>=TotalDuration-.5f)Finish();else RefreshSubtitle();return;}
+                }
+            Finish();
+        }
         void RefreshSubtitle()
         {
             if(subtitle==null)return;
-            skip.text=Loc.Russian?"[ПРОБЕЛ / ESC] Пропустить":"[SPACE / ESC] Skip";
+            skip.text=Loc.Russian?"[ПРОБЕЛ] Следующая реплика   [ESC] Пропустить всё":"[SPACE] Next line   [ESC] Skip all";
             float t=elapsed-turnDuration;subtitle.text="";card.style.opacity=0;
             if(t<0||!content||content.radioLines==null)return;
             foreach(var line in content.radioLines)
             {
                 if(line==null)continue;float duration=Mathf.Max(1,line.seconds);
-                if(t<duration){subtitle.text=line.Text;card.style.opacity=Mathf.Clamp01(Mathf.Min(t/.2f,(duration-t)/.3f));return;}
+                if(t<duration){
+                    int words=line.Text.Split(new[]{' '},System.StringSplitOptions.RemoveEmptyEntries).Length;
+                    int word=Mathf.Min(Mathf.Max(0,words-1),Mathf.FloorToInt(t/Mathf.Max(.15f,(duration-.4f)/Mathf.Max(1,words))));
+                    if(spokenLine!=line||spokenWord!=word){spokenLine=line;spokenWord=word;GameAudio.VoiceWord();}
+                    subtitle.text=line.Text;card.style.opacity=Mathf.Clamp01(Mathf.Min(t/.2f,(duration-t)/.3f));return;}
                 t-=duration;
             }
         }

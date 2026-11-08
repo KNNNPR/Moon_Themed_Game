@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -100,7 +101,7 @@ namespace MoonThemedGame.Repair
                 if (!glassCollider || !glassCollider.Raycast(shot, out var exact, hit.distance + glass.bounds.size.magnitude)) return false;
                 hit = exact;
             }
-            IsBroken = true;
+            IsBroken = true;GameAudio.At(Sound.LampDestroyed,hit.point);
             foreach (var light in lights) if (light) light.enabled = false;
             ZombieImpact.Emit(hit.point, hit.normal, Mathf.Max(scale, glass.bounds.size.magnitude * .5f), particles, true);
             glass.enabled = false;

@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System.Collections.Generic;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
@@ -25,6 +26,7 @@ namespace MoonThemedGame.Scavenger
             public bool frontAxle;
             public bool rearAxle;
             public Vector3 contact, normal;
+            public RaycastHit groundHit;
         }
 
         [Header("Drive (robot lengths)")]
@@ -218,6 +220,13 @@ namespace MoonThemedGame.Scavenger
             stiffness = mass * gravity / count / Mathf.Max(0.001f, sag);
             damper = 2 * dampingRatio * Mathf.Sqrt(stiffness * mass / count);
             initialized=true;
+            if(!GetComponent<RoverDriveDust>())gameObject.AddComponent<RoverDriveDust>();
+        }
+
+        internal void CopyGroundContacts(List<RaycastHit> target)
+        {
+            target.Clear();
+            foreach(var wheel in wheels)if(wheel.grounded&&wheel.groundHit.collider)target.Add(wheel.groundHit);
         }
 
         Bounds LocalBounds(Renderer[] renderers)
@@ -301,7 +310,7 @@ namespace MoonThemedGame.Scavenger
             }
         }
 
-        void OnCollisionEnter(Collision collision)=>lastHullContact=Time.time;
+        void OnCollisionEnter(Collision collision){lastHullContact=Time.time;GameAudio.Collision(collision,collision.contactCount>0?collision.GetContact(0).point:transform.position);}
         void OnCollisionStay(Collision collision)=>lastHullContact=Time.time;
         void UpdateLanding(int grounded,float dt)
         {
@@ -312,7 +321,7 @@ namespace MoonThemedGame.Scavenger
             }
             float impact=Mathf.Max(fallSpeed,-body.linearVelocity.y);
             if(unsupportedTime>=.12f&&!IsOverturned&&impact>length*.45f)
-                Landed?.Invoke(Mathf.InverseLerp(length*.45f,length*2.8f,impact));
+            {float amount=Mathf.InverseLerp(length*.45f,length*2.8f,impact);Landed?.Invoke(amount);GameAudio.At(Sound.DirtBang,transform.position,Mathf.Lerp(.35f,1,amount));}
             unsupportedTime=fallSpeed=0;
         }
         void UpdateAirControl(int grounded,Vector2 input,float airPitchInput,float dt)
@@ -359,7 +368,7 @@ namespace MoonThemedGame.Scavenger
             float lead = wheel.radius;
             var origin = mount + up * lead;
             float previous = wheel.length;
-            wheel.grounded = CastGround(origin, -up, wheel.radius * 0.95f, rest * 2 + lead, out float distance, out wheel.contact, out wheel.normal);
+            wheel.grounded = CastGround(origin, -up, wheel.radius * 0.95f, rest * 2 + lead, out float distance, out wheel.contact, out wheel.normal,out wheel.groundHit);
             wheel.length = wheel.grounded ? Mathf.Max(0, distance - lead) : rest * 2;
             if (!wheel.grounded) return;
             float compression = rest * 1.5f - wheel.length;
@@ -369,8 +378,9 @@ namespace MoonThemedGame.Scavenger
             body.AddForceAtPosition(up * force, wheel.contact);
         }
 
-        bool CastGround(Vector3 origin, Vector3 direction, float radius, float reach, out float distance, out Vector3 contact, out Vector3 normal)
+        bool CastGround(Vector3 origin, Vector3 direction, float radius, float reach, out float distance, out Vector3 contact, out Vector3 normal,out RaycastHit groundHit)
         {
+            groundHit=default;
             distance = float.MaxValue;
             contact = origin;
             normal = Vector3.up;
@@ -379,9 +389,10 @@ namespace MoonThemedGame.Scavenger
             {
                 var hit = hits[i];
                 if (hit.distance <= 0 || System.Array.IndexOf(own, hit.collider) >= 0 || hit.collider.attachedRigidbody == body) continue;
+                if(hit.collider.GetComponentInParent<MoonThemedGame.Repair.ZombieActor>())continue;
                 // A wall face is not ground: standing on it is what lets the wheels drive up vertical surfaces.
                 if (hit.normal.y < maxGroundSteepness) continue;
-                if (hit.distance < distance) { distance = hit.distance; contact = hit.point; normal = hit.normal; }
+                if (hit.distance < distance) { distance = hit.distance; contact = hit.point; normal = hit.normal;groundHit=hit; }
             }
             return distance < float.MaxValue;
         }

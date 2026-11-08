@@ -151,7 +151,8 @@ namespace MoonThemedGame.Interactions
             Vector3 position;Quaternion rotation;
             if(t<.22f)
             {
-                position=lyingPosition+Vector3.up*(Mathf.Sin(t*35)*.008f);rotation=lyingRotation*Quaternion.Euler(Mathf.Sin(t*22)*.45f,0,0);
+                float motion=ComfortSettings.CameraShake?1:0;
+                position=lyingPosition+Vector3.up*(Mathf.Sin(t*35)*.008f*motion);rotation=lyingRotation*Quaternion.Euler(Mathf.Sin(t*22)*.45f*motion,0,0);
             }
             else if(t<.55f)
             {
@@ -161,9 +162,9 @@ namespace MoonThemedGame.Interactions
             else
             {
                 float u=Ease((t-.55f)/.37f);position=Vector3.Lerp(sittingPosition,standingPosition,u)-Vector3.up*(Mathf.Sin(u*Mathf.PI)*.08f);
-                rotation=Quaternion.Slerp(sittingRotation,standingRotation,u)*Quaternion.Euler(0,0,Mathf.Sin(u*Mathf.PI*2)*1.2f*(1-u));
+                rotation=Quaternion.Slerp(sittingRotation,standingRotation,u)*Quaternion.Euler(0,0,ComfortSettings.CameraShake?Mathf.Sin(u*Mathf.PI*2)*1.2f*(1-u):0);
             }
-            view.transform.SetPositionAndRotation(position,rotation);view.fieldOfView=Mathf.Lerp(originalFov-7,originalFov,Ease((t-.18f)/.74f));view.nearClipPlane=.025f;
+            view.transform.SetPositionAndRotation(position,rotation);view.fieldOfView=Mathf.Lerp(originalFov-7*ComfortSettings.DynamicFov,originalFov,Ease((t-.18f)/.74f));view.nearClipPlane=.025f;
             if(blackout!=null)
             {
                 blackout.style.opacity=1-Ease(elapsed/.4f);

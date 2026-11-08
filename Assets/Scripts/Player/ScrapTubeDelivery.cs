@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -58,7 +59,7 @@ namespace MoonThemedGame.Repair
             for(int i=0;i<colliders.Length;i++)if(colliders[i])colliders[i].enabled=colliderStates[i];
             var part=released.AddComponent<RepairPartProp>();part.prefab=currentPrefab;
             part.ReleaseFromDelivery(Outlet.forward*exitSpeed+Vector3.down*0.15f);
-            DeliveredCount++;cooldown=partInterval;
+            GameAudio.At(Sound.Pipe,Outlet.position);DeliveredCount++;cooldown=partInterval;
         }
         void Begin(GameObject prefab)
         {

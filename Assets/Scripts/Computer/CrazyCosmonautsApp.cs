@@ -1,3 +1,4 @@
+using MoonThemedGame.Audio;
 using System;
 using System.Collections.Generic;
 using MoonThemedGame.Interactions;
@@ -126,7 +127,7 @@ namespace MoonThemedGame.Computer
         public void TakeDamage(int amount)
         {
             if (!GameplayActive || amount <= 0) return;
-            Health = Mathf.Max(0, Health - amount); damageFlash = .35f;
+            Health = Mathf.Max(0, Health - amount); damageFlash = .35f;GameAudio.Ui(Sound.GameDamage);
             if (Health == 0)
             {
                 State = CrazyCosmonautsState.Dead; lockout.Start(content.retryDelaySeconds); ReleaseCursor();
@@ -193,6 +194,7 @@ namespace MoonThemedGame.Computer
                 {
                     lastRewardedWave = Wave;
                     terminal.SetCredits((int)Math.Min(int.MaxValue, (long)terminal.Credits + content.waveReward));
+                    MoonThemedGame.Weather.MoonWeatherSystem.Active?.RecordCosmonautsWaveCleared(Wave);
                     State = CrazyCosmonautsState.Intermission; ReleaseCursor();
                 }
             }
@@ -206,6 +208,10 @@ namespace MoonThemedGame.Computer
             bool hover = Purchased && !IsOpen && free && pointer && icon.worldBound.Contains(point);
             icon.EnableInClassList("pointer-over", hover);
             foreach (var action in actions) action.element.style.backgroundColor = pointer && action.element.worldBound.Contains(point) ? new Color(1, 1, 1, .14f) : Color.clear;
+            object audioHover=hover?(object)icon:null;
+            if(IsOpen&&pointer)foreach(var audioAction in actions)if(audioAction.element.resolvedStyle.display!=DisplayStyle.None&&audioAction.element.worldBound.Contains(point))audioHover=string.IsNullOrEmpty(audioAction.element.name)?(object)audioAction.element:audioAction.element.name;
+            GameAudio.Hover(this,audioHover);
+            if(audioHover!=null&&pointer&&Mouse.current!=null&&Mouse.current.leftButton.wasPressedThisFrame)GameAudio.Ui(Sound.Icon);
             if (!pointer || Mouse.current == null || !Mouse.current.leftButton.wasPressedThisFrame) return;
             if (hover) { SetOpen(true); return; }
             if (IsOpen && State != CrazyCosmonautsState.Playing)
